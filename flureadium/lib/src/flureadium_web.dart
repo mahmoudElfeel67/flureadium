@@ -335,12 +335,12 @@ class FlureadiumWebPlugin extends FlureadiumPlatform {
       throw UnimplementedError('audioSetPreferences is not implemented on web platform');
   // AUDIOBOOK API - END
 
-  @override
-  Stream<ReadiumTimebasedState> get onTimebasedPlayerStateChanged {
-    // TODO: Implement when karaoke books are supported
-    // throw UnimplementedError('get onTimebasedPlayerStateChanged is not implemented on web platform');
-    return const Stream.empty();
-  }
+  // @override
+  // Stream<ReadiumTimebasedState> get onTimebasedPlayerStateChanged {
+  //   // TODO: Implement when karaoke books are supported
+  //   // throw UnimplementedError('get onTimebasedPlayerStateChanged is not implemented on web platform');
+  //   return const Stream.empty();
+  // }
 
   @override
   Stream<ReadiumError> get onErrorEvent {

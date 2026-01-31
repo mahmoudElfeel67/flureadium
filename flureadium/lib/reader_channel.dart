@@ -145,5 +145,6 @@ class ReadiumReaderChannel extends MethodChannel {
 /// The original Readium UserProperty::getJson leaves out the quotes around "name" and "value".
 /// There are plans to clean up the Readium user settings API.
 /// TODO: Nuke this function from orbit if/when that happens.
+// ignore: unused_element
 String _readiumEncode(final Map<String, String> map) =>
     json.encode(map.entries.map((final e) => json.encode({'name': e.key, 'value': e.value})).toList());

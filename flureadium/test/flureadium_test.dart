@@ -177,6 +177,12 @@ class MockFlureadiumPlatform with MockPlatformInterfaceMixin implements Flureadi
   }
 
   @override
+  Future<void> audioSeekBy(Duration offset) {
+    // TODO: implement audioSeekBy
+    throw UnimplementedError();
+  }
+
+  @override
   Future<String?> getLinkContent(Link link) {
     // TODO: implement getLinkContent
     throw UnimplementedError();
@@ -190,6 +196,7 @@ class MockFlureadiumPlatform with MockPlatformInterfaceMixin implements Flureadi
 }
 
 void main() {
+  // ignore: unused_local_variable
   late Flureadium flutterReadium;
   late MockFlureadiumPlatform fakePlatform;
 
