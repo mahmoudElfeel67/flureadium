@@ -1,231 +1,323 @@
-import 'dart:async';
+import 'dart:ui' show Color;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flureadium/flureadium.dart';
-import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
-class MockFlureadiumPlatform with MockPlatformInterfaceMixin implements FlureadiumPlatform {
-  @override
-  ReadiumReaderWidgetInterface? currentReaderWidget;
-
-  @override
-  EPUBPreferences? defaultPreferences;
-
-  @override
-  Future<void> setCustomHeaders(Map<String, String> headers) {
-    // TODO: implement setCustomHeaders
-    throw UnimplementedError();
-  }
-
-  @override
-  void setDefaultPreferences(EPUBPreferences preferences) {
-    defaultPreferences = preferences;
-  }
-
-  @override
-  Future<Publication> loadPublication(String pubUrl) => Future.value(
-    Publication(
-      links: [],
-      metadata: Metadata(localizedTitle: LocalizedString.fromStrings({'en': 'test'})),
-      readingOrder: [],
-    ),
-  );
-
-  @override
-  Future<Publication> openPublication(String pubUrl) => Future.value(
-    Publication(
-      links: [],
-      metadata: Metadata(localizedTitle: LocalizedString.fromStrings({'en': 'test'})),
-      readingOrder: [],
-    ),
-  );
-  @override
-  Stream<Locator> get onTextLocatorChanged => Stream.fromIterable([
-    // TODO: Test locators
-  ]);
-
-  @override
-  Future<void> applyDecorations(String id, List<ReaderDecoration> decorations) {
-    // TODO: implement applyDecorations
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> closePublication() {
-    // TODO: implement closePublication
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> goLeft() {
-    // TODO: implement goLeft
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> goRight() {
-    // TODO: implement goRight
-    throw UnimplementedError();
-  }
-
-  @override
-  // TODO: implement onReaderStatusChanged
-  Stream<ReadiumReaderStatus> get onReaderStatusChanged => throw UnimplementedError();
-
-  @override
-  Future<void> setEPUBPreferences(EPUBPreferences preferences) {
-    // TODO: implement setEPUBPreferences
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> skipToNext() {
-    // TODO: implement skipToNext
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> skipToPrevious() {
-    // TODO: implement skipToPrevious
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> ttsEnable(TTSPreferences? preferences) {
-    // TODO: implement ttsEnable
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<List<ReaderTTSVoice>> ttsGetAvailableVoices() {
-    // TODO: implement ttsGetAvailableVoices
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> setDecorationStyle(ReaderDecorationStyle? utteranceDecoration, ReaderDecorationStyle? rangeDecoration) {
-    // TODO: implement setDecorationStyle
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> ttsSetVoice(String voiceIdentifier, String? forLanguage) {
-    // TODO: implement ttsSetVoice
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> play(Locator? fromLocator) {
-    // TODO: implement play
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> pause() {
-    // TODO: implement ttsPause
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> resume() {
-    // TODO: implement ttsResume
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> next() {
-    // TODO: implement ttsNext
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> previous() {
-    // TODO: implement ttsPrevious
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> stop() {
-    // TODO: implement stop
-    throw UnimplementedError();
-  }
-
-  @override
-  // TODO: implement onTimebasedPlayerStateChanged
-  Stream<ReadiumTimebasedState> get onTimebasedPlayerStateChanged => throw UnimplementedError();
-
-  @override
-  // TODO: implement onErrorEvent
-  Stream<ReadiumError> get onErrorEvent => throw UnimplementedError();
-
-  @override
-  Future<void> ttsSetPreferences(TTSPreferences preferences) {
-    // TODO: implement ttsSetPreferences
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> audioEnable({AudioPreferences? prefs, Locator? fromLocator}) {
-    // TODO: implement audioEnable
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> audioSetPreferences(AudioPreferences prefs) {
-    // TODO: implement audioSetPreferences
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> audioSeekBy(Duration offset) {
-    // TODO: implement audioSeekBy
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<String?> getLinkContent(Link link) {
-    // TODO: implement getLinkContent
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<bool> goToLocator(Locator locator) {
-    // TODO: implement goToLocator
-    throw UnimplementedError();
-  }
-}
+import 'mocks/mock_platform.dart';
 
 void main() {
-  // ignore: unused_local_variable
-  late Flureadium flutterReadium;
-  late MockFlureadiumPlatform fakePlatform;
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(() {
-    fakePlatform = MockFlureadiumPlatform();
-    FlureadiumPlatform.instance = fakePlatform;
-    flutterReadium = Flureadium();
+  late Flureadium flureadium;
+  late MockFlureadiumPlatform mockPlatform;
+
+  setUp(() {
+    mockPlatform = MockFlureadiumPlatform();
+    FlureadiumPlatform.instance = mockPlatform;
+    flureadium = Flureadium();
   });
 
-  // test('batteryLevel', () async {
-  //   expect(await flutterReadium.batteryLevel, 42);
-  // });
+  tearDown(() {
+    mockPlatform.dispose();
+  });
 
-  // test('isInBatterySaveMode', () async {
-  //   expect(await flutterReadium.isInBatterySaveMode, true);
-  // });
+  group('Flureadium', () {
+    group('Publication Management', () {
+      test('loadPublication calls platform method', () async {
+        final publication = await flureadium.loadPublication('file:///test.epub');
 
-  // test('current state of the battery', () async {
-  //   expect(await flutterReadium.batteryState, BatteryState.charging);
-  // });
+        expect(mockPlatform.wasCalled('loadPublication'), isTrue);
+        expect(publication, isNotNull);
+        expect(publication.metadata.title, equals('Test Book'));
+      });
 
-  // test('receiving events of the battery state', () async {
-  //   final queue = StreamQueue<BatteryState>(battery.onBatteryStateChanged);
+      test('openPublication calls platform method', () async {
+        final publication = await flureadium.openPublication('https://example.com/book.epub');
 
-  //   expect(await queue.next, BatteryState.unknown);
-  //   expect(await queue.next, BatteryState.charging);
-  //   expect(await queue.next, BatteryState.full);
-  //   expect(await queue.next, BatteryState.discharging);
+        expect(mockPlatform.wasCalled('openPublication'), isTrue);
+        expect(mockPlatform.lastCallArgs('openPublication')?['pubUrl'],
+               equals('https://example.com/book.epub'));
+        expect(publication, isNotNull);
+      });
 
-  //   expect(await queue.hasNext, false);
-  // });
+      test('closePublication calls platform method', () async {
+        await flureadium.closePublication();
+
+        expect(mockPlatform.wasCalled('closePublication'), isTrue);
+      });
+
+      test('setCustomHeaders calls platform method', () async {
+        final headers = {'Authorization': 'Bearer token'};
+
+        await flureadium.setCustomHeaders(headers);
+
+        expect(mockPlatform.wasCalled('setCustomHeaders'), isTrue);
+        expect(mockPlatform.lastCallArgs('setCustomHeaders')?['headers'], equals(headers));
+      });
+    });
+
+    group('Navigation', () {
+      test('goLeft calls platform method', () async {
+        await flureadium.goLeft();
+
+        expect(mockPlatform.wasCalled('goLeft'), isTrue);
+      });
+
+      test('goRight calls platform method', () async {
+        await flureadium.goRight();
+
+        expect(mockPlatform.wasCalled('goRight'), isTrue);
+      });
+
+      test('skipToNext calls platform method', () async {
+        await flureadium.skipToNext();
+
+        expect(mockPlatform.wasCalled('skipToNext'), isTrue);
+      });
+
+      test('skipToPrevious calls platform method', () async {
+        await flureadium.skipToPrevious();
+
+        expect(mockPlatform.wasCalled('skipToPrevious'), isTrue);
+      });
+
+      test('goToLocator calls platform method with correct locator', () async {
+        final locator = Locator(
+          href: 'chapter2.xhtml',
+          type: 'application/xhtml+xml',
+          locations: Locations(position: 5),
+        );
+
+        final result = await flureadium.goToLocator(locator);
+
+        expect(mockPlatform.wasCalled('goToLocator'), isTrue);
+        expect(result, isTrue);
+      });
+    });
+
+    group('Preferences', () {
+      test('setDefaultPreferences calls platform method', () {
+        final prefs = EPUBPreferences(
+          fontFamily: 'Georgia',
+          fontSize: 120,
+          fontWeight: 400.0,
+          verticalScroll: false,
+          backgroundColor: const Color(0xFFFFFFFF),
+          textColor: const Color(0xFF000000),
+        );
+
+        flureadium.setDefaultPreferences(prefs);
+
+        expect(mockPlatform.wasCalled('setDefaultPreferences'), isTrue);
+        expect(mockPlatform.defaultPreferences, equals(prefs));
+      });
+
+      test('setEPUBPreferences calls platform method', () async {
+        final prefs = EPUBPreferences(
+          fontFamily: 'Arial',
+          fontSize: 100,
+          fontWeight: 300.0,
+          verticalScroll: true,
+          backgroundColor: null,
+          textColor: null,
+        );
+
+        await flureadium.setEPUBPreferences(prefs);
+
+        expect(mockPlatform.wasCalled('setEPUBPreferences'), isTrue);
+      });
+
+      test('applyDecorations calls platform method', () async {
+        final decorations = [
+          ReaderDecoration(
+            id: 'highlight-1',
+            locator: Locator(href: 'chapter1.xhtml', type: 'text/html'),
+            style: ReaderDecorationStyle(
+              style: DecorationStyle.highlight,
+              tint: const Color(0xFFFFFF00),
+            ),
+          ),
+        ];
+
+        await flureadium.applyDecorations('highlights', decorations);
+
+        expect(mockPlatform.wasCalled('applyDecorations'), isTrue);
+        expect(mockPlatform.lastCallArgs('applyDecorations')?['id'], equals('highlights'));
+      });
+    });
+
+    group('Playback', () {
+      test('play calls platform method', () async {
+        await flureadium.play(null);
+
+        expect(mockPlatform.wasCalled('play'), isTrue);
+      });
+
+      test('play with locator calls platform method', () async {
+        final locator = Locator(
+          href: 'chapter1.xhtml',
+          type: 'text/html',
+        );
+
+        await flureadium.play(locator);
+
+        expect(mockPlatform.wasCalled('play'), isTrue);
+        expect(mockPlatform.lastCallArgs('play')?['fromLocator'], equals(locator));
+      });
+
+      test('pause calls platform method', () async {
+        await flureadium.pause();
+
+        expect(mockPlatform.wasCalled('pause'), isTrue);
+      });
+
+      test('resume calls platform method', () async {
+        await flureadium.resume();
+
+        expect(mockPlatform.wasCalled('resume'), isTrue);
+      });
+
+      test('stop calls platform method', () async {
+        await flureadium.stop();
+
+        expect(mockPlatform.wasCalled('stop'), isTrue);
+      });
+
+      test('next calls platform method', () async {
+        await flureadium.next();
+
+        expect(mockPlatform.wasCalled('next'), isTrue);
+      });
+
+      test('previous calls platform method', () async {
+        await flureadium.previous();
+
+        expect(mockPlatform.wasCalled('previous'), isTrue);
+      });
+    });
+
+    group('TTS', () {
+      test('ttsEnable calls platform method', () async {
+        final prefs = TTSPreferences(speed: 1.5, pitch: 1.0);
+
+        await flureadium.ttsEnable(prefs);
+
+        expect(mockPlatform.wasCalled('ttsEnable'), isTrue);
+      });
+
+      test('ttsEnable with null preferences', () async {
+        await flureadium.ttsEnable(null);
+
+        expect(mockPlatform.wasCalled('ttsEnable'), isTrue);
+      });
+
+      test('ttsGetAvailableVoices calls platform method', () async {
+        final voices = await flureadium.ttsGetAvailableVoices();
+
+        expect(mockPlatform.wasCalled('ttsGetAvailableVoices'), isTrue);
+        expect(voices, isA<List<ReaderTTSVoice>>());
+      });
+
+      test('ttsSetVoice calls platform method', () async {
+        await flureadium.ttsSetVoice('voice-id', 'en-US');
+
+        expect(mockPlatform.wasCalled('ttsSetVoice'), isTrue);
+        expect(mockPlatform.lastCallArgs('ttsSetVoice')?['voiceIdentifier'], equals('voice-id'));
+        expect(mockPlatform.lastCallArgs('ttsSetVoice')?['forLanguage'], equals('en-US'));
+      });
+
+      test('ttsSetPreferences calls platform method', () async {
+        final prefs = TTSPreferences(
+          speed: 2.0,
+          controlPanelInfoType: ControlPanelInfoType.chapterTitle,
+        );
+
+        await flureadium.ttsSetPreferences(prefs);
+
+        expect(mockPlatform.wasCalled('ttsSetPreferences'), isTrue);
+      });
+
+      test('setDecorationStyle calls platform method', () async {
+        final style = ReaderDecorationStyle(
+          style: DecorationStyle.underline,
+          tint: const Color(0xFF0000FF),
+        );
+
+        await flureadium.setDecorationStyle(style, null);
+
+        expect(mockPlatform.wasCalled('setDecorationStyle'), isTrue);
+      });
+    });
+
+    group('Audio', () {
+      test('audioEnable calls platform method', () async {
+        final prefs = AudioPreferences(volume: 0.8, speed: 1.25);
+
+        await flureadium.audioEnable(prefs: prefs);
+
+        expect(mockPlatform.wasCalled('audioEnable'), isTrue);
+      });
+
+      test('audioEnable with locator', () async {
+        final locator = Locator(
+          href: 'track01.mp3',
+          type: 'audio/mpeg',
+        );
+
+        await flureadium.audioEnable(fromLocator: locator);
+
+        expect(mockPlatform.wasCalled('audioEnable'), isTrue);
+        expect(mockPlatform.lastCallArgs('audioEnable')?['fromLocator'], equals(locator));
+      });
+
+      test('audioSetPreferences calls platform method', () async {
+        final prefs = AudioPreferences(speed: 1.5, seekInterval: 30.0);
+
+        await flureadium.audioSetPreferences(prefs);
+
+        expect(mockPlatform.wasCalled('audioSetPreferences'), isTrue);
+      });
+
+      test('audioSeekBy calls platform method', () async {
+        await flureadium.audioSeekBy(const Duration(seconds: 30));
+
+        expect(mockPlatform.wasCalled('audioSeekBy'), isTrue);
+        expect(mockPlatform.lastCallArgs('audioSeekBy')?['offset'],
+               equals(const Duration(seconds: 30)));
+      });
+
+      test('audioSeekBy with negative offset', () async {
+        await flureadium.audioSeekBy(const Duration(seconds: -15));
+
+        expect(mockPlatform.wasCalled('audioSeekBy'), isTrue);
+        expect(mockPlatform.lastCallArgs('audioSeekBy')?['offset'],
+               equals(const Duration(seconds: -15)));
+      });
+    });
+
+    group('Method call tracking', () {
+      test('clearCalls resets call history', () async {
+        await flureadium.goLeft();
+        await flureadium.goRight();
+
+        expect(mockPlatform.callCount('goLeft'), equals(1));
+        expect(mockPlatform.callCount('goRight'), equals(1));
+
+        mockPlatform.clearCalls();
+
+        expect(mockPlatform.callCount('goLeft'), equals(0));
+        expect(mockPlatform.callCount('goRight'), equals(0));
+      });
+
+      test('callsTo returns all calls to a method', () async {
+        await flureadium.goLeft();
+        await flureadium.goRight();
+        await flureadium.goLeft();
+
+        final leftCalls = mockPlatform.callsTo('goLeft');
+
+        expect(leftCalls.length, equals(2));
+      });
+    });
+  });
 }
