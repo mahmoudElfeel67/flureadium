@@ -1,0 +1,46 @@
+name: flureadium
+description: 'Flutter plugin wrapping the Readium toolkit components for EPUB reading.'
+version: 0.0.1
+homepage: https://github.com/mulev/flureadium
+publish_to: none
+
+environment:
+  sdk: ">=3.8.0 <4.0.0"
+  flutter: '>=3.3.0'
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: dk.nota.flureadium
+        pluginClass: FlureadiumPlugin
+      ios:
+        pluginClass: FlureadiumPlugin
+      macos:
+        pluginClass: FlureadiumPlugin
+      web:
+        pluginClass: FlureadiumWebPlugin
+        fileName: src/flureadium_web.dart
+  assets:
+    - assets/helpers/
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
+  flureadium_platform_interface:
+    path: ../flureadium_platform_interface
+  rxdart:
+  wakelock_plus: ^1.2.8
+  web: ^1.1.1
+  collection: ^1.19.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  plugin_platform_interface: ^2.0.2
+
+executables:
+  copy_js_file: bin/copy_js_file.dart

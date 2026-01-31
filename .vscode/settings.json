@@ -17,7 +17,7 @@
   },
   "js/ts.implicitProjectConfig.checkJs": false,
   "eslint.workingDirectories": [
-    "flutter_readium/assets/_helper_scripts/"
+    "flureadium/assets/_helper_scripts/"
   ],
   "dart.lineLength": 120,
   "[dart]": {

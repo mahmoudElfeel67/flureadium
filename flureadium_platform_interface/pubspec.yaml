@@ -1,0 +1,29 @@
+name: flureadium_platform_interface
+description: A common platform interface for the flureadium plugin.
+version: 0.0.1
+homepage: https://github.com/notalib/flureadium
+repository: https://github.com/notalib/flureadium
+publish_to: none
+
+environment:
+  sdk: ">=3.8.0 <4.0.0"
+  flutter: ">=3.3.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  meta: ^1.16.0
+  json_diff:
+  plugin_platform_interface: ^2.1.4
+  dartx: ^1.2.0
+  dfunc: ^0.10.0
+  fimber: ^0.7.0
+  equatable: ^2.0.5
+  json_serializable: ^6.11.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  analyzer: ^10.0.1
+  build_runner: ^2.10.5

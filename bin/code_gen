@@ -2,4 +2,4 @@
 
 set -e
 
-cd ./flutter_readium_platform_interface; dart run build_runner build --delete-conflicting-outputs
+cd ./flureadium_platform_interface; dart run build_runner build --delete-conflicting-outputs

@@ -8,8 +8,8 @@ $PROJECT_ROOT/bin/forAll flutter pub get
 
 # this is not working as expected
 if [ "$(uname)" == "Darwin" ]; then
-  (cd $PROJECT_ROOT/flutter_readium/example/ios; pod update && pod install --repo-update)
+  (cd $PROJECT_ROOT/flureadium/example/ios; pod update && pod install --repo-update)
 fi
 
-$PROJECT_ROOT/flutter_readium/bin/build_helper_scripts.sh
+$PROJECT_ROOT/flureadium/bin/build_helper_scripts.sh
 $PROJECT_ROOT/bin/update_web_example

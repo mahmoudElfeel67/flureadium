@@ -1,6 +1,7 @@
-# Plugin: flutter_readium
+# Plugin: flureadium
 
 A Flutter wrapper for the Readium toolkits for ebooks, audiobooks and comics (kotlin-toolkit & swift-toolkit).
+This project is a fork of [Notalib/flureadium](https://github.com/Notalib/flureadium)
 
 This branch is under active development and meant to replace the `nota-lyt4` branch,
 which implements both TTS and Text+Audio sync on top of the native toolkits via other Flutter plugins.
@@ -22,13 +23,13 @@ General TODO:
 - [ ] Support for custom Decoration styles
 - [ ] Full support for Sync Narration and Guided Navigation
 
-## Adding flutter_readium to your project
+## Adding flureadium to your project
 
 To use, add to `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  flutter_readium: ^x.y.z
+  flureadium: ^x.y.z
 ```
 
 Also, update your Android and iOS projects as follows:
@@ -87,7 +88,7 @@ To use this plugin for web, follow these steps to ensure everything works correc
 To use the JavaScript file from the plugin in your Flutter web app, run the following command in your terminal from the root directory of your app:
 
 ```bash
-dart run flutter_readium:copy_js_file <destination_directory>
+dart run flureadium:copy_js_file <destination_directory>
 ```
 
 It is recommended to place the destination directory within the `web` directory or a subdirectory of it. Avoid saving it outside the `web` directory.

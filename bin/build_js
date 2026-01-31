@@ -1,6 +1,6 @@
-# Build for flutter_readium web
-echo "Building flutter_readium web"
-cd ./flutter_readium/
+# Build for flureadium web
+echo "Building flureadium web"
+cd ./flureadium/
 npm i
 npm run build_dev
 ### this is for when production build is ready
