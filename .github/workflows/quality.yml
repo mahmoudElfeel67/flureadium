@@ -1,0 +1,78 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  format:
+    name: Check Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Check format - platform interface
+        run: dart format --set-exit-if-changed flureadium_platform_interface/lib
+
+      - name: Check format - main package
+        run: dart format --set-exit-if-changed flureadium/lib
+
+  analyze:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies - platform interface
+        working-directory: flureadium_platform_interface
+        run: flutter pub get
+
+      - name: Get dependencies - main package
+        working-directory: flureadium
+        run: flutter pub get
+
+      - name: Analyze - platform interface
+        working-directory: flureadium_platform_interface
+        run: flutter analyze --fatal-infos --fatal-warnings
+
+      - name: Analyze - main package
+        working-directory: flureadium
+        run: flutter analyze --fatal-infos --fatal-warnings
+
+  pub-score:
+    name: Pub.dev Score Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install pana
+        run: dart pub global activate pana
+
+      - name: Check platform interface score
+        working-directory: flureadium_platform_interface
+        run: |
+          flutter pub get
+          pana --no-warning --exit-code-threshold 100
+
+      - name: Check main package score
+        working-directory: flureadium
+        run: |
+          flutter pub get
+          pana --no-warning --exit-code-threshold 100

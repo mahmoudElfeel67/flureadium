@@ -1,0 +1,37 @@
+name: Build Web
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build Web Example
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flureadium/example
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Copy JS file
+        run: dart run flureadium:copy_js_file web/
+
+      - name: Build Web
+        run: flutter build web
+
+      - name: Upload Web Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: flureadium/example/build/web/
