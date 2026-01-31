@@ -41,6 +41,7 @@ abstract class R2Log {
       debugPrint('WARNING: $message', wrapWidth: wrapWidth);
 
   static void e(final Object error, {final int? wrapWidth, final Object? data}) {
+    // ignore: unused_local_variable
     late ReadiumError err;
 
     if (error is ReadiumError) {

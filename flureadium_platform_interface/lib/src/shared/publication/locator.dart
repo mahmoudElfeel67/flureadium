@@ -60,7 +60,7 @@ class Locator extends AdditionalProperties with EquatableMixin implements JSONab
       //Fimber.d("jsonString $jsonString");
       final Map<String, dynamic> json = JsonCodec().decode(jsonString);
       return Locator.fromJson(json);
-    } catch (ex, st) {
+    } on Object catch (ex, st) {
       Fimber.e('ERROR', ex: ex, stacktrace: st);
     }
     return null;
