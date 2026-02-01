@@ -2,13 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE.Iridium file.
 
-import 'package:dartx/dartx.dart';
 import 'package:dfunc/dfunc.dart';
 import 'package:fimber/fimber.dart';
 import 'package:meta/meta.dart';
-import 'package:path/path.dart' as p;
-
 import 'charset.dart' show Charset;
+
+export 'mediatype_extensions.dart';
 
 /// Represents a document format, identified by a unique RFC 6838 media type.
 ///
@@ -481,8 +480,4 @@ class MediaType {
   });
 
   static void addSupportedType(MediaType mediaType) => _values.add(mediaType);
-}
-
-extension StringPathExtension on String {
-  String extension() => p.extension(this).removePrefix('.');
 }

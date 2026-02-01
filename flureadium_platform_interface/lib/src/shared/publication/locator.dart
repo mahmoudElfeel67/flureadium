@@ -12,22 +12,18 @@ import 'package:json_annotation/json_annotation.dart';
 
 import '../../utils/additional_properties.dart';
 import '../../utils/jsonable.dart';
-import '../../utils/take.dart';
 import '../../extensions/readium_string_extensions.dart';
-import '../epub.dart';
 import '../mediatype/mediatype.dart';
 import 'link.dart';
+import 'locations.dart';
+import 'locator_text.dart';
 
+export 'locations.dart';
+export 'locator_text.dart';
+
+// Re-export sentinel values used by Locator.copyWithLocations
 const int _emptyIntValue = -1;
 const double _emptyDoubleValue = -1;
-
-extension IntCheck on int? {
-  int? check(int? defaultValue) => (this == _emptyIntValue) ? defaultValue : this;
-}
-
-extension DoubleCheck on double? {
-  double? check(double? defaultValue) => (this == _emptyDoubleValue) ? defaultValue : this;
-}
 
 /// Provides a precise location in a publication in a format that can be stored and shared.
 ///
@@ -171,163 +167,6 @@ class Locator extends AdditionalProperties with EquatableMixin implements JSONab
   }
 }
 
-/// One or more alternative expressions of the location.
-/// https://github.com/readium/architecture/tree/master/models/locators#the-location-object
-/// https://github.com/readium/architecture/blob/master/models/locators/extensions/html.md
-///
-/// @param fragments Contains one or more fragment in the resource referenced by the [Locator].
-/// @param progression Progression in the resource expressed as a percentage (between 0 and 1).
-/// @param position An index in the publication (>= 1).
-/// @param totalProgression Progression in the publication expressed as a percentage (between 0
-///        and 1).
-/// @param otherLocations Additional locations for extensions.
-class Locations extends AdditionalProperties with EquatableMixin implements JSONable {
-  const Locations({
-    this.position,
-    this.progression,
-    this.totalProgression,
-    this.cssSelector,
-    this.fragments = const [],
-    this.domRange,
-    this.partialCfi,
-    super.additionalProperties,
-  });
-
-  factory Locations.fromJson(Map<String, dynamic>? json) {
-    if (json == null) {
-      return Locations();
-    }
-
-    final jsonObject = Map<String, dynamic>.of(json);
-    final fragments =
-        jsonObject.optStringsFromArrayOrSingle('fragments', remove: true).takeIf((it) => it.isNotEmpty) ??
-        jsonObject.optStringsFromArrayOrSingle('fragment', remove: true);
-
-    final progression = jsonObject
-        .optNullableDouble('progression', remove: true)
-        ?.takeIf((it) => 0.0 <= it && it <= 1.0);
-    final position = jsonObject.optNullableInt('position', remove: true)?.takeIf((it) => it > 0);
-
-    final totalProgression = jsonObject
-        .optPositiveDouble('totalProgression', remove: true)
-        ?.takeIf((it) => 0.0 <= it && it <= 1.0);
-
-    final cssSelector = jsonObject.optNullableString('cssSelector', remove: true);
-    final domRange = DomRange.fromJson(jsonObject.optJsonObject('domRange', remove: true));
-    final partialCfi = jsonObject.optNullableString('partialCfi', remove: true);
-
-    return Locations(
-      fragments: fragments,
-      progression: progression,
-      position: position,
-      totalProgression: totalProgression,
-      cssSelector: cssSelector,
-      domRange: domRange,
-      partialCfi: partialCfi,
-      additionalProperties: jsonObject,
-    );
-  }
-
-  final int? position;
-  final double? progression;
-  final double? totalProgression;
-  final List<String> fragments;
-  final String? cssSelector;
-  final DomRange? domRange;
-  final String? partialCfi;
-
-  Locations copyWith({
-    int? position = _emptyIntValue,
-    double? progression = _emptyDoubleValue,
-    double? totalProgression = _emptyDoubleValue,
-    List<String>? fragments,
-    Map<String, dynamic>? additionalProperties,
-    String? cssSelector,
-    DomRange? domRange,
-    String? partialCfi,
-  }) {
-    final mergeProperties = Map<String, dynamic>.of(this.additionalProperties)
-      ..addAll(additionalProperties ?? {})
-      ..removeWhere((key, value) => value == null);
-
-    return Locations(
-      progression: progression.check(this.progression),
-      position: position.check(this.position),
-      totalProgression: totalProgression.check(this.totalProgression),
-      fragments: fragments ?? this.fragments,
-      cssSelector: cssSelector ?? this.cssSelector,
-      domRange: domRange ?? this.domRange,
-      partialCfi: partialCfi ?? this.partialCfi,
-      additionalProperties: mergeProperties,
-    );
-  }
-
-  int get timestamp {
-    if (fragments.isEmpty) {
-      return 0;
-    }
-    final timeFragment = fragments.firstWhere((e) => e.startsWith('t='), orElse: () => 't=0');
-    return int.parse(timeFragment.replaceFirst('t=', ''));
-  }
-
-  @override
-  Map<String, dynamic> toJson() => Map.of(additionalProperties)
-    ..putIterableIfNotEmpty('fragments', fragments)
-    ..putOpt('progression', progression)
-    ..putOpt('position', position)
-    ..putOpt('totalProgression', totalProgression)
-    ..putOpt('cssSelector', cssSelector)
-    ..putOpt('partialCfi', partialCfi)
-    ..putJSONableIfNotEmpty('domRange', domRange);
-
-  @override
-  List<Object?> get props => [position, progression, totalProgression, fragments, additionalProperties, cssSelector];
-
-  @override
-  String toString() =>
-      'Location{position: $position, progression: $progression, '
-      'totalProgression: $totalProgression, fragments: $fragments}, '
-      'otherLocations: $additionalProperties, cssSelector: $cssSelector}';
-}
-
-/// Textual context of the locator.
-///
-/// A Locator Text Object contains multiple text fragments, useful to give a context to the
-/// [Locator] or for highlights.
-/// https://github.com/readium/architecture/tree/master/models/locators#the-text-object
-///
-/// @param before The text before the locator.
-/// @param highlight The text at the locator.
-/// @param after The text after the locator.
-class LocatorText with EquatableMixin implements JSONable {
-  factory LocatorText.fromJson(Map<String, dynamic>? json) {
-    if (json == null) {
-      return const LocatorText();
-    }
-
-    final jsonObject = Map<String, dynamic>.of(json);
-    return LocatorText(
-      before: jsonObject.optNullableString('before', remove: true),
-      highlight: jsonObject.optNullableString('highlight', remove: true),
-      after: jsonObject.optNullableString('after', remove: true),
-    );
-  }
-
-  const LocatorText({this.before, this.highlight, this.after});
-  final String? before;
-  final String? highlight;
-  final String? after;
-
-  @override
-  Map<String, dynamic> toJson() => {}
-    ..putOpt('before', before)
-    ..putOpt('highlight', highlight)
-    ..putOpt('after', after);
-
-  @override
-  List<Object?> get props => [before, highlight, after];
-}
-
 extension LinkLocator on Link {
   /// Creates a [Locator] from a reading order [Link].
   Locator toLocator() {
@@ -343,18 +182,6 @@ extension LinkLocator on Link {
   }
 }
 
-extension HTMLLocationsExtension on Locations {
-  /// [partialCfi] is an expression conforming to the "right-hand" side of the EPUB CFI syntax, that is
-  /// to say: without the EPUB-specific OPF spine item reference that precedes the first ! exclamation
-  /// mark (which denotes the "step indirection" into a publication document). Note that the wrapping
-  /// epubcfi(***) syntax is not used for the [partialCfi] string, i.e. the "fragment" part of the CFI
-  /// grammar is ignored.
-  String? get partialCfi => this['partialCfi'] as String?;
-
-  /// An HTML DOM range.
-  DomRange? get domRange => (this['domRange'] as Map<String, dynamic>?)?.let((it) => DomRange.fromJson(it));
-}
-
 class LocatorJsonConverter extends JsonConverter<Locator, Map<String, dynamic>?> {
   const LocatorJsonConverter();
 
@@ -363,24 +190,4 @@ class LocatorJsonConverter extends JsonConverter<Locator, Map<String, dynamic>?>
 
   @override
   Map<String, dynamic>? toJson(Locator? locator) => locator?.toJson();
-}
-
-class LocationsJsonConverter extends JsonConverter<Locations?, Map<String, dynamic>?> {
-  const LocationsJsonConverter();
-
-  @override
-  Locations? fromJson(Map<String, dynamic>? json) => Locations.fromJson(json);
-
-  @override
-  Map<String, dynamic>? toJson(Locations? locations) => locations?.toJson();
-}
-
-class LocatorTextJsonConverter extends JsonConverter<LocatorText?, Map<String, dynamic>?> {
-  const LocatorTextJsonConverter();
-
-  @override
-  LocatorText? fromJson(Map<String, dynamic>? json) => LocatorText.fromJson(json);
-
-  @override
-  Map<String, dynamic>? toJson(LocatorText? locatorText) => locatorText?.toJson();
 }

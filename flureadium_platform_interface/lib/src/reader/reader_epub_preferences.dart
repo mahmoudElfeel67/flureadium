@@ -17,7 +17,7 @@ class EPUBPreferences {
   factory EPUBPreferences.fromJsonMap(final Map<String, dynamic> map) => EPUBPreferences(
     fontFamily: map['fontFamily'] as String,
     fontSize: map['fontSize'] as int,
-    fontWeight: map['fontSize'] as double,
+    fontWeight: map['fontWeight'] as double,
     verticalScroll: map['verticalScroll'] as bool,
     backgroundColor: map['tint'] is int ? Color(map['tint'] as int) : null,
     textColor: map['tint'] is int ? Color(map['tint'] as int) : null,
