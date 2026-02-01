@@ -25,8 +25,41 @@ import 'subcollection_map.dart';
 
 final _hrefEnd = RegExp('[#?]');
 
-/// Holds the metadata of a Readium publication, as described in the Readium Web Publication Manifest.
+/// Represents a Readium Web Publication Manifest (RWPM).
+///
+/// A publication contains all metadata, content structure, and resources
+/// needed to render an ebook, audiobook, or comic.
+///
+/// ## Structure
+///
+/// ```
+/// Publication
+/// ├── metadata (title, author, language, etc.)
+/// ├── readingOrder (sequential content spine)
+/// ├── resources (images, stylesheets, fonts)
+/// ├── tableOfContents (navigation structure)
+/// └── subCollections (page-list, landmarks, etc.)
+/// ```
+///
+/// ## Common Operations
+///
+/// ```dart
+/// // Find a content document by href
+/// final link = publication.linkWithHref('chapter1.xhtml');
+///
+/// // Get the cover image
+/// final coverUrl = publication.coverUri;
+///
+/// // Convert a TOC link to a locator for navigation
+/// final locator = publication.locatorFromLink(tocEntry);
+/// ```
+///
+/// See also:
+/// - [Metadata] for publication metadata details
+/// - [Link] for content and resource links
+/// - [Locator] for position tracking
 class Publication with EquatableMixin implements JSONable {
+  /// Creates a new publication with the given components.
   const Publication({
     required this.metadata,
     this.context = const [],
@@ -37,18 +70,34 @@ class Publication with EquatableMixin implements JSONable {
     this.subCollections = const {},
   });
 
+  /// JSON-LD context URIs for the manifest.
   final List<String> context;
+
+  /// Publication metadata including title, authors, language, etc.
   final Metadata metadata;
+
+  /// Links to related resources (self, alternate, search, etc.).
   final List<Link> links;
+
+  /// Ordered list of content documents forming the reading spine.
   final List<Link> readingOrder;
+
+  /// Additional resources like images, stylesheets, and fonts.
   final List<Link> resources;
+
+  /// Navigation table of contents structure.
   final List<Link> tableOfContents;
+
+  /// Named subcollections like page-list, landmarks, or guided navigation.
   final Map<String, List<PublicationCollection>> subCollections;
 
+  /// Alias for [tableOfContents].
   List<Link> get toc => tableOfContents;
 
+  /// Returns the publication identifier from metadata, or 'unidentified'.
   String get identifier => metadata.identifier ?? 'unidentified';
 
+  /// Creates a copy of this publication with the given fields replaced.
   Publication copyWith({
     List<String>? context,
     Metadata? metadata,
@@ -174,6 +223,10 @@ class Publication with EquatableMixin implements JSONable {
     );
   }
 
+  /// Converts a [Link] to a [Locator] for navigation.
+  ///
+  /// Returns null if the link's type cannot be determined.
+  /// Optionally provide [typeOverride] to specify the media type.
   Locator? locatorFromLink(final Link link, {final MediaType? typeOverride}) {
     final href = link.href;
     final hashIndex = href.indexOf(_hrefEnd);
@@ -225,25 +278,34 @@ class Publication with EquatableMixin implements JSONable {
     return split == -1 ? null : find(href.substring(0, split));
   }
 
+  /// Returns the cover image link, if available.
   Link? get coverLink => resources.firstWhereOrNull(
     (final r) =>
         (r.rels.contains('cover')) ||
         (r.href.contains('cover') && r.type == MediaType.jpeg.type || r.type == MediaType.png.type),
   );
 
+  /// Returns the cover image URI, if available.
   Uri? get coverUri => coverLink != null ? Uri.tryParse(coverLink!.href) : null;
 
+  /// Returns true if this publication conforms to the Readium audiobook profile.
   bool get conformsToReadiumAudiobook =>
       metadata.conformsTo?.any((c) => c == 'https://readium.org/webpub-manifest/profiles/audiobook') == true;
 
+  /// Returns true if this publication conforms to the Readium EPUB profile.
   bool get conformsToReadiumEbook =>
       metadata.conformsTo?.any((c) => c == 'https://readium.org/webpub-manifest/profiles/epub') == true;
 
+  /// Returns true if this publication contains media overlays (synchronized narration).
   bool get containsMediaOverlays =>
       readingOrder.any((link) => link.alternates.any((alt) => alt.type == MediaType.syncMediaNarration.name));
 }
 
+/// JSON converter for [Publication] objects.
+///
+/// Used with json_serializable to automatically convert publications.
 class PublicationJsonConverter extends JsonConverter<Publication?, Map<String, dynamic>?> {
+  /// Creates a new publication JSON converter.
   const PublicationJsonConverter();
 
   @override
