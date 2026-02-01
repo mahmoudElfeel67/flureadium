@@ -1,46 +1,41 @@
-import 'dart:async';
 import 'dart:convert';
 import 'package:flureadium_platform_interface/flureadium_platform_interface.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'js_publication_channel.dart';
 import 'package:flutter/services.dart';
+import 'web/json_transformer.dart';
+import 'web/web_stream_handlers.dart';
 
 class FlureadiumWebPlugin extends FlureadiumPlatform {
   static void registerWith(Registrar registrar) {
     FlureadiumPlatform.instance = FlureadiumWebPlugin();
   }
 
-  static final StreamController<Locator> _locatorTextController = StreamController<Locator>.broadcast();
-  static final StreamController<ReadiumTimebasedState> _timebasedStateController =
-      StreamController<ReadiumTimebasedState>.broadcast();
-  static final StreamController<ReadiumReaderStatus> _readerStatusController =
-      StreamController<ReadiumReaderStatus>.broadcast();
-
   static void addTextLocatorUpdate(Locator locator) {
-    _locatorTextController.add(locator);
+    WebStreamHandlers.addTextLocatorUpdate(locator);
   }
 
   static void addTimeBasedStateUpdate(ReadiumTimebasedState timebasedState) {
-    _timebasedStateController.add(timebasedState);
+    WebStreamHandlers.addTimeBasedStateUpdate(timebasedState);
   }
 
   static void addReaderStatusUpdate(ReadiumReaderStatus status) {
-    _readerStatusController.add(status);
+    WebStreamHandlers.addReaderStatusUpdate(status);
   }
 
   @override
   Stream<Locator> get onTextLocatorChanged {
-    return _locatorTextController.stream;
+    return WebStreamHandlers.onTextLocatorChanged;
   }
 
   @override
   Stream<ReadiumTimebasedState> get onTimebasedPlayerStateChanged {
-    return _timebasedStateController.stream;
+    return WebStreamHandlers.onTimebasedPlayerStateChanged;
   }
 
   @override
   Stream<ReadiumReaderStatus> get onReaderStatusChanged {
-    return _readerStatusController.stream;
+    return WebStreamHandlers.onReaderStatusChanged;
   }
 
   @override
@@ -61,7 +56,7 @@ class FlureadiumWebPlugin extends FlureadiumPlatform {
 
       var publicationJson = jsonDecode(publicationString) as Map<String, dynamic>;
 
-      publicationJson = _transformPublicationJson(publicationJson);
+      publicationJson = PublicationJsonTransformer.transform(publicationJson);
 
       publication = Publication.fromJson(publicationJson);
       if (publication == null) {
@@ -82,110 +77,6 @@ class FlureadiumWebPlugin extends FlureadiumPlatform {
     }
 
     return publication;
-  }
-
-  static Map<String, dynamic> _transformPublicationJson(final Map<String, dynamic> publicationJson) {
-    // Transform 'links', 'readingOrder', 'resources', and 'tableOfContents' keys
-    _transformKeyItems(publicationJson, 'links');
-    _transformKeyItems(publicationJson, 'readingOrder');
-    _transformKeyItems(publicationJson, 'resources');
-
-    // rename key 'tableOfContents' to 'toc'
-    if (publicationJson.containsKey('tableOfContents')) {
-      publicationJson['toc'] = publicationJson.remove('tableOfContents');
-    }
-
-    // Transform 'children' key in 'toc'
-    if (publicationJson.containsKey('toc') && publicationJson['toc'] is Map<String, dynamic>) {
-      _transformKeyItems(publicationJson, 'toc');
-      publicationJson['toc'] = _transformChildren(publicationJson['toc']);
-    }
-
-    // Transform 'translations' key in 'metadata'
-    if (publicationJson.containsKey('metadata') && publicationJson['metadata'] is Map) {
-      final metadataMap = publicationJson['metadata'] as Map<String, dynamic>;
-
-      if (metadataMap.containsKey('authors') && metadataMap['authors'] is Map) {
-        // rename key 'authors' to 'author'
-        metadataMap['author'] = metadataMap.remove('authors');
-        // remove 'items' wrapper if exists
-        _transformKeyItems(metadataMap, 'author');
-
-        for (final author in metadataMap['author']) {
-          if (author is Map && author.containsKey('name') && author['name'] is Map) {
-            final nameMap = author['name'] as Map<String, dynamic>;
-            if (nameMap.containsKey('translations') && nameMap['translations'] is Map) {
-              final translationsMap = nameMap['translations'] as Map<String, dynamic>;
-              _validateTranslations(translationsMap);
-              author['name'] = translationsMap;
-            }
-          }
-        }
-      }
-
-      if (metadataMap.containsKey('title') && metadataMap['title'] is Map) {
-        final titleMap = metadataMap['title'] as Map<String, dynamic>;
-        if (titleMap.containsKey('translations') && titleMap['translations'] is Map) {
-          final translationsMap = titleMap['translations'] as Map<String, dynamic>;
-
-          _validateTranslations(translationsMap);
-
-          metadataMap['title'] = translationsMap;
-        }
-      }
-
-      if (metadataMap.containsKey('sortAs')) {
-        final sortAs = metadataMap['sortAs'];
-        if (sortAs is Map && sortAs['translations'] is Map) {
-          final translations = sortAs['translations'] as Map;
-          if (translations.isNotEmpty) {
-            // Use the first value in the translations map
-            metadataMap['sortAs'] = translations.values.first;
-          } else {
-            metadataMap['sortAs'] = null;
-          }
-        } else if (sortAs is! String) {
-          metadataMap['sortAs'] = null;
-        }
-      }
-    }
-
-    return publicationJson;
-  }
-
-  static void _transformKeyItems(final Map<String, dynamic> json, final String key) {
-    if (json.containsKey(key) && json[key] is Map) {
-      final map = json[key] as Map<String, dynamic>;
-      if (map.containsKey('items') && map['items'] is List) {
-        json[key] = map['items'];
-      }
-    }
-  }
-
-  static List<dynamic> _transformChildren(final List<dynamic> items) => items.map((final item) {
-    if (item is Map<String, dynamic> && item.containsKey('children')) {
-      final children = item['children'];
-      if (children is Map<String, dynamic> && children.containsKey('items')) {
-        item['children'] = children['items'];
-      }
-      if (item['children'] is List) {
-        item['children'] = _transformChildren(item['children']);
-      }
-    }
-    return item;
-  }).toList();
-
-  static void _validateTranslations(Map<String, dynamic> translationsMap) {
-    if (translationsMap.containsKey('undefined')) {
-      translationsMap['und'] = translationsMap.remove('undefined');
-    }
-
-    // TODO: unknown if other languages also fails the validation, needs better handling
-    translationsMap.forEach((final key, final value) {
-      if (key.length > 3) {
-        R2Log.d('PUBLICATION WEB: Translations map key "$key" is longer than three letters.');
-      }
-    });
   }
 
   @override
