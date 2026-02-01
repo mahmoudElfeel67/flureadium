@@ -9,9 +9,11 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flureadium_platform_interface/flureadium_platform_interface.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'reader_channel.dart';
+import 'src/reader/orientation_handler_mixin.dart';
+import 'src/reader/reader_lifecycle_mixin.dart';
+import 'src/reader/wakelock_manager_mixin.dart';
 
 const _viewType = 'dk.nota.flureadium/ReadiumReaderWidget';
 
@@ -42,23 +44,19 @@ class ReadiumReaderWidget extends StatefulWidget {
   State<StatefulWidget> createState() => _ReadiumReaderWidgetState();
 }
 
-class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget> implements ReadiumReaderWidgetInterface {
-  static const _wakelockTimerDuration = Duration(minutes: 30);
-
-  Timer? _wakelockTimer;
+class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
+    with WakelockManagerMixin, ReaderLifecycleMixin, OrientationHandlerMixin
+    implements ReadiumReaderWidgetInterface {
   ReadiumReaderChannel? _channel;
   bool wasDestroyed = false;
   bool isReady = false;
 
   final _isReadyCompleter = Completer<Locator>();
 
-  final _readium = FlureadiumPlatform.instance;
-
-  mq.Orientation? _lastOrientation;
   late Widget _readerWidget;
 
   EPUBPreferences? get _defaultPreferences {
-    return _readium.defaultPreferences;
+    return readium.defaultPreferences;
   }
 
   @override
@@ -67,19 +65,19 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget> implements Re
     R2Log.d('ReadiumReaderWidget initiated');
 
     _readerWidget = _buildNativeReader();
-    _enableWakelock();
-    _setCurrentWidgetInterface();
+    enableWakelock();
+    setCurrentWidgetInterface(this);
   }
 
   @override
   void dispose() {
     R2Log.d('ReadiumReaderWidget disposed');
-    _cleanup();
+    cleanupWidgetInterface(_channel?.name);
     _channel?.dispose();
     _channel = null;
-    _lastOrientation = null;
+    lastOrientation = null;
 
-    _disableWakelock();
+    disableWakelock();
     wasDestroyed = true;
 
     super.dispose();
@@ -87,11 +85,16 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget> implements Re
 
   @override
   Widget build(final BuildContext context) {
-    _onOrientationChangeWorkaround(MediaQuery.orientationOf(context));
+    handleOrientationChange(
+      currentOrientation: MediaQuery.orientationOf(context),
+      isReady: isReady,
+      currentLocator: _currentLocator,
+      channel: _channel,
+    );
 
     return Listener(
       onPointerDown: (final _) {
-        _enableWakelock();
+        enableWakelock();
       },
       child: _readerWidget,
     );
@@ -122,7 +125,7 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget> implements Re
 
     // Ensure we are at least 1 page into the current chapter, if not in scroll mode.
     // TODO: Find a better way to do this, maybe a `lastVisibleLocator` ?
-    if (_readium.defaultPreferences?.verticalScroll != true) {
+    if (readium.defaultPreferences?.verticalScroll != true) {
       await _channel?.goRight(animated: false);
       final loc = await _channel?.getCurrentLocator();
       currentHref = getTextLocatorHrefWithTocFragment(loc);
@@ -230,33 +233,6 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget> implements Re
     );
   }
 
-  Future<void> _enableWakelock() async {
-    R2Log.d('Ensure wakelock /w timer');
-
-    WakelockPlus.enable();
-
-    // Disable wakelock after 30 minutes of inactivity (no interaction with reader).
-    _wakelockTimer?.cancel();
-    _wakelockTimer = Timer(_wakelockTimerDuration, _disableWakelock);
-  }
-
-  void _disableWakelock() {
-    R2Log.d('Disable wakelock');
-
-    WakelockPlus.disable();
-    _wakelockTimer?.cancel();
-  }
-
-  void _setCurrentWidgetInterface() {
-    R2Log.d('Set current reader in plugin');
-    _readium.currentReaderWidget = this;
-  }
-
-  void _cleanup() {
-    R2Log.d('cleanup ${_channel?.name}!');
-    _readium.currentReaderWidget = null;
-  }
-
   Locator? _currentLocator;
 
   void _onPlatformViewCreated(final int id) {
@@ -278,7 +254,7 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget> implements Re
     R2Log.d('New widget is: ${_channel?.name}');
 
     // TODO: This is just to demo how to use and debounce the Stream, remove when appropriate.
-    final nativeLocatorStream = _readium.onTextLocatorChanged
+    final nativeLocatorStream = readium.onTextLocatorChanged
         .debounceTime(const Duration(milliseconds: 50))
         .asBroadcastStream()
         .distinct();
@@ -304,38 +280,5 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget> implements Re
       return null;
     }
     return '${txtLoc.toTextLocator().hrefPath.substring(1)}#${tocFragment.substring(4)}';
-  }
-
-  /// TODO: Remove this workaround, if the underlying issue is completely fixed in Readium.
-  ///
-  /// If orientation changes, fix page alignment, so it doesn't stay on a weird-looking page 5½.
-  void _onOrientationChangeWorkaround(final mq.Orientation orientation) async {
-    if (_lastOrientation == null) {
-      _lastOrientation = orientation;
-
-      return;
-    }
-
-    if (!isReady) {
-      return;
-    }
-
-    if (orientation != _lastOrientation) {
-      // Remove domRange/cssSelector, so it navigates to a progression, which will always
-      // trigger scrolling to the nearest page.
-      if (_lastOrientation != null && _currentLocator != null) {
-        Future.delayed(const Duration(milliseconds: 500)).then((final value) {
-          R2Log.d('Orientation changed. Re-navigating to current locator to re-align page.');
-          R2Log.d('locator = $_currentLocator');
-          _channel?.go(
-            _currentLocator!,
-            animated: false,
-            isAudioBookWithText: false, // TODO: isAudioBookWithText - we don't know atm.
-          );
-        });
-      }
-
-      _lastOrientation = orientation;
-    }
   }
 }
