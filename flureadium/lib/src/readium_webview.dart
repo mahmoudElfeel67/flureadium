@@ -10,7 +10,11 @@ import 'package:web/web.dart' as web;
 import 'dart:js_interop' as js_interop;
 
 class ReadiumWebView extends StatefulWidget {
-  const ReadiumWebView({super.key, required this.publication, this.currentLocator});
+  const ReadiumWebView({
+    super.key,
+    required this.publication,
+    this.currentLocator,
+  });
 
   final Publication publication;
   final Locator? currentLocator;
@@ -43,7 +47,9 @@ class ReadiumWebViewState extends State<ReadiumWebView> {
   @js_interop.JSExport()
   void onReaderStatusChanged(final String statusString) {
     R2Log.d('Reader status changed: $statusString');
-    final status = ReadiumReaderStatus.values.firstWhereOrNull((e) => e.name == statusString);
+    final status = ReadiumReaderStatus.values.firstWhereOrNull(
+      (e) => e.name == statusString,
+    );
     if (status != null) {
       FlureadiumWebPlugin.addReaderStatusUpdate(status);
     } else {
@@ -68,7 +74,9 @@ class ReadiumWebViewState extends State<ReadiumWebView> {
 
       final pubId = widget.publication.identifier;
       final preferences = _defaultPreferences?.toJson() ?? <String, dynamic>{};
-      final currentLocatorString = widget.currentLocator != null ? json.encode(widget.currentLocator) : null;
+      final currentLocatorString = widget.currentLocator != null
+          ? json.encode(widget.currentLocator)
+          : null;
       registerJSExports();
       await JsPublicationChannel().openPublication(
         publicationUrl,
@@ -107,7 +115,10 @@ class ReadiumWebViewState extends State<ReadiumWebView> {
 
         wrapperElement.append(htmlElement);
 
-        void mutationCallback(js_interop.JSArray<web.MutationRecord> mutations, web.MutationObserver observer) {
+        void mutationCallback(
+          js_interop.JSArray<web.MutationRecord> mutations,
+          web.MutationObserver observer,
+        ) {
           final container = web.document.getElementById('container');
 
           if (container != null) {
@@ -121,7 +132,10 @@ class ReadiumWebViewState extends State<ReadiumWebView> {
         final htmlBody = web.document.body;
 
         if (htmlBody != null) {
-          htmlObserver.observe(htmlBody, web.MutationObserverInit(childList: true, subtree: true));
+          htmlObserver.observe(
+            htmlBody,
+            web.MutationObserverInit(childList: true, subtree: true),
+          );
         } else {
           throw Exception('Body element not found');
         }

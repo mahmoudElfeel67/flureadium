@@ -105,10 +105,12 @@ void main() {
           textColor: null,
         );
 
-        prefs.fontFamily = 'Georgia';
-        prefs.fontSize = 150;
-        prefs.verticalScroll = true;
-        prefs.pageMargins = 25.0;
+        // ignore: cascade_invocations
+        prefs
+          ..fontFamily = 'Georgia'
+          ..fontSize = 150
+          ..verticalScroll = true
+          ..pageMargins = 25.0;
 
         expect(prefs.fontFamily, equals('Georgia'));
         expect(prefs.fontSize, equals(150));
@@ -194,9 +196,11 @@ void main() {
       test('properties can be modified', () {
         final prefs = TTSPreferences();
 
-        prefs.speed = 2.0;
-        prefs.pitch = 0.8;
-        prefs.voiceIdentifier = 'new-voice';
+        // ignore: cascade_invocations
+        prefs
+          ..speed = 2.0
+          ..pitch = 0.8
+          ..voiceIdentifier = 'new-voice';
 
         expect(prefs.speed, equals(2.0));
         expect(prefs.pitch, equals(0.8));
@@ -259,8 +263,8 @@ void main() {
       });
 
       test('includes updateIntervalSecs in map', () {
-        final prefs = AudioPreferences();
-        prefs.updateIntervalSecs = 0.5;
+        final prefs = AudioPreferences()
+          ..updateIntervalSecs = 0.5;
 
         final map = prefs.toMap();
 
@@ -272,10 +276,12 @@ void main() {
       test('properties can be modified', () {
         final prefs = AudioPreferences();
 
-        prefs.volume = 0.5;
-        prefs.speed = 2.0;
-        prefs.seekInterval = 60.0;
-        prefs.updateIntervalSecs = 1.0;
+        // ignore: cascade_invocations
+        prefs
+          ..volume = 0.5
+          ..speed = 2.0
+          ..seekInterval = 60.0
+          ..updateIntervalSecs = 1.0;
 
         expect(prefs.volume, equals(0.5));
         expect(prefs.speed, equals(2.0));

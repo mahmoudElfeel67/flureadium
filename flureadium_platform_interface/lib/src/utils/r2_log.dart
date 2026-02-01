@@ -16,26 +16,32 @@ const _methodCount = 1;
 // Add keywords as class name or method name for selective debug logging.
 // Debug logs only print if the log message or stack trace contains one of these keywords (case-insensitive).
 const _trace = <String>[
-  'Flureadium',           // Core plugin functionality
-  'Publication',          // Publication loading and parsing
-  'Navigation',           // Page navigation and TOC
-  'Locator',              // Locator operations and position tracking
-  'Preferences',          // EPUB/TTS/Audio preferences
-  'JsonTransformer',      // JSON transformation debugging
-  'OrientationHandler',   // Orientation change handling
-  'ReaderLifecycle',      // Reader widget lifecycle
-  'WakelockManager',      // Wakelock management
+  'Flureadium', // Core plugin functionality
+  'Publication', // Publication loading and parsing
+  'Navigation', // Page navigation and TOC
+  'Locator', // Locator operations and position tracking
+  'Preferences', // EPUB/TTS/Audio preferences
+  'JsonTransformer', // JSON transformation debugging
+  'OrientationHandler', // Orientation change handling
+  'ReaderLifecycle', // Reader widget lifecycle
+  'WakelockManager', // Wakelock management
 ];
 
 abstract class R2Log {
   const R2Log._();
 
-  static void d(final dynamic message, {final int? wrapWidth, final int? stackTraceBeginIndex}) {
+  static void d(
+    final dynamic message, {
+    final int? wrapWidth,
+    final int? stackTraceBeginIndex,
+  }) {
     if (kDebugMode) {
       final log = _log(message, stackTraceBeginIndex: stackTraceBeginIndex);
       final caseInsensitiveLog = log.toLowerCase();
 
-      if (_trace.any((final trace) => caseInsensitiveLog.contains(trace.toLowerCase()))) {
+      if (_trace.any(
+        (final trace) => caseInsensitiveLog.contains(trace.toLowerCase()),
+      )) {
         // debugPrintSynchronously(log, wrapWidth: wrapWidth);
         debugPrintThrottled(log, wrapWidth: wrapWidth);
       }
@@ -48,14 +54,22 @@ abstract class R2Log {
   static void w(final String? message, {final int? wrapWidth}) =>
       debugPrint('WARNING: $message', wrapWidth: wrapWidth);
 
-  static void e(final Object error, {final int? wrapWidth, final Object? data}) {
+  static void e(
+    final Object error, {
+    final int? wrapWidth,
+    final Object? data,
+  }) {
     // ignore: unused_local_variable
     late ReadiumError err;
 
     if (error is ReadiumError) {
       err = error;
     } else if (error is PlatformException) {
-      err = ReadiumError(error.message.toString(), code: error.code, data: data);
+      err = ReadiumError(
+        error.message.toString(),
+        code: error.code,
+        data: data,
+      );
     } else {
       err = ReadiumError(error.toString(), data: data);
     }
@@ -77,8 +91,11 @@ abstract class R2Log {
   }
 }
 
-String _logMapDiffPrefix(final String message, {final int indent = 0, final String? prefix}) =>
-    '\n${prefix ?? ''}${'\t' * indent} $message';
+String _logMapDiffPrefix(
+  final String message, {
+  final int indent = 0,
+  final String? prefix,
+}) => '\n${prefix ?? ''}${'\t' * indent} $message';
 
 String _logDiff({
   final Map? leftJson,
@@ -87,7 +104,8 @@ String _logDiff({
   final int indent = 1,
   final String? prefix,
 }) {
-  final diff = diffNode ?? JsonDiffer.fromJson(leftJson ?? {}, rightJson ?? {}).diff();
+  final diff =
+      diffNode ?? JsonDiffer.fromJson(leftJson ?? {}, rightJson ?? {}).diff();
 
   if (diff.hasNothing) {
     return _logMapDiffPrefix('No diff', indent: 0, prefix: prefix);
@@ -96,7 +114,9 @@ String _logDiff({
   final all = {
     ...diff.added.map((final key, final value) => MapEntry(key, [null, value])),
     ...diff.changed,
-    ...diff.removed.map((final key, final value) => MapEntry(key, [value, null])),
+    ...diff.removed.map(
+      (final key, final value) => MapEntry(key, [value, null]),
+    ),
     ...diff.node,
   };
 
@@ -111,9 +131,18 @@ String _logDiff({
 
       if (left is Map || right is Map) {
         message += _logMapDiffPrefix('$key:', prefix: prefix, indent: indent);
-        message += _logDiff(leftJson: left, rightJson: right, indent: indent + 1, prefix: prefix);
+        message += _logDiff(
+          leftJson: left,
+          rightJson: right,
+          indent: indent + 1,
+          prefix: prefix,
+        );
       } else {
-        message += _logMapDiffPrefix('$key: $left --> $right', prefix: prefix, indent: indent);
+        message += _logMapDiffPrefix(
+          '$key: $left --> $right',
+          prefix: prefix,
+          indent: indent,
+        );
       }
     } else if (value is DiffNode) {
       message += _logMapDiffPrefix('$key:', prefix: prefix, indent: indent);
@@ -141,7 +170,10 @@ String _log(final dynamic message, {final int? stackTraceBeginIndex}) {
   return _formatAndPrint(messageStr, stackTraceStr);
 }
 
-String _formatStackTrace(final StackTrace stackTrace, {final int? stackTraceBeginIndex}) {
+String _formatStackTrace(
+  final StackTrace stackTrace, {
+  final int? stackTraceBeginIndex,
+}) {
   var lines = stackTrace.toString().split('\n');
   if (_stackTraceBeginIndex > 0 && _stackTraceBeginIndex < lines.length - 1) {
     lines = lines.sublist(_stackTraceBeginIndex + (stackTraceBeginIndex ?? 0));
@@ -186,7 +218,8 @@ bool _discardBrowserStacktraceLine(final String line) {
   if (match == null) {
     return false;
   }
-  return match.group(1)!.startsWith('package:logger') || match.group(1)!.startsWith('dart:');
+  return match.group(1)!.startsWith('package:logger') ||
+      match.group(1)!.startsWith('dart:');
 }
 
 // Handles any object that is causing JsonEncoder() problems
@@ -203,7 +236,9 @@ String _stringifyMessage(final dynamic message) {
 }
 
 String _formatAndPrint(final String message, final String stacktrace) {
-  final stackTraceSplit = stacktrace.replaceAll('.<anonymous closure>', '').split(' ');
+  final stackTraceSplit = stacktrace
+      .replaceAll('.<anonymous closure>', '')
+      .split(' ');
 
   return '[[ ${stackTraceSplit.first} ]] $message ${stackTraceSplit.last}';
 }

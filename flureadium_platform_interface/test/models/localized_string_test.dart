@@ -237,6 +237,7 @@ void main() {
           'en': 'Original',
         });
 
+        // ignore: cascade_invocations
         original.copyWithString('de', 'German');
 
         expect(original.translations, hasLength(1));
@@ -262,9 +263,9 @@ void main() {
           'fr': 'French',
         });
 
-        final transformed = original.mapLanguages((language, translation) {
-          return language?.toUpperCase() ?? 'NULL';
-        });
+        final transformed = original
+            .mapLanguages((language, translation) =>
+                language?.toUpperCase() ?? 'NULL');
 
         expect(transformed.translations.containsKey('EN'), isTrue);
         expect(transformed.translations.containsKey('FR'), isTrue);
@@ -278,9 +279,8 @@ void main() {
           'en': 'English',
         });
 
-        final transformed = original.mapLanguages((language, translation) {
-          return language ?? 'default';
-        });
+        final transformed =
+            original.mapLanguages((language, translation) => language ?? 'default');
 
         expect(transformed.translations.containsKey('default'), isTrue);
         expect(transformed.translations['default']!.string, equals('Default'));
@@ -294,9 +294,8 @@ void main() {
           'fr': 'bonjour',
         });
 
-        final transformed = original.mapTranslations((language, translation) {
-          return Translation(translation.string.toUpperCase());
-        });
+        final transformed = original.mapTranslations(
+            (language, translation) => Translation(translation.string.toUpperCase()));
 
         expect(transformed.translations['en']!.string, equals('HELLO'));
         expect(transformed.translations['fr']!.string, equals('BONJOUR'));

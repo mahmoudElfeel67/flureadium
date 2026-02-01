@@ -14,9 +14,11 @@ extension StringExtension on String {
   /// Otherwise, returns a copy of this string after adding the [prefix].
   String addPrefix(String prefix) => startsWith(prefix) ? this : '$prefix$this';
 
-  String? ifBlank(String? Function() defaultValue) => isBlank ? defaultValue() : this;
+  String? ifBlank(String? Function() defaultValue) =>
+      isBlank ? defaultValue() : this;
 
-  String insert(int index, String value) => substring(0, index) + value + substring(index);
+  String insert(int index, String value) =>
+      substring(0, index) + value + substring(index);
 
   String substringBefore(String? separator) {
     if (isEmpty) {
@@ -99,16 +101,19 @@ extension StringExtension on String {
     return null;
   }
 
-  Map<String, String> queryParameters() => Uri.tryParse(this)?.queryParameters ?? {};
+  Map<String, String> queryParameters() =>
+      Uri.tryParse(this)?.queryParameters ?? {};
 
   /// Returns a string containing the first characters that satisfy the given [predicate].
   ///
   /// @sample samples.text.Strings.take
-  String takeWhile(bool Function(String) predicate) => characters.takeWhile(predicate).string;
+  String takeWhile(bool Function(String) predicate) =>
+      characters.takeWhile(predicate).string;
 }
 
 extension StringHashExtension on String {
-  String hashWith(crypto.Hash algorithm) => algorithm.convert(toUtf8()).toString();
+  String hashWith(crypto.Hash algorithm) =>
+      algorithm.convert(toUtf8()).toString();
 
   /// Calculates the SHA1 digest and returns the value as a [String] of
   /// hexadecimal digits.

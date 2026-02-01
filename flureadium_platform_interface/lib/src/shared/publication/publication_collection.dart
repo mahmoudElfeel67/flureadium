@@ -15,7 +15,11 @@ import '../publication.dart';
 /// https://readium.org/webpub-manifest/schema/subcollection.schema.json
 /// Can be used as extension point in the Readium Web Publication Manifest.
 class PublicationCollection with EquatableMixin implements JSONable {
-  const PublicationCollection({this.metadata = const {}, this.links = const [], this.subcollections = const {}});
+  const PublicationCollection({
+    this.metadata = const {},
+    this.links = const [],
+    this.subcollections = const {},
+  });
   final Map<String, dynamic> metadata;
   final List<Link> links;
   final Map<String, List<PublicationCollection>> subcollections;
@@ -26,7 +30,10 @@ class PublicationCollection with EquatableMixin implements JSONable {
   /// Serializes a [PublicationCollection] to its RWPM JSON representation.
   @override
   Map<String, dynamic> toJson() {
-    final json = <String, dynamic>{'metadata': metadata, 'links': links.toJson()};
+    final json = <String, dynamic>{
+      'metadata': metadata,
+      'links': links.toJson(),
+    };
     subcollections.appendToJsonObject(json);
     return json;
   }
@@ -49,7 +56,10 @@ class PublicationCollection with EquatableMixin implements JSONable {
 
     // Parses a sub-collection object.
     if (json is Map<String, dynamic>) {
-      links = Link.fromJsonArray(json.optJsonArray('links', remove: true), normalizeHref: normalizeHref);
+      links = Link.fromJsonArray(
+        json.optJsonArray('links', remove: true),
+        normalizeHref: normalizeHref,
+      );
       metadata = (json.optNullableMap('metadata', remove: true) ?? {});
       subcollections = collectionsFromJSON(json, normalizeHref: normalizeHref);
     }
@@ -66,7 +76,11 @@ class PublicationCollection with EquatableMixin implements JSONable {
       return null;
     }
 
-    return PublicationCollection(metadata: metadata ?? {}, links: links, subcollections: subcollections ?? {});
+    return PublicationCollection(
+      metadata: metadata ?? {},
+      links: links,
+      subcollections: subcollections ?? {},
+    );
   }
 
   /// Parses a map of [PublicationCollection] indexed by their roles from its RWPM JSON representation.
@@ -83,13 +97,21 @@ class PublicationCollection with EquatableMixin implements JSONable {
       final dynamic subJSON = json[role];
 
       // Parses a list of links or a single collection object.
-      final collection = PublicationCollection.fromJson(subJSON, normalizeHref: normalizeHref);
+      final collection = PublicationCollection.fromJson(
+        subJSON,
+        normalizeHref: normalizeHref,
+      );
       if (collection != null) {
         collections.putIfAbsent(role, () => []).add(collection);
         // Parses a list of collection objects.
       } else if (subJSON is List) {
         final subcollections = subJSON
-            .map((it) => PublicationCollection.fromJson(it, normalizeHref: normalizeHref))
+            .map(
+              (it) => PublicationCollection.fromJson(
+                it,
+                normalizeHref: normalizeHref,
+              ),
+            )
             .whereNotNull();
         collections.putIfAbsent(role, () => []).addAll(subcollections);
       }
@@ -98,11 +120,13 @@ class PublicationCollection with EquatableMixin implements JSONable {
   }
 }
 
-class PublicationCollectionJsonConverter extends JsonConverter<PublicationCollection?, dynamic> {
+class PublicationCollectionJsonConverter
+    extends JsonConverter<PublicationCollection?, dynamic> {
   const PublicationCollectionJsonConverter();
 
   @override
-  PublicationCollection? fromJson(dynamic json) => PublicationCollection.fromJson(json);
+  PublicationCollection? fromJson(dynamic json) =>
+      PublicationCollection.fromJson(json);
 
   @override
   dynamic toJson(PublicationCollection? collection) => collection?.toJson();

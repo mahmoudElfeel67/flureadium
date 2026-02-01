@@ -57,7 +57,8 @@ class Contributor extends Collection {
     );
   }
 
-  static Contributor fromString(String name) => Contributor(localizedName: LocalizedString.fromString(name));
+  static Contributor fromString(String name) =>
+      Contributor(localizedName: LocalizedString.fromString(name));
 
   /// Parses a [Contributor] from its RWPM JSON representation.
   ///
@@ -65,7 +66,10 @@ class Contributor extends Collection {
   /// The [links]' href and their children's will be normalized recursively using the
   /// provided [normalizeHref] closure.
   /// If the contributor can't be parsed, a warning will be logged with [warnings].
-  static Contributor? fromJson(dynamic json, {LinkHrefNormalizer normalizeHref = linkHrefNormalizerIdentity}) {
+  static Contributor? fromJson(
+    dynamic json, {
+    LinkHrefNormalizer normalizeHref = linkHrefNormalizerIdentity,
+  }) {
     if (json == null) {
       return null;
     }
@@ -92,10 +96,17 @@ class Contributor extends Collection {
     }
 
     final identifier = jsonObject.optNullableString('identifier', remove: true);
-    final localizedSortAs = LocalizedString.fromJson(jsonObject.remove('sortAs'));
-    final roles = jsonObject.optStringsFromArrayOrSingle('role', remove: true).toList();
+    final localizedSortAs = LocalizedString.fromJson(
+      jsonObject.remove('sortAs'),
+    );
+    final roles = jsonObject
+        .optStringsFromArrayOrSingle('role', remove: true)
+        .toList();
     final position = jsonObject.optNullableDouble('position', remove: true);
-    final links = Link.fromJsonArray(jsonObject.optJsonArray('links'), normalizeHref: normalizeHref);
+    final links = Link.fromJsonArray(
+      jsonObject.optJsonArray('links'),
+      normalizeHref: normalizeHref,
+    );
 
     return Contributor(
       localizedName: localizedName,
@@ -118,20 +129,29 @@ class Contributor extends Collection {
     LinkHrefNormalizer normalizeHref = linkHrefNormalizerIdentity,
   }) {
     if (json is String || json is Map<String, dynamic>) {
-      return [json].map((it) => Contributor.fromJson(it, normalizeHref: normalizeHref)).whereNotNull().toList();
+      return [json]
+          .map((it) => Contributor.fromJson(it, normalizeHref: normalizeHref))
+          .whereNotNull()
+          .toList();
     } else if (json is List) {
-      return json.map((it) => Contributor.fromJson(it, normalizeHref: normalizeHref)).whereNotNull().toList();
+      return json
+          .map((it) => Contributor.fromJson(it, normalizeHref: normalizeHref))
+          .whereNotNull()
+          .toList();
     }
     return [];
   }
 }
 
-class ContributorJsonConverter extends JsonConverter<Contributor?, Map<String, dynamic>?> {
+class ContributorJsonConverter
+    extends JsonConverter<Contributor?, Map<String, dynamic>?> {
   const ContributorJsonConverter();
 
   @override
-  Contributor? fromJson(Map<String, dynamic>? json) => Contributor.fromJson(json);
+  Contributor? fromJson(Map<String, dynamic>? json) =>
+      Contributor.fromJson(json);
 
   @override
-  Map<String, dynamic>? toJson(Contributor? contributor) => contributor?.toJson();
+  Map<String, dynamic>? toJson(Contributor? contributor) =>
+      contributor?.toJson();
 }

@@ -17,14 +17,20 @@ class AudioPreferences {
   ControlPanelInfoType? controlPanelInfoType;
 
   Map<String, dynamic> toMap() => {
-        'volume': volume,
-        'speed': speed,
-        'pitch': pitch,
-        'seekInterval': seekInterval,
-        'allowExternalSeeking': allowExternalSeeking,
-        'updateIntervalSecs': updateIntervalSecs,
-        'controlPanelInfoType': controlPanelInfoType?.toString().split('.').last,
-      };
+    'volume': volume,
+    'speed': speed,
+    'pitch': pitch,
+    'seekInterval': seekInterval,
+    'allowExternalSeeking': allowExternalSeeking,
+    'updateIntervalSecs': updateIntervalSecs,
+    'controlPanelInfoType': controlPanelInfoType?.toString().split('.').last,
+  };
 }
 
-enum ControlPanelInfoType { standard, standardWCh, chapterTitleAuthor, chapterTitle, titleChapter }
+enum ControlPanelInfoType {
+  standard,
+  standardWCh,
+  chapterTitleAuthor,
+  chapterTitle,
+  titleChapter,
+}

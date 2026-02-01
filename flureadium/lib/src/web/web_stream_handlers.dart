@@ -8,8 +8,10 @@ import 'package:flureadium_platform_interface/flureadium_platform_interface.dart
 /// - Time-based state changes (playback state for audiobooks/TTS)
 /// - Reader status changes
 class WebStreamHandlers {
-  static final StreamController<Locator> _locatorTextController = StreamController<Locator>.broadcast();
-  static final StreamController<ReadiumTimebasedState> _timebasedStateController =
+  static final StreamController<Locator> _locatorTextController =
+      StreamController<Locator>.broadcast();
+  static final StreamController<ReadiumTimebasedState>
+  _timebasedStateController =
       StreamController<ReadiumTimebasedState>.broadcast();
   static final StreamController<ReadiumReaderStatus> _readerStatusController =
       StreamController<ReadiumReaderStatus>.broadcast();

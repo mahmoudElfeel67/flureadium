@@ -16,10 +16,10 @@ class TTSPreferences {
   ControlPanelInfoType? controlPanelInfoType;
 
   Map<String, dynamic> toMap() => {
-        'speed': speed,
-        'pitch': pitch,
-        'voiceIdentifier': voiceIdentifier,
-        'languageOverride': languageOverride,
-        'controlPanelInfoType': controlPanelInfoType?.toString().split('.').last,
-      };
+    'speed': speed,
+    'pitch': pitch,
+    'voiceIdentifier': voiceIdentifier,
+    'languageOverride': languageOverride,
+    'controlPanelInfoType': controlPanelInfoType?.toString().split('.').last,
+  };
 }

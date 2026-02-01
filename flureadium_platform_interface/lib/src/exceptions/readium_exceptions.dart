@@ -12,7 +12,9 @@ class ReadiumException implements Exception {
   String toString() => 'ReadiumException{$message}';
 
   static ReadiumException fromPlatformException(PlatformException ex) {
-    final type = OpeningReadiumExceptionType.values.firstWhereOrNull((v) => v.name == ex.code);
+    final type = OpeningReadiumExceptionType.values.firstWhereOrNull(
+      (v) => v.name == ex.code,
+    );
     return ReadiumException(ex.details ?? 'unknown', type: type);
   }
 
@@ -33,7 +35,8 @@ class PublicationNotSetReadiumException extends ReadiumException {
 }
 
 class OfflineReadiumException extends ReadiumException {
-  const OfflineReadiumException([final String? message]) : super('Offline: $message');
+  const OfflineReadiumException([final String? message])
+    : super('Offline: $message');
 
   @override
   String toString() => 'OfflineReadiumException';
@@ -62,8 +65,12 @@ extension PlatformExceptionCodeExtension on PlatformException {
 }
 
 class ReadiumError implements Error {
-  ReadiumError(this.message, {this.code, this.data, final StackTrace? stackTrace})
-    : stackTrace = stackTrace ?? StackTrace.current;
+  ReadiumError(
+    this.message, {
+    this.code,
+    this.data,
+    final StackTrace? stackTrace,
+  }) : stackTrace = stackTrace ?? StackTrace.current;
 
   final String message;
   final String? code;
@@ -75,13 +82,15 @@ class ReadiumError implements Error {
 
   @override
   bool operator ==(covariant final Object other) =>
-      identical(this, other) || other is ReadiumError && other.message == message && other.code == code;
+      identical(this, other) ||
+      other is ReadiumError && other.message == message && other.code == code;
 
   @override
   int get hashCode => message.hashCode ^ code.hashCode;
 
   @override
-  String toString() => 'ReadiumError(message: $message, code: $code data: $data, stackTrace: $stackTrace)';
+  String toString() =>
+      'ReadiumError(message: $message, code: $code data: $data, stackTrace: $stackTrace)';
 
   Map<String, dynamic> toJson() => <String, dynamic>{
     'message': message,
@@ -95,6 +104,8 @@ class ReadiumError implements Error {
     map['message'] as String,
     code: map['code'] != null ? map['code'] as String : null,
     data: map['data'] != null ? map['data'] as Object : null,
-    stackTrace: map['stackTrace'] != null ? StackTrace.fromString(map['stackTrace'] as String) : null,
+    stackTrace: map['stackTrace'] != null
+        ? StackTrace.fromString(map['stackTrace'] as String)
+        : null,
   );
 }

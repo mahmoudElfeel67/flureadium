@@ -15,11 +15,13 @@ const int _emptyIntValue = -1;
 const double _emptyDoubleValue = -1;
 
 extension IntCheck on int? {
-  int? check(int? defaultValue) => (this == _emptyIntValue) ? defaultValue : this;
+  int? check(int? defaultValue) =>
+      (this == _emptyIntValue) ? defaultValue : this;
 }
 
 extension DoubleCheck on double? {
-  double? check(double? defaultValue) => (this == _emptyDoubleValue) ? defaultValue : this;
+  double? check(double? defaultValue) =>
+      (this == _emptyDoubleValue) ? defaultValue : this;
 }
 
 /// One or more alternative expressions of the location.
@@ -32,7 +34,9 @@ extension DoubleCheck on double? {
 /// @param totalProgression Progression in the publication expressed as a percentage (between 0
 ///        and 1).
 /// @param otherLocations Additional locations for extensions.
-class Locations extends AdditionalProperties with EquatableMixin implements JSONable {
+class Locations extends AdditionalProperties
+    with EquatableMixin
+    implements JSONable {
   const Locations({
     this.position,
     this.progression,
@@ -51,20 +55,29 @@ class Locations extends AdditionalProperties with EquatableMixin implements JSON
 
     final jsonObject = Map<String, dynamic>.of(json);
     final fragments =
-        jsonObject.optStringsFromArrayOrSingle('fragments', remove: true).takeIf((it) => it.isNotEmpty) ??
+        jsonObject
+            .optStringsFromArrayOrSingle('fragments', remove: true)
+            .takeIf((it) => it.isNotEmpty) ??
         jsonObject.optStringsFromArrayOrSingle('fragment', remove: true);
 
     final progression = jsonObject
         .optNullableDouble('progression', remove: true)
         ?.takeIf((it) => 0.0 <= it && it <= 1.0);
-    final position = jsonObject.optNullableInt('position', remove: true)?.takeIf((it) => it > 0);
+    final position = jsonObject
+        .optNullableInt('position', remove: true)
+        ?.takeIf((it) => it > 0);
 
     final totalProgression = jsonObject
         .optPositiveDouble('totalProgression', remove: true)
         ?.takeIf((it) => 0.0 <= it && it <= 1.0);
 
-    final cssSelector = jsonObject.optNullableString('cssSelector', remove: true);
-    final domRange = DomRange.fromJson(jsonObject.optJsonObject('domRange', remove: true));
+    final cssSelector = jsonObject.optNullableString(
+      'cssSelector',
+      remove: true,
+    );
+    final domRange = DomRange.fromJson(
+      jsonObject.optJsonObject('domRange', remove: true),
+    );
     final partialCfi = jsonObject.optNullableString('partialCfi', remove: true);
 
     return Locations(
@@ -117,7 +130,10 @@ class Locations extends AdditionalProperties with EquatableMixin implements JSON
     if (fragments.isEmpty) {
       return 0;
     }
-    final timeFragment = fragments.firstWhere((e) => e.startsWith('t='), orElse: () => 't=0');
+    final timeFragment = fragments.firstWhere(
+      (e) => e.startsWith('t='),
+      orElse: () => 't=0',
+    );
     return int.parse(timeFragment.replaceFirst('t=', ''));
   }
 
@@ -132,7 +148,14 @@ class Locations extends AdditionalProperties with EquatableMixin implements JSON
     ..putJSONableIfNotEmpty('domRange', domRange);
 
   @override
-  List<Object?> get props => [position, progression, totalProgression, fragments, additionalProperties, cssSelector];
+  List<Object?> get props => [
+    position,
+    progression,
+    totalProgression,
+    fragments,
+    additionalProperties,
+    cssSelector,
+  ];
 
   @override
   String toString() =>
@@ -150,10 +173,13 @@ extension HTMLLocationsExtension on Locations {
   String? get partialCfi => this['partialCfi'] as String?;
 
   /// An HTML DOM range.
-  DomRange? get domRange => (this['domRange'] as Map<String, dynamic>?)?.let((it) => DomRange.fromJson(it));
+  DomRange? get domRange => (this['domRange'] as Map<String, dynamic>?)?.let(
+    (it) => DomRange.fromJson(it),
+  );
 }
 
-class LocationsJsonConverter extends JsonConverter<Locations?, Map<String, dynamic>?> {
+class LocationsJsonConverter
+    extends JsonConverter<Locations?, Map<String, dynamic>?> {
   const LocationsJsonConverter();
 
   @override

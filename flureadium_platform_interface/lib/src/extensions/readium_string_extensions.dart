@@ -7,7 +7,9 @@ extension ReadiumStringExtension on String {
   String truncateQuote(final int maxLength, {final int start = 0}) {
     final length = this.length;
     final sc = start.clamp(0, length);
-    final truncated = length > sc + maxLength ? '${substring(sc, sc + maxLength - 1)}…' : this;
+    final truncated = length > sc + maxLength
+        ? '${substring(sc, sc + maxLength - 1)}…'
+        : this;
 
     return jsonEncode(truncated);
   }
@@ -32,7 +34,8 @@ extension ReadiumStringExtension on String {
     final localeList = split(separator);
     switch (localeList.length) {
       case 2:
-        return localeList.last.length == 4 // scriptCode length is 4
+        return localeList.last.length ==
+                4 // scriptCode length is 4
             ? Locale.fromSubtags(
                 languageCode: localeList.first,
                 scriptCode: localeList.last,

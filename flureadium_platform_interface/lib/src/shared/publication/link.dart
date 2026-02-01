@@ -50,7 +50,10 @@ class Link with EquatableMixin implements JSONable {
   /// It's [href] and its children's recursively will be normalized using the provided
   /// [normalizeHref] closure.
   /// If the link can't be parsed, a warning will be logged with [warnings].
-  static Link? fromJson(Map<String, dynamic>? json, {LinkHrefNormalizer normalizeHref = linkHrefNormalizerIdentity}) {
+  static Link? fromJson(
+    Map<String, dynamic>? json, {
+    LinkHrefNormalizer normalizeHref = linkHrefNormalizerIdentity,
+  }) {
     if (json == null) {
       return null;
     }
@@ -65,17 +68,35 @@ class Link with EquatableMixin implements JSONable {
     return Link(
       href: normalizeHref(href),
       type: jsonObject.optNullableString('type', remove: true),
-      templated: jsonObject.optBoolean('templated', fallback: false, remove: true),
+      templated: jsonObject.optBoolean(
+        'templated',
+        fallback: false,
+        remove: true,
+      ),
       title: jsonObject.optNullableString('title', remove: true),
-      rels: jsonObject.optStringsFromArrayOrSingle('rel', remove: true).toSet().toList(),
-      properties: Properties.fromJson(jsonObject.optJsonObject('properties', remove: true)),
+      rels: jsonObject
+          .optStringsFromArrayOrSingle('rel', remove: true)
+          .toSet()
+          .toList(),
+      properties: Properties.fromJson(
+        jsonObject.optJsonObject('properties', remove: true),
+      ),
       height: jsonObject.optPositiveInt('height', remove: true),
       width: jsonObject.optPositiveInt('width', remove: true),
       bitrate: jsonObject.optPositiveDouble('bitrate', remove: true),
       duration: jsonObject.optPositiveDouble('duration', remove: true),
-      languages: jsonObject.optStringsFromArrayOrSingle('language', remove: true),
-      alternates: fromJsonArray(jsonObject.optJsonArray('alternate', remove: true), normalizeHref: normalizeHref),
-      children: fromJsonArray(jsonObject.optJsonArray('children', remove: true), normalizeHref: normalizeHref),
+      languages: jsonObject.optStringsFromArrayOrSingle(
+        'language',
+        remove: true,
+      ),
+      alternates: fromJsonArray(
+        jsonObject.optJsonArray('alternate', remove: true),
+        normalizeHref: normalizeHref,
+      ),
+      children: fromJsonArray(
+        jsonObject.optJsonArray('children', remove: true),
+        normalizeHref: normalizeHref,
+      ),
     );
   }
 
@@ -86,7 +107,12 @@ class Link with EquatableMixin implements JSONable {
   static List<Link> fromJsonArray(
     List<dynamic>? json, {
     LinkHrefNormalizer normalizeHref = linkHrefNormalizerIdentity,
-  }) => (json ?? []).parseObjects((it) => Link.fromJson(it as Map<String, dynamic>?, normalizeHref: normalizeHref));
+  }) => (json ?? []).parseObjects(
+    (it) => Link.fromJson(
+      it as Map<String, dynamic>?,
+      normalizeHref: normalizeHref,
+    ),
+  );
 
   /// (Nullable) Unique identifier for this link in the [Publication].
   final String? id;
@@ -179,7 +205,8 @@ class Link with EquatableMixin implements JSONable {
   }
 
   /// List of URI template parameter keys, if the [Link] is templated.
-  List<String> get templateParameters => (templated) ? UriTemplate(href).parameters.toList() : [];
+  List<String> get templateParameters =>
+      (templated) ? UriTemplate(href).parameters.toList() : [];
 
   /// Expands the HREF by replacing URI template variables by the given parameters.
   ///
@@ -247,7 +274,8 @@ class Link with EquatableMixin implements JSONable {
   ];
 
   @override
-  String toString() => 'Link{id: $id, href: $href, type: $type, title: $title, rels: $rels, properties: $properties}';
+  String toString() =>
+      'Link{id: $id, href: $href, type: $type, title: $title, rels: $rels, properties: $properties}';
 }
 
 class LinkJsonConverter extends JsonConverter<Link, Map<String, dynamic>?> {
@@ -267,5 +295,6 @@ class LinkListJsonConverter extends JsonConverter<List<Link>, List<dynamic>?> {
   List<Link> fromJson(List<dynamic>? json) => Link.fromJsonArray(json);
 
   @override
-  List<dynamic>? toJson(List<Link> links) => links.map((it) => it.toJson()).toList();
+  List<dynamic>? toJson(List<Link> links) =>
+      links.map((it) => it.toJson()).toList();
 }

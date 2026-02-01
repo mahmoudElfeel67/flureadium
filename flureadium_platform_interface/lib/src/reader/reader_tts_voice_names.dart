@@ -47,6 +47,7 @@ class ReaderTTSVoiceNames {
       'en-AU': {'I': 'Phoebe', 'II': 'Chris', 'III': 'Rachel', 'IV': 'Jack'},
     };
 
-    return voiceMappings[voiceModel.language]?[voiceModel.identifier] ?? voiceModel.identifier;
+    return voiceMappings[voiceModel.language]?[voiceModel.identifier] ??
+        voiceModel.identifier;
   }
 }

@@ -20,7 +20,10 @@ class Copies with EquatableMixin implements JSONable {
 
   /// Serializes an [Copies] to its JSON representation.
   @override
-  Map<String, dynamic> toJson() => {if (total != null) 'total': total, if (available != null) 'available': available};
+  Map<String, dynamic> toJson() => {
+    if (total != null) 'total': total,
+    if (available != null) 'available': available,
+  };
 
   /// Creates an [Copies] from its JSON representation.
   static Copies? fromJson(Map<String, dynamic>? json) {
@@ -37,7 +40,8 @@ class Copies with EquatableMixin implements JSONable {
   }
 }
 
-class CopiesJsonConverter extends JsonConverter<Copies?, Map<String, dynamic>?> {
+class CopiesJsonConverter
+    extends JsonConverter<Copies?, Map<String, dynamic>?> {
   const CopiesJsonConverter();
 
   @override

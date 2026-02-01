@@ -51,9 +51,15 @@ class Presentation with EquatableMixin implements JSONable {
       clipped: jsonObject.optNullableBoolean('clipped', remove: true),
       continuous: jsonObject.optNullableBoolean('continuous', remove: true),
       fit: PresentationFit.from(jsonObject.optString('fit', remove: true)),
-      orientation: PresentationOrientation.from(jsonObject.optString('orientation', remove: true)),
-      overflow: PresentationOverflow.from(jsonObject.optString('overflow', remove: true)),
-      spread: PresentationSpread.from(jsonObject.optString('spread', remove: true)),
+      orientation: PresentationOrientation.from(
+        jsonObject.optString('orientation', remove: true),
+      ),
+      overflow: PresentationOverflow.from(
+        jsonObject.optString('overflow', remove: true),
+      ),
+      spread: PresentationSpread.from(
+        jsonObject.optString('spread', remove: true),
+      ),
       layout: EpubLayout.from(jsonObject.optString('layout', remove: true)),
     );
   }
@@ -75,11 +81,20 @@ class Presentation with EquatableMixin implements JSONable {
   final bool? continuous;
 
   @override
-  List<Object?> get props => [layout, orientation, overflow, spread, fit, clipped, continuous];
+  List<Object?> get props => [
+    layout,
+    orientation,
+    overflow,
+    spread,
+    fit,
+    clipped,
+    continuous,
+  ];
 
   /// Determines the layout of the given resource in this publication.
   /// The default layout is reflowable.
-  EpubLayout layoutOf(Link link) => link.properties.layout ?? layout ?? EpubLayout.reflowable;
+  EpubLayout layoutOf(Link link) =>
+      link.properties.layout ?? layout ?? EpubLayout.reflowable;
 
   /// Serializes a [Presentation] to its RWPM JSON representation.
   @override
@@ -110,7 +125,8 @@ class PresentationFit with EquatableMixin {
   @override
   List<Object> get props => [value];
 
-  static PresentationFit? from(String? value) => _values.firstWhereOrNull((element) => element.value == value);
+  static PresentationFit? from(String? value) =>
+      _values.firstWhereOrNull((element) => element.value == value);
 }
 
 /// Hints how the layout of the resource should be presented.
@@ -128,7 +144,8 @@ class EpubLayout with EquatableMixin {
   @override
   List<Object> get props => [value];
 
-  static EpubLayout? from(String? value) => _values.firstWhereOrNull((element) => element.value == value);
+  static EpubLayout? from(String? value) =>
+      _values.firstWhereOrNull((element) => element.value == value);
 }
 
 /// Suggested orientation for the device when displaying the linked resource.
@@ -138,18 +155,27 @@ class PresentationOrientation with EquatableMixin {
   static const PresentationOrientation auto = PresentationOrientation._('auto');
 
   // Specifies that the given spine item is to be rendered in landscape orientation.
-  static const PresentationOrientation landscape = PresentationOrientation._('landscape');
+  static const PresentationOrientation landscape = PresentationOrientation._(
+    'landscape',
+  );
 
   // Specifies that the given spine item is to be rendered in portrait orientation.
-  static const PresentationOrientation portrait = PresentationOrientation._('portrait');
-  static const List<PresentationOrientation> _values = [auto, landscape, portrait];
+  static const PresentationOrientation portrait = PresentationOrientation._(
+    'portrait',
+  );
+  static const List<PresentationOrientation> _values = [
+    auto,
+    landscape,
+    portrait,
+  ];
 
   final String value;
 
   @override
   List<Object> get props => [value];
 
-  static PresentationOrientation? from(String? value) => _values.firstWhereOrNull((element) => element.value == value);
+  static PresentationOrientation? from(String? value) =>
+      _values.firstWhereOrNull((element) => element.value == value);
 }
 
 /// Suggested method for handling overflow while displaying the linked resource.
@@ -159,10 +185,14 @@ class PresentationOverflow with EquatableMixin {
   static const PresentationOverflow auto = PresentationOverflow._('auto');
 
   // Indicates the Author preference is to dynamically paginate content overflow.
-  static const PresentationOverflow paginated = PresentationOverflow._('paginated');
+  static const PresentationOverflow paginated = PresentationOverflow._(
+    'paginated',
+  );
 
   // Indicates the Author preference is to provide a scrolled view for overflow content, and each spine item with this property is to be rendered as separate scrollable document.
-  static const PresentationOverflow scrolled = PresentationOverflow._('scrolled');
+  static const PresentationOverflow scrolled = PresentationOverflow._(
+    'scrolled',
+  );
   static const List<PresentationOverflow> _values = [auto, paginated, scrolled];
 
   final String value;
@@ -170,7 +200,8 @@ class PresentationOverflow with EquatableMixin {
   @override
   List<Object> get props => [value];
 
-  static PresentationOverflow? from(String? value) => _values.firstWhereOrNull((element) => element.value == value);
+  static PresentationOverflow? from(String? value) =>
+      _values.firstWhereOrNull((element) => element.value == value);
 }
 
 /// Indicates how the linked resource should be displayed in a reading
@@ -187,7 +218,8 @@ class PresentationPage with EquatableMixin {
   @override
   List<Object> get props => [value];
 
-  static PresentationPage? from(String? value) => _values.firstWhereOrNull((element) => element.value == value);
+  static PresentationPage? from(String? value) =>
+      _values.firstWhereOrNull((element) => element.value == value);
 }
 
 /// Indicates the condition to be met for the linked resource to be rendered within a synthetic spread.
@@ -211,15 +243,19 @@ class PresentationSpread with EquatableMixin {
   @override
   List<Object> get props => [value];
 
-  static PresentationSpread? from(String? value) => _values.firstWhereOrNull((element) => element.value == value);
+  static PresentationSpread? from(String? value) =>
+      _values.firstWhereOrNull((element) => element.value == value);
 }
 
-class PresentationJsonConverter extends JsonConverter<Presentation?, Map<String, dynamic>?> {
+class PresentationJsonConverter
+    extends JsonConverter<Presentation?, Map<String, dynamic>?> {
   const PresentationJsonConverter();
 
   @override
-  Presentation? fromJson(Map<String, dynamic>? json) => Presentation.fromJson(json);
+  Presentation? fromJson(Map<String, dynamic>? json) =>
+      Presentation.fromJson(json);
 
   @override
-  Map<String, dynamic>? toJson(Presentation? presentation) => presentation?.toJson();
+  Map<String, dynamic>? toJson(Presentation? presentation) =>
+      presentation?.toJson();
 }

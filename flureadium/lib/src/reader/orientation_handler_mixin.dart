@@ -43,12 +43,15 @@ mixin OrientationHandlerMixin {
       // trigger scrolling to the nearest page.
       if (_lastOrientation != null && currentLocator != null) {
         Future.delayed(const Duration(milliseconds: 500)).then((final value) {
-          R2Log.d('Orientation changed. Re-navigating to current locator to re-align page.');
+          R2Log.d(
+            'Orientation changed. Re-navigating to current locator to re-align page.',
+          );
           R2Log.d('locator = $currentLocator');
           channel?.go(
             currentLocator,
             animated: false,
-            isAudioBookWithText: false, // TODO: isAudioBookWithText - we don't know atm.
+            isAudioBookWithText:
+                false, // TODO: isAudioBookWithText - we don't know atm.
           );
         });
       }

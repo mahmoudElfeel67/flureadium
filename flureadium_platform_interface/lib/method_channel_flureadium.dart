@@ -14,17 +14,25 @@ class MethodChannelFlureadium extends FlureadiumPlatform {
 
   /// The event channel used to receive text Locator changes from the native platform.
   @visibleForTesting
-  EventChannel textLocatorChannel = const EventChannel('dk.nota.flureadium/text-locator');
+  EventChannel textLocatorChannel = const EventChannel(
+    'dk.nota.flureadium/text-locator',
+  );
 
   @visibleForTesting
-  EventChannel timebasedStateChannel = const EventChannel('dk.nota.flureadium/timebased-state');
+  EventChannel timebasedStateChannel = const EventChannel(
+    'dk.nota.flureadium/timebased-state',
+  );
 
   @visibleForTesting
-  EventChannel errorEventChannel = const EventChannel('dk.nota.flureadium/error');
+  EventChannel errorEventChannel = const EventChannel(
+    'dk.nota.flureadium/error',
+  );
 
   /// The event channel used to receive text Locator changes from the native platform.
   @visibleForTesting
-  EventChannel readerStatusChannel = const EventChannel('dk.nota.flureadium/reader-status');
+  EventChannel readerStatusChannel = const EventChannel(
+    'dk.nota.flureadium/reader-status',
+  );
 
   Stream<Locator>? _onTextLocatorChanged;
 
@@ -37,8 +45,12 @@ class MethodChannelFlureadium extends FlureadiumPlatform {
   /// Fires whenever the Reader's current Locator changes.
   @override
   Stream<Locator> get onTextLocatorChanged {
-    _onTextLocatorChanged ??= textLocatorChannel.receiveBroadcastStream().map((dynamic event) {
-      final newLocator = Locator.fromJson(json.decode(event) as Map<String, dynamic>);
+    _onTextLocatorChanged ??= textLocatorChannel.receiveBroadcastStream().map((
+      dynamic event,
+    ) {
+      final newLocator = Locator.fromJson(
+        json.decode(event) as Map<String, dynamic>,
+      );
       return newLocator!;
     });
     return _onTextLocatorChanged!;
@@ -47,25 +59,35 @@ class MethodChannelFlureadium extends FlureadiumPlatform {
   /// Fires whenever the TimebasedNavigator changes state
   @override
   Stream<ReadiumTimebasedState> get onTimebasedPlayerStateChanged {
-    _onTimebasedPlayerStateChanged ??= timebasedStateChannel.receiveBroadcastStream().map((dynamic event) {
-      final state = ReadiumTimebasedState.fromJsonMap(json.decode(event) as Map<String, dynamic>);
-      return state;
-    });
+    _onTimebasedPlayerStateChanged ??= timebasedStateChannel
+        .receiveBroadcastStream()
+        .map((dynamic event) {
+          final state = ReadiumTimebasedState.fromJsonMap(
+            json.decode(event) as Map<String, dynamic>,
+          );
+          return state;
+        });
     return _onTimebasedPlayerStateChanged!;
   }
 
   @override
   Stream<ReadiumReaderStatus> get onReaderStatusChanged {
-    _onReaderStatusChanged ??= readerStatusChannel.receiveBroadcastStream().map((dynamic event) {
-      final newStatus = ReadiumReaderStatus.values.firstWhere((e) => e.name == json.decode(event) as String);
-      return newStatus;
-    });
+    _onReaderStatusChanged ??= readerStatusChannel.receiveBroadcastStream().map(
+      (dynamic event) {
+        final newStatus = ReadiumReaderStatus.values.firstWhere(
+          (e) => e.name == json.decode(event) as String,
+        );
+        return newStatus;
+      },
+    );
     return _onReaderStatusChanged!;
   }
 
   @override
   Stream<ReadiumError> get onErrorEvent {
-    _onErrorEvent ??= errorEventChannel.receiveBroadcastStream().map((dynamic event) {
+    _onErrorEvent ??= errorEventChannel.receiveBroadcastStream().map((
+      dynamic event,
+    ) {
       final errorEvent = json.decode(event) as ReadiumError;
       return errorEvent;
     });
@@ -78,12 +100,16 @@ class MethodChannelFlureadium extends FlureadiumPlatform {
         .invokeMethod<String>('loadPublication', [pubUrl])
         .then<String>((dynamic result) => result);
 
-    return Publication.fromJson(json.decode(publicationString) as Map<String, dynamic>)!;
+    return Publication.fromJson(
+      json.decode(publicationString) as Map<String, dynamic>,
+    )!;
   }
 
   @override
   Future<void> setCustomHeaders(Map<String, String> headers) async {
-    await methodChannel.invokeMethod<void>('setCustomHeaders', {'httpHeaders': headers});
+    await methodChannel.invokeMethod<void>('setCustomHeaders', {
+      'httpHeaders': headers,
+    });
   }
 
   @override
@@ -91,11 +117,14 @@ class MethodChannelFlureadium extends FlureadiumPlatform {
     final publicationString = await methodChannel
         .invokeMethod<String>('openPublication', [pubUrl])
         .then<String>((dynamic result) => result);
-    return Publication.fromJson(json.decode(publicationString) as Map<String, dynamic>)!;
+    return Publication.fromJson(
+      json.decode(publicationString) as Map<String, dynamic>,
+    )!;
   }
 
   @override
-  Future<void> closePublication() async => await methodChannel.invokeMethod<void>('closePublication');
+  Future<void> closePublication() async =>
+      await methodChannel.invokeMethod<void>('closePublication');
 
   @override
   Future<void> goLeft() async => await currentReaderWidget?.goLeft();
@@ -107,11 +136,15 @@ class MethodChannelFlureadium extends FlureadiumPlatform {
   Future<void> skipToNext() async => await currentReaderWidget?.skipToNext();
 
   @override
-  Future<void> skipToPrevious() async => await currentReaderWidget?.skipToPrevious();
+  Future<void> skipToPrevious() async =>
+      await currentReaderWidget?.skipToPrevious();
 
   @override
   Future<bool> goToLocator(Locator locator) async =>
-      await methodChannel.invokeMethod<bool>('goToLocator', [locator.toJson()]) ?? false;
+      await methodChannel.invokeMethod<bool>('goToLocator', [
+        locator.toJson(),
+      ]) ??
+      false;
 
   @override
   Future<void> setEPUBPreferences(EPUBPreferences preferences) async {
@@ -120,15 +153,18 @@ class MethodChannelFlureadium extends FlureadiumPlatform {
   }
 
   @override
-  Future<void> applyDecorations(String id, List<ReaderDecoration> decorations) async =>
-      await currentReaderWidget?.applyDecorations(id, decorations);
+  Future<void> applyDecorations(
+    String id,
+    List<ReaderDecoration> decorations,
+  ) async => await currentReaderWidget?.applyDecorations(id, decorations);
 
   @override
   Future<void> ttsEnable(TTSPreferences? preferences) async =>
       await methodChannel.invokeMethod('ttsEnable', preferences?.toMap());
 
   @override
-  Future<void> play(Locator? fromLocator) async => await methodChannel.invokeMethod('play', [fromLocator?.toJson()]);
+  Future<void> play(Locator? fromLocator) async =>
+      await methodChannel.invokeMethod('play', [fromLocator?.toJson()]);
 
   @override
   Future<void> stop() async => await methodChannel.invokeMethod('stop');
@@ -146,16 +182,25 @@ class MethodChannelFlureadium extends FlureadiumPlatform {
   Future<void> previous() async => await methodChannel.invokeMethod('previous');
 
   @override
-  Future<void> setDecorationStyle(ReaderDecorationStyle? utteranceDecoration, ReaderDecorationStyle? rangeDecoration) =>
-      methodChannel.invokeMethod('setDecorationStyle', [utteranceDecoration?.toJson(), rangeDecoration?.toJson()]);
+  Future<void> setDecorationStyle(
+    ReaderDecorationStyle? utteranceDecoration,
+    ReaderDecorationStyle? rangeDecoration,
+  ) => methodChannel.invokeMethod('setDecorationStyle', [
+    utteranceDecoration?.toJson(),
+    rangeDecoration?.toJson(),
+  ]);
 
   @override
   Future<List<ReaderTTSVoice>> ttsGetAvailableVoices() async {
-    final voicesStr = await methodChannel.invokeMethod<List<dynamic>>('ttsGetAvailableVoices');
+    final voicesStr = await methodChannel.invokeMethod<List<dynamic>>(
+      'ttsGetAvailableVoices',
+    );
     final voices =
         voicesStr
             ?.cast<String>()
-            .map<Map<String, dynamic>>((str) => json.decode(str) as Map<String, dynamic>)
+            .map<Map<String, dynamic>>(
+              (str) => json.decode(str) as Map<String, dynamic>,
+            )
             .map<ReaderTTSVoice>((map) => ReaderTTSVoice.fromJsonMap(map))
             .toList() ??
         <ReaderTTSVoice>[];
@@ -164,7 +209,10 @@ class MethodChannelFlureadium extends FlureadiumPlatform {
 
   @override
   Future<void> ttsSetVoice(String voiceIdentifier, String? forLanguage) async {
-    await methodChannel.invokeMethod('ttsSetVoice', [voiceIdentifier, forLanguage]);
+    await methodChannel.invokeMethod('ttsSetVoice', [
+      voiceIdentifier,
+      forLanguage,
+    ]);
   }
 
   @override
@@ -172,17 +220,21 @@ class MethodChannelFlureadium extends FlureadiumPlatform {
       methodChannel.invokeMethod('ttsSetPreferences', preferences.toMap());
 
   @override
-  Future<String?> getLinkContent(final Link link) =>
-      methodChannel.invokeMethod<String>('getLinkContent', [jsonEncode(link.toJson())]);
+  Future<String?> getLinkContent(final Link link) => methodChannel
+      .invokeMethod<String>('getLinkContent', [jsonEncode(link.toJson())]);
 
   @override
   Future<void> audioEnable({AudioPreferences? prefs, Locator? fromLocator}) =>
-      methodChannel.invokeMethod('audioEnable', [prefs?.toMap(), fromLocator?.toJson()]);
+      methodChannel.invokeMethod('audioEnable', [
+        prefs?.toMap(),
+        fromLocator?.toJson(),
+      ]);
 
   @override
   Future<void> audioSetPreferences(AudioPreferences prefs) =>
       methodChannel.invokeMethod('audioSetPreferences', prefs.toMap());
 
   @override
-  Future<void> audioSeekBy(Duration offset) => methodChannel.invokeMethod('audioSeekBy', offset.inSeconds);
+  Future<void> audioSeekBy(Duration offset) =>
+      methodChannel.invokeMethod('audioSeekBy', offset.inSeconds);
 }

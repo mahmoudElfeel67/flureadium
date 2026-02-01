@@ -45,12 +45,15 @@ class LocatorText with EquatableMixin implements JSONable {
   List<Object?> get props => [before, highlight, after];
 }
 
-class LocatorTextJsonConverter extends JsonConverter<LocatorText?, Map<String, dynamic>?> {
+class LocatorTextJsonConverter
+    extends JsonConverter<LocatorText?, Map<String, dynamic>?> {
   const LocatorTextJsonConverter();
 
   @override
-  LocatorText? fromJson(Map<String, dynamic>? json) => LocatorText.fromJson(json);
+  LocatorText? fromJson(Map<String, dynamic>? json) =>
+      LocatorText.fromJson(json);
 
   @override
-  Map<String, dynamic>? toJson(LocatorText? locatorText) => locatorText?.toJson();
+  Map<String, dynamic>? toJson(LocatorText? locatorText) =>
+      locatorText?.toJson();
 }

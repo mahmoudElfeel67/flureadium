@@ -12,7 +12,9 @@ import '../../utils/jsonable.dart';
 import '../opds.dart';
 import '../publication/link.dart' show Link;
 
-class Feed extends AdditionalProperties with EquatableMixin implements JSONable {
+class Feed extends AdditionalProperties
+    with EquatableMixin
+    implements JSONable {
   const Feed({
     this.metadata = const OpdsMetadata(title: ''),
     this.links = const [],
@@ -33,7 +35,16 @@ class Feed extends AdditionalProperties with EquatableMixin implements JSONable 
   final List<String> context;
 
   @override
-  List<Object?> get props => [metadata, links, facets, groups, publications, navigation, context, additionalProperties];
+  List<Object?> get props => [
+    metadata,
+    links,
+    facets,
+    groups,
+    publications,
+    navigation,
+    context,
+    additionalProperties,
+  ];
 
   @override
   String toString() =>
@@ -86,17 +97,31 @@ class Feed extends AdditionalProperties with EquatableMixin implements JSONable 
     }
 
     final jsonObject = Map<String, dynamic>.of(json);
-    final metadata = OpdsMetadata.fromJson(jsonObject.optNullableMap('metadata', remove: true));
+    final metadata = OpdsMetadata.fromJson(
+      jsonObject.optNullableMap('metadata', remove: true),
+    );
     if (metadata == null) {
       return null;
     }
 
-    final links = Link.fromJsonArray(jsonObject.optJsonArray('links', remove: true));
-    final facets = Facet.fromJsonArray(jsonObject.optJsonArray('facets', remove: true));
-    final groups = Group.fromJsonArray(jsonObject.optJsonArray('groups', remove: true));
-    final publications = OpdsPublication.fromJsonArray(jsonObject.optJsonArray('publications', remove: true));
-    final navigation = Link.fromJsonArray(jsonObject.optJsonArray('navigation', remove: true));
-    final context = (jsonObject.optJsonArray('@context', remove: true) ?? []).map((e) => e.toString()).toList();
+    final links = Link.fromJsonArray(
+      jsonObject.optJsonArray('links', remove: true),
+    );
+    final facets = Facet.fromJsonArray(
+      jsonObject.optJsonArray('facets', remove: true),
+    );
+    final groups = Group.fromJsonArray(
+      jsonObject.optJsonArray('groups', remove: true),
+    );
+    final publications = OpdsPublication.fromJsonArray(
+      jsonObject.optJsonArray('publications', remove: true),
+    );
+    final navigation = Link.fromJsonArray(
+      jsonObject.optJsonArray('navigation', remove: true),
+    );
+    final context = (jsonObject.optJsonArray('@context', remove: true) ?? [])
+        .map((e) => e.toString())
+        .toList();
 
     return Feed(
       metadata: metadata,

@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
-import 'package:flutter/material.dart' as mq show Orientation;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -101,10 +100,18 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
   }
 
   @override
-  Future<void> go(final Locator locator, {required final bool isAudioBookWithText, final bool animated = false}) async {
+  Future<void> go(
+    final Locator locator, {
+    required final bool isAudioBookWithText,
+    final bool animated = false,
+  }) async {
     R2Log.d(() => 'Go to $locator');
 
-    await _channel?.go(locator, animated: animated, isAudioBookWithText: isAudioBookWithText);
+    await _channel?.go(
+      locator,
+      animated: animated,
+      isAudioBookWithText: isAudioBookWithText,
+    );
 
     R2Log.d('Done');
   }
@@ -113,7 +120,8 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
   Future<void> goLeft({final bool animated = true}) async => _channel?.goLeft();
 
   @override
-  Future<void> goRight({final bool animated = true}) async => _channel?.goRight();
+  Future<void> goRight({final bool animated = true}) async =>
+      _channel?.goRight();
 
   @override
   Future<void> skipToNext({final bool animated = true}) async {
@@ -136,7 +144,11 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
       final newIndex = (curIndex + 1).clamp(0, toc.length - 1);
       Locator? nextChapter = widget.publication.locatorFromLink(toc[newIndex]);
       if (nextChapter != null) {
-        await _channel?.go(nextChapter, isAudioBookWithText: false, animated: true);
+        await _channel?.go(
+          nextChapter,
+          isAudioBookWithText: false,
+          animated: true,
+        );
       }
     }
   }
@@ -151,9 +163,15 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
     int? curIndex = toc.indexWhere((l) => l.href == currentHref);
     if (curIndex > -1) {
       final newIndex = (curIndex - 1).clamp(0, toc.length - 1);
-      Locator? previousChapter = widget.publication.locatorFromLink(toc[newIndex]);
+      Locator? previousChapter = widget.publication.locatorFromLink(
+        toc[newIndex],
+      );
       if (previousChapter != null) {
-        await _channel?.go(previousChapter, isAudioBookWithText: false, animated: true);
+        await _channel?.go(
+          previousChapter,
+          isAudioBookWithText: false,
+          animated: true,
+        );
       }
     }
   }
@@ -179,7 +197,10 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
   }
 
   @override
-  Future<void> applyDecorations(String id, List<ReaderDecoration> decorations) async {
+  Future<void> applyDecorations(
+    String id,
+    List<ReaderDecoration> decorations,
+  ) async {
     await _channel?.applyDecorations(id, decorations);
   }
 
@@ -193,7 +214,9 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
     final creationParams = <String, dynamic>{
       'pubIdentifier': publication.identifier,
       'preferences': defaultPreferences,
-      'initialLocator': widget.initialLocator == null ? null : json.encode(widget.initialLocator),
+      'initialLocator': widget.initialLocator == null
+          ? null
+          : json.encode(widget.initialLocator),
     };
 
     R2Log.d('creationParams=$creationParams');
@@ -229,7 +252,11 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
     }
     return ColoredBox(
       color: const Color(0xffff00ff),
-      child: Center(child: Text('TODO — Implement ReadiumReaderWidget on ${Platform.operatingSystem}.')),
+      child: Center(
+        child: Text(
+          'TODO — Implement ReadiumReaderWidget on ${Platform.operatingSystem}.',
+        ),
+      ),
     );
   }
 
@@ -275,7 +302,9 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
     }
 
     final txtLoc = locator.toTextLocator();
-    final tocFragment = locator.locations?.fragments.firstWhereOrNull((f) => f.startsWith("toc="));
+    final tocFragment = locator.locations?.fragments.firstWhereOrNull(
+      (f) => f.startsWith("toc="),
+    );
     if (tocFragment == null) {
       return null;
     }

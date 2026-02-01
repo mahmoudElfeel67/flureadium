@@ -6,7 +6,11 @@ import 'package:flureadium_platform_interface/flureadium_platform_interface.dart
 extension type ReadiumReader._(JSObject _) implements JSObject {
   external ReadiumReader();
   external JSPromise openPublication(
-      JSString publicationURL, JSString pubId, JSString? initialPositionJson, JSString preferencesJson);
+    JSString publicationURL,
+    JSString pubId,
+    JSString? initialPositionJson,
+    JSString preferencesJson,
+  );
   external JSPromise getPublication(JSString link);
   external JSPromise goTo(JSString location);
   external void goLeft();
@@ -26,11 +30,20 @@ external set updateReaderStatus(JSFunction f);
 class JsPublicationChannel {
   static final ReadiumReader _readiumReader = ReadiumReader();
 
-  Future<void> openPublication(String publicationURL,
-      {required String pubId, required String initialPreferences, String? initialPositionJson}) async {
+  Future<void> openPublication(
+    String publicationURL, {
+    required String pubId,
+    required String initialPreferences,
+    String? initialPositionJson,
+  }) async {
     try {
       await _readiumReader
-          .openPublication(publicationURL.toJS, pubId.toJS, initialPositionJson?.toJS, initialPreferences.toJS)
+          .openPublication(
+            publicationURL.toJS,
+            pubId.toJS,
+            initialPositionJson?.toJS,
+            initialPreferences.toJS,
+          )
           .toDart;
     } on Object catch (jsError, stackTrace) {
       String errorString = jsError.toString();
@@ -48,6 +61,7 @@ class JsPublicationChannel {
   Future<String> getPublication(String link) async {
     try {
       final publicationPromise = _readiumReader.getPublication(link.toJS);
+      // ignore: invalid_runtime_check_with_js_interop_types
       final publicationString = await publicationPromise.toDart as String;
 
       return publicationString;
@@ -125,6 +139,7 @@ class JsPublicationChannel {
   Future<String> getResource(String link, {bool? asBytes}) async {
     try {
       final resourceJS = _readiumReader.getResource(link.toJS, asBytes?.toJS);
+      // ignore: invalid_runtime_check_with_js_interop_types
       var resourceString = await resourceJS.toDart as String;
       return resourceString;
     } on Object catch (jsError, stackTrace) {

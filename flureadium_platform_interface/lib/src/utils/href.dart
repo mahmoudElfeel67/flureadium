@@ -15,7 +15,8 @@ import '../extensions/strings.dart';
 ///
 /// This is used to normalize the string representation.
 class Href {
-  Href(this.href, {String baseHref = '/'}) : baseHref = (baseHref.isEmpty) ? '/' : baseHref;
+  Href(this.href, {String baseHref = '/'})
+    : baseHref = (baseHref.isEmpty) ? '/' : baseHref;
 
   final String href;
   final String baseHref;
@@ -30,7 +31,8 @@ class Href {
     try {
       final absoluteUri = Uri.parse(baseHref).resolve(href);
       final absoluteString = absoluteUri.toString(); // This is percent-decoded
-      final addSlash = !absoluteUri.hasScheme && !absoluteString.startsWith('/');
+      final addSlash =
+          !absoluteUri.hasScheme && !absoluteString.startsWith('/');
       resolved = ((addSlash) ? '/' : '') + absoluteString;
     } on Exception {
       if (href.startsWith('http://') || href.startsWith('https://')) {
@@ -55,7 +57,9 @@ class Href {
     try {
       final url = Uri.parse(string);
       final uri = url.replace(host: AsciiCodec().decode(url.host.toUtf8()));
-      return String.fromCharCodes(AsciiCodec().encode(uri.toString())).removePrefix('file://');
+      return String.fromCharCodes(
+        AsciiCodec().encode(uri.toString()),
+      ).removePrefix('file://');
     } on Exception catch (e) {
       Fimber.e('ERROR in percentEncodedString', ex: e);
       return this.string;
@@ -63,9 +67,11 @@ class Href {
   }
 
   /// Returns the query parameters present in this HREF, in the order they appear.
-  List<QueryParameter> get queryParameters => Uri.parse(
-    percentEncodedString,
-  ).queryParameters.entries.map((it) => QueryParameter(it.key, value: it.value)).toList();
+  List<QueryParameter> get queryParameters => Uri.parse(percentEncodedString)
+      .queryParameters
+      .entries
+      .map((it) => QueryParameter(it.key, value: it.value))
+      .toList();
 }
 
 class QueryParameter {
@@ -78,7 +84,9 @@ class QueryParameter {
 }
 
 extension QueryParameterExtension on List<QueryParameter> {
-  String? firstNamedOrNull(String name) => firstWhereOrNull((it) => it.name == name)?.value;
+  String? firstNamedOrNull(String name) =>
+      firstWhereOrNull((it) => it.name == name)?.value;
 
-  List<String> allNamed(String name) => where((it) => it.name == name).mapNotNull((it) => it.value).toList();
+  List<String> allNamed(String name) =>
+      where((it) => it.name == name).mapNotNull((it) => it.value).toList();
 }

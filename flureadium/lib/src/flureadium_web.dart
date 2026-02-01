@@ -40,7 +40,9 @@ class FlureadiumWebPlugin extends FlureadiumPlatform {
 
   @override
   Future<void> setCustomHeaders(Map<String, String> headers) =>
-      throw UnimplementedError('setCustomHeaders is not implemented on web platform');
+      throw UnimplementedError(
+        'setCustomHeaders is not implemented on web platform',
+      );
 
   @override
   void setDefaultPreferences(EPUBPreferences preferences) {
@@ -52,9 +54,12 @@ class FlureadiumWebPlugin extends FlureadiumPlatform {
     Publication? publication;
 
     try {
-      final publicationString = await JsPublicationChannel().getPublication(pubUrl);
+      final publicationString = await JsPublicationChannel().getPublication(
+        pubUrl,
+      );
 
-      var publicationJson = jsonDecode(publicationString) as Map<String, dynamic>;
+      var publicationJson =
+          jsonDecode(publicationString) as Map<String, dynamic>;
 
       publicationJson = PublicationJsonTransformer.transform(publicationJson);
 
@@ -113,7 +118,10 @@ class FlureadiumWebPlugin extends FlureadiumPlatform {
   static Future<Uint8List> getBytes(final Link link) async {
     // TODO: Is this still needed for audio books with the new implementation
     final linkString = json.encode(link);
-    final resourceBytesString = await JsPublicationChannel().getResource(linkString, asBytes: true);
+    final resourceBytesString = await JsPublicationChannel().getResource(
+      linkString,
+      asBytes: true,
+    );
     final byteList = jsonDecode(resourceBytesString).cast<int>();
     return Uint8List.fromList(byteList);
   }
@@ -141,32 +149,43 @@ class FlureadiumWebPlugin extends FlureadiumPlatform {
   @override
   Future<void> setEPUBPreferences(EPUBPreferences preferences) async {
     defaultPreferences = preferences;
-    JsPublicationChannel().setEPUBPreferences(json.encode(preferences.toJson()));
+    JsPublicationChannel().setEPUBPreferences(
+      json.encode(preferences.toJson()),
+    );
   }
 
   @override
-  Future<void> applyDecorations(String id, List<ReaderDecoration> decorations) async {
+  Future<void> applyDecorations(
+    String id,
+    List<ReaderDecoration> decorations,
+  ) async {
     R2Log.d('applyDecorations is not implemented on web platform');
   }
 
   // COMMON PLAYBACK API - BEGIN
   @override
-  Future<void> play(Locator? fromLocator) => throw UnimplementedError('play is not implemented on web platform');
+  Future<void> play(Locator? fromLocator) =>
+      throw UnimplementedError('play is not implemented on web platform');
 
   @override
-  Future<void> stop() => throw UnimplementedError('stop is not implemented on web platform');
+  Future<void> stop() =>
+      throw UnimplementedError('stop is not implemented on web platform');
 
   @override
-  Future<void> pause() => throw UnimplementedError('pause is not implemented on web platform');
+  Future<void> pause() =>
+      throw UnimplementedError('pause is not implemented on web platform');
 
   @override
-  Future<void> resume() => throw UnimplementedError('resume is not implemented on web platform');
+  Future<void> resume() =>
+      throw UnimplementedError('resume is not implemented on web platform');
 
   @override
-  Future<void> next() => throw UnimplementedError('next is not implemented on web platform');
+  Future<void> next() =>
+      throw UnimplementedError('next is not implemented on web platform');
 
   @override
-  Future<void> previous() => throw UnimplementedError('previous is not implemented on web platform');
+  Future<void> previous() =>
+      throw UnimplementedError('previous is not implemented on web platform');
 
   @override
   Future<bool> goToLocator(final Locator locator) async {
@@ -219,11 +238,15 @@ class FlureadiumWebPlugin extends FlureadiumPlatform {
   // AUDIOBOOK API - BEGIN
   @override
   Future<void> audioEnable({AudioPreferences? prefs, Locator? fromLocator}) =>
-      throw UnimplementedError('audioEnable is not implemented on web platform');
+      throw UnimplementedError(
+        'audioEnable is not implemented on web platform',
+      );
 
   @override
   Future<void> audioSetPreferences(AudioPreferences prefs) =>
-      throw UnimplementedError('audioSetPreferences is not implemented on web platform');
+      throw UnimplementedError(
+        'audioSetPreferences is not implemented on web platform',
+      );
   // AUDIOBOOK API - END
 
   // @override
@@ -235,6 +258,8 @@ class FlureadiumWebPlugin extends FlureadiumPlatform {
 
   @override
   Stream<ReadiumError> get onErrorEvent {
-    throw UnimplementedError('get onErrorEvent is not implemented on web platform');
+    throw UnimplementedError(
+      'get onErrorEvent is not implemented on web platform',
+    );
   }
 }
