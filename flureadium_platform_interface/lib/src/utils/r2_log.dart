@@ -13,10 +13,18 @@ const _stackTraceBeginIndex = 2;
 const _methodCount = 1;
 
 // Trace logs in Flutter readium.
-// Add keywords as class name or method name.
+// Add keywords as class name or method name for selective debug logging.
+// Debug logs only print if the log message or stack trace contains one of these keywords (case-insensitive).
 const _trace = <String>[
-  // EX. Flureadium
-  '',
+  'Flureadium',           // Core plugin functionality
+  'Publication',          // Publication loading and parsing
+  'Navigation',           // Page navigation and TOC
+  'Locator',              // Locator operations and position tracking
+  'Preferences',          // EPUB/TTS/Audio preferences
+  'JsonTransformer',      // JSON transformation debugging
+  'OrientationHandler',   // Orientation change handling
+  'ReaderLifecycle',      // Reader widget lifecycle
+  'WakelockManager',      // Wakelock management
 ];
 
 abstract class R2Log {
