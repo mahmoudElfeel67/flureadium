@@ -14,7 +14,7 @@ import 'src/reader/orientation_handler_mixin.dart';
 import 'src/reader/reader_lifecycle_mixin.dart';
 import 'src/reader/wakelock_manager_mixin.dart';
 
-const _viewType = 'dk.nota.flureadium/ReadiumReaderWidget';
+const _viewType = 'dev.mulev.flureadium/ReadiumReaderWidget';
 
 /// A ReadiumReaderWidget wraps a native Kotlin/Swift Readium navigator widget.
 class ReadiumReaderWidget extends StatefulWidget {

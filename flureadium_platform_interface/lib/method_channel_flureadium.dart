@@ -10,28 +10,28 @@ import 'flureadium_platform_interface.dart';
 class MethodChannelFlureadium extends FlureadiumPlatform {
   /// The method channel used to interact with the native platform.
   @visibleForTesting
-  MethodChannel methodChannel = const MethodChannel('dk.nota.flureadium/main');
+  MethodChannel methodChannel = const MethodChannel('dev.mulev.flureadium/main');
 
   /// The event channel used to receive text Locator changes from the native platform.
   @visibleForTesting
   EventChannel textLocatorChannel = const EventChannel(
-    'dk.nota.flureadium/text-locator',
+    'dev.mulev.flureadium/text-locator',
   );
 
   @visibleForTesting
   EventChannel timebasedStateChannel = const EventChannel(
-    'dk.nota.flureadium/timebased-state',
+    'dev.mulev.flureadium/timebased-state',
   );
 
   @visibleForTesting
   EventChannel errorEventChannel = const EventChannel(
-    'dk.nota.flureadium/error',
+    'dev.mulev.flureadium/error',
   );
 
   /// The event channel used to receive text Locator changes from the native platform.
   @visibleForTesting
   EventChannel readerStatusChannel = const EventChannel(
-    'dk.nota.flureadium/reader-status',
+    'dev.mulev.flureadium/reader-status',
   );
 
   Stream<Locator>? _onTextLocatorChanged;

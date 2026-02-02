@@ -115,7 +115,7 @@ void main() {
 
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('dk.nota.flureadium/main'),
+      const MethodChannel('dev.mulev.flureadium/main'),
       (call) async {
         calls.add(call);
         return _mockResponse(call);

@@ -35,7 +35,7 @@ class EventStreamHandler: NSObject, FlutterStreamHandler {
   init(withName streamName: String, messenger: FlutterBinaryMessenger) {
     self.streamName = streamName
     TAG = "EventStreamHandler[\(streamName)]"
-    channel = FlutterEventChannel(name: "dk.nota.flureadium/\(streamName)", binaryMessenger: messenger)
+    channel = FlutterEventChannel(name: "dev.mulev.flureadium/\(streamName)", binaryMessenger: messenger)
     super.init()
 
     channel.setStreamHandler(self)

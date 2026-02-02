@@ -12,7 +12,7 @@ flutter:
   plugin:
     platforms:
       android:
-        package: dk.nota.flureadium
+        package: dev.mulev.flureadium
         pluginClass: FlureadiumPlugin
       ios:
         pluginClass: FlureadiumPlugin

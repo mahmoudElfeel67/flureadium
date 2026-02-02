@@ -97,19 +97,19 @@ flureadium/
 ### 2.2 Platform Communication
 
 ```
-┌─────────────────┐     Method Channel      ┌──────────────────┐
+┌─────────────────┐     Method Channel     ┌──────────────────┐
 │   Dart Layer    │◄──────────────────────►│  Native Layer    │
-│                 │   dk.nota.flureadium    │                  │
-│  Flureadium     │         /main           │  Kotlin/Swift    │
-│  Singleton      │                         │  Plugin          │
-└────────┬────────┘                         └────────┬─────────┘
-         │                                           │
-         │  Event Channels (Broadcast)               │
+│                 │   dev.mulev.flureadium │                  │
+│  Flureadium     │         /main          │  Kotlin/Swift    │
+│  Singleton      │                        │  Plugin          │
+└────────┬────────┘                        └────────┬─────────┘
+         │                                          │
+         │  Event Channels (Broadcast)              │
          │  ├── /text-locator                       │
          │  ├── /timebased-state                    │
          │  ├── /reader-status                      │
          │  └── /error                              │
-         │◄──────────────────────────────────────────┘
+         │◄─────────────────────────────────────────┘
 ```
 
 ### 2.3 Domain Models
