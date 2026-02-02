@@ -14,8 +14,15 @@ import '../publication.dart';
 ///
 /// See https://github.com/readium/webpub-manifest/tree/master/contexts/default#subjects
 class Subject with EquatableMixin implements JSONable {
-  factory Subject.fromString(String name) => Subject(localizedName: LocalizedString.fromString(name));
-  const Subject({required this.localizedName, this.localizedSortAs, this.scheme, this.code, this.links = const []});
+  factory Subject.fromString(String name) =>
+      Subject(localizedName: LocalizedString.fromString(name));
+  const Subject({
+    required this.localizedName,
+    this.localizedSortAs,
+    this.scheme,
+    this.code,
+    this.links = const [],
+  });
 
   final LocalizedString localizedName;
   final LocalizedString? localizedSortAs;
@@ -30,7 +37,13 @@ class Subject with EquatableMixin implements JSONable {
   String? get sortAs => localizedSortAs?.string;
 
   @override
-  List<Object?> get props => [localizedName, localizedSortAs, scheme, code, links];
+  List<Object?> get props => [
+    localizedName,
+    localizedSortAs,
+    scheme,
+    code,
+    links,
+  ];
 
   @override
   String toString() => 'Subject($props)';
@@ -49,7 +62,10 @@ class Subject with EquatableMixin implements JSONable {
   /// The [links]' href and their children's will be normalized recursively using the
   /// provided [normalizeHref] closure.
   /// If the subject can't be parsed, a warning will be logged with [warnings].
-  static Subject? fromJson(dynamic json, {LinkHrefNormalizer normalizeHref = linkHrefNormalizerIdentity}) {
+  static Subject? fromJson(
+    dynamic json, {
+    LinkHrefNormalizer normalizeHref = linkHrefNormalizerIdentity,
+  }) {
     if (json == null) {
       return null;
     }
@@ -77,10 +93,15 @@ class Subject with EquatableMixin implements JSONable {
 
     return Subject(
       localizedName: localizedName,
-      localizedSortAs: LocalizedString.fromJson(jsonObject.opt('sortAs', remove: true)),
+      localizedSortAs: LocalizedString.fromJson(
+        jsonObject.opt('sortAs', remove: true),
+      ),
       scheme: jsonObject.optNullableString('scheme', remove: true),
       code: jsonObject.optNullableString('code', remove: true),
-      links: Link.fromJsonArray(jsonObject.optJsonArray('links', remove: true), normalizeHref: normalizeHref),
+      links: Link.fromJsonArray(
+        jsonObject.optJsonArray('links', remove: true),
+        normalizeHref: normalizeHref,
+      ),
     );
   }
 
@@ -89,17 +110,27 @@ class Subject with EquatableMixin implements JSONable {
   /// The [links]' href and their children's will be normalized recursively using the
   /// provided [normalizeHref] closure.
   /// If a subject can't be parsed, a warning will be logged with [warnings].
-  static List<Subject> fromJsonArray(dynamic json, {LinkHrefNormalizer normalizeHref = linkHrefNormalizerIdentity}) {
+  static List<Subject> fromJsonArray(
+    dynamic json, {
+    LinkHrefNormalizer normalizeHref = linkHrefNormalizerIdentity,
+  }) {
     if (json is String || json is Map<String, dynamic>) {
-      return [json].map((it) => Subject.fromJson(it, normalizeHref: normalizeHref)).whereNotNull().toList();
+      return [json]
+          .map((it) => Subject.fromJson(it, normalizeHref: normalizeHref))
+          .whereNotNull()
+          .toList();
     } else if (json is List) {
-      return json.map((it) => Subject.fromJson(it, normalizeHref: normalizeHref)).whereNotNull().toList();
+      return json
+          .map((it) => Subject.fromJson(it, normalizeHref: normalizeHref))
+          .whereNotNull()
+          .toList();
     }
     return [];
   }
 }
 
-class SubjectJsonConverter implements JsonConverter<Subject, Map<String, dynamic>> {
+class SubjectJsonConverter
+    implements JsonConverter<Subject, Map<String, dynamic>> {
   @override
   Subject fromJson(Map<String, dynamic> json) => Subject.fromJson(json)!;
 

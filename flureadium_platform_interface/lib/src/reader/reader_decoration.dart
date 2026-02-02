@@ -16,19 +16,28 @@ DecorationStyle _styleFromString(String styleStr) {
 }
 
 class ReaderDecoration {
-  ReaderDecoration({required this.id, required this.locator, required this.style});
+  ReaderDecoration({
+    required this.id,
+    required this.locator,
+    required this.style,
+  });
 
-  factory ReaderDecoration.fromJsonMap(final Map<String, dynamic> map) => ReaderDecoration(
-    id: map['id'] as String,
-    locator: Locator.fromJson(map['locator'])!,
-    style: ReaderDecorationStyle.fromJsonMap(map['style']),
-  );
+  factory ReaderDecoration.fromJsonMap(final Map<String, dynamic> map) =>
+      ReaderDecoration(
+        id: map['id'] as String,
+        locator: Locator.fromJson(map['locator'])!,
+        style: ReaderDecorationStyle.fromJsonMap(map['style']),
+      );
 
   String id;
   Locator locator;
   ReaderDecorationStyle style;
 
-  Map<String, dynamic> toJson() => {'id': id, 'locator': locator.toJson(), 'style': style.toJson()};
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'locator': locator.toJson(),
+    'style': style.toJson(),
+  };
 }
 
 class ReaderDecorationStyle {
@@ -39,8 +48,9 @@ class ReaderDecorationStyle {
 
   Map<String, dynamic> toJson() => {'style': style.name, 'tint': tint.toCSS()};
 
-  factory ReaderDecorationStyle.fromJsonMap(final Map<String, dynamic> map) => ReaderDecorationStyle(
-    style: _styleFromString(map['style']),
-    tint: map['tint'] != null ? Color(map['tint'] as int) : Colors.red,
-  );
+  factory ReaderDecorationStyle.fromJsonMap(final Map<String, dynamic> map) =>
+      ReaderDecorationStyle(
+        style: _styleFromString(map['style']),
+        tint: map['tint'] != null ? Color(map['tint'] as int) : Colors.red,
+      );
 }

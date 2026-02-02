@@ -1,5 +1,1 @@
-enum ReadiumHighlightMode {
-  paragraph,
-  sentence,
-  word,
-}
+enum ReadiumHighlightMode { paragraph, sentence, word }

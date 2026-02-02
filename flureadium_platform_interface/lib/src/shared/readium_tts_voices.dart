@@ -1,7 +1,8 @@
 import 'dart:ui';
 import 'package:json_annotation/json_annotation.dart';
 
-import '../extensions/readium_string_extensions.dart' show ReadiumStringExtension;
+import '../extensions/readium_string_extensions.dart'
+    show ReadiumStringExtension;
 import '../utils/jsonable.dart';
 import '../utils/runtime_platform.dart' show RuntimePlatform;
 
@@ -12,7 +13,10 @@ class ReadiumTtsVoice implements JSONable {
   final String name;
 
   @override
-  Map<String, dynamic> toJson() => <String, dynamic>{'locale': locale, 'name': name};
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'locale': locale,
+    'name': name,
+  };
 
   static ReadiumTtsVoice fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -32,10 +36,12 @@ extension ReadiumTtsVoiceExtension on ReadiumTtsVoice {
   String get langCode => localeObj.languageCode;
 
   // Android voices have a different name format than what we receive, making it more readable
-  String? get androidVoiceName => RuntimePlatform.isAndroid ? _androidTtsVoiceName(name) : null;
+  String? get androidVoiceName =>
+      RuntimePlatform.isAndroid ? _androidTtsVoiceName(name) : null;
 
   // Identifying bool for if the voice is local or network or not one of the standards.
-  bool? get androidIsLocal => RuntimePlatform.isAndroid ? _androidIsLocal(name) : null;
+  bool? get androidIsLocal =>
+      RuntimePlatform.isAndroid ? _androidIsLocal(name) : null;
 
   // Funtion to map the voice name to the correct voice name for Android
   // These are only for the languages we know and might not be correct, as it is not always easy to hear which are the correct matches.
@@ -153,11 +159,13 @@ extension ReadiumTtsVoiceExtension on ReadiumTtsVoice {
   }
 }
 
-class ReadiumTtsVoicesJsonConverter extends JsonConverter<ReadiumTtsVoice, Map<String, dynamic>> {
+class ReadiumTtsVoicesJsonConverter
+    extends JsonConverter<ReadiumTtsVoice, Map<String, dynamic>> {
   const ReadiumTtsVoicesJsonConverter();
 
   @override
-  ReadiumTtsVoice fromJson(Map<String, dynamic> json) => ReadiumTtsVoice.fromJson(json);
+  ReadiumTtsVoice fromJson(Map<String, dynamic> json) =>
+      ReadiumTtsVoice.fromJson(json);
 
   @override
   Map<String, dynamic> toJson(ReadiumTtsVoice voice) => voice.toJson();

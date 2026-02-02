@@ -5,8 +5,9 @@ import '../metadata.dart';
 
 extension EpubMetadataExtension on Metadata {
   static const String _mediaOverlayKey = 'mediaOverlay';
-  MetdataMediaOverlay? get mediaOverlay =>
-      MetdataMediaOverlay.fromJson(additionalProperties.optJsonObject(_mediaOverlayKey));
+  MetdataMediaOverlay? get mediaOverlay => MetdataMediaOverlay.fromJson(
+    additionalProperties.optJsonObject(_mediaOverlayKey),
+  );
 }
 
 class MetdataMediaOverlay with EquatableMixin implements JSONable {
@@ -30,9 +31,18 @@ class MetdataMediaOverlay with EquatableMixin implements JSONable {
     }
 
     final jsonObject = Map<String, dynamic>.of(json);
-    final activeClass = jsonObject.optNullableString('activeClass', remove: true);
-    final playbackActiveClass = jsonObject.optNullableString('playbackActiveClass', remove: true);
+    final activeClass = jsonObject.optNullableString(
+      'activeClass',
+      remove: true,
+    );
+    final playbackActiveClass = jsonObject.optNullableString(
+      'playbackActiveClass',
+      remove: true,
+    );
 
-    return MetdataMediaOverlay(activeClass: activeClass, playbackActiveClass: playbackActiveClass);
+    return MetdataMediaOverlay(
+      activeClass: activeClass,
+      playbackActiveClass: playbackActiveClass,
+    );
   }
 }

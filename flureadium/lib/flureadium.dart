@@ -111,7 +111,8 @@ class Flureadium {
   /// Stream of reader status changes.
   ///
   /// Emits [ReadiumReaderStatus] whenever the reader state changes.
-  Stream<ReadiumReaderStatus> get onReaderStatusChanged => _platform.onReaderStatusChanged;
+  Stream<ReadiumReaderStatus> get onReaderStatusChanged =>
+      _platform.onReaderStatusChanged;
 
   /// Stream of text locator changes during reading.
   ///
@@ -173,7 +174,8 @@ class Flureadium {
   ///   backgroundColor: Color(0xFFF5E6D3),
   /// ));
   /// ```
-  Future<void> setEPUBPreferences(EPUBPreferences preferences) => _platform.setEPUBPreferences(preferences);
+  Future<void> setEPUBPreferences(EPUBPreferences preferences) =>
+      _platform.setEPUBPreferences(preferences);
 
   /// Applies decorations (highlights, bookmarks) to the reader.
   ///
@@ -185,28 +187,35 @@ class Flureadium {
   ///   ReaderDecoration(id: 'h1', locator: loc, style: DecorationStyle.highlight),
   /// ]);
   /// ```
-  Future<void> applyDecorations(String id, List<ReaderDecoration> decorations) =>
-      _platform.applyDecorations(id, decorations);
+  Future<void> applyDecorations(
+    String id,
+    List<ReaderDecoration> decorations,
+  ) => _platform.applyDecorations(id, decorations);
 
   /// Enables text-to-speech mode with optional preferences.
   ///
   /// Once enabled, use [play], [pause], [next], [previous] to control.
-  Future<void> ttsEnable(TTSPreferences? preferences) => _platform.ttsEnable(preferences);
+  Future<void> ttsEnable(TTSPreferences? preferences) =>
+      _platform.ttsEnable(preferences);
 
   /// Updates TTS preferences while TTS is enabled.
-  Future<void> ttsSetPreferences(TTSPreferences preferences) => _platform.ttsSetPreferences(preferences);
+  Future<void> ttsSetPreferences(TTSPreferences preferences) =>
+      _platform.ttsSetPreferences(preferences);
 
   /// Sets decoration styles for TTS highlighting.
   ///
   /// [utteranceDecoration] highlights the current sentence.
   /// [rangeDecoration] highlights the current word/range.
-  Future<void> setDecorationStyle(ReaderDecorationStyle? utteranceDecoration, ReaderDecorationStyle? rangeDecoration) =>
-      _platform.setDecorationStyle(utteranceDecoration, rangeDecoration);
+  Future<void> setDecorationStyle(
+    ReaderDecorationStyle? utteranceDecoration,
+    ReaderDecorationStyle? rangeDecoration,
+  ) => _platform.setDecorationStyle(utteranceDecoration, rangeDecoration);
 
   /// Gets the list of available TTS voices.
   ///
   /// Returns platform-specific voice options for TTS playback.
-  Future<List<ReaderTTSVoice>> ttsGetAvailableVoices() => _platform.ttsGetAvailableVoices();
+  Future<List<ReaderTTSVoice>> ttsGetAvailableVoices() =>
+      _platform.ttsGetAvailableVoices();
 
   /// Sets the TTS voice to use.
   ///
@@ -248,7 +257,8 @@ class Flureadium {
       _platform.audioEnable(prefs: prefs, fromLocator: fromLocator);
 
   /// Updates audio playback preferences.
-  Future<void> audioSetPreferences(AudioPreferences prefs) => _platform.audioSetPreferences(prefs);
+  Future<void> audioSetPreferences(AudioPreferences prefs) =>
+      _platform.audioSetPreferences(prefs);
 
   /// Seeks audio playback by the given offset.
   ///
@@ -281,10 +291,15 @@ class Flureadium {
   /// The [index] is matched case-insensitively against page titles.
   ///
   /// Throws [ReadiumException] if the page is not found.
-  Future<bool> toPhysicalPageIndex(final String index, final Publication pub) async {
+  Future<bool> toPhysicalPageIndex(
+    final String index,
+    final Publication pub,
+  ) async {
     final pageIndex = index.toLowerCase();
     final pageList = pub.pageList;
-    final pageLink = pageList.firstWhereOrNull((final link) => link.title?.toLowerCase() == pageIndex);
+    final pageLink = pageList.firstWhereOrNull(
+      (final link) => link.title?.toLowerCase() == pageIndex,
+    );
     if (pageLink == null) {
       throw const ReadiumException('Page link not found');
     }

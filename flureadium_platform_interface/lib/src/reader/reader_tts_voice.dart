@@ -16,14 +16,22 @@ class ReaderTTSVoice {
     name = ReaderTTSVoiceNames.getVoiceName(this);
   }
 
-  factory ReaderTTSVoice.fromJson(String jsonStr) => ReaderTTSVoice.fromJsonMap(json.decode(jsonStr));
-  factory ReaderTTSVoice.fromJsonMap(final Map<String, dynamic> map) => ReaderTTSVoice(
+  factory ReaderTTSVoice.fromJson(String jsonStr) =>
+      ReaderTTSVoice.fromJsonMap(json.decode(jsonStr));
+  factory ReaderTTSVoice.fromJsonMap(final Map<String, dynamic> map) =>
+      ReaderTTSVoice(
         identifier: map['identifier'] as String,
         name: map['name'] is String ? map['name'] : '',
         language: map['language'] as String,
-        networkRequired: map['networkRequired'] is String ? map['networkRequired'] == true : false,
-        gender: map['gender'] is String ? TTSVoiceGender.values.byName(map['gender']) : TTSVoiceGender.unspecified,
-        quality: map['quality'] is String ? TTSVoiceQuality.values.byName(map['quality']) : null,
+        networkRequired: map['networkRequired'] is String
+            ? map['networkRequired'] == true
+            : false,
+        gender: map['gender'] is String
+            ? TTSVoiceGender.values.byName(map['gender'])
+            : TTSVoiceGender.unspecified,
+        quality: map['quality'] is String
+            ? TTSVoiceQuality.values.byName(map['quality'])
+            : null,
       );
 
   String identifier;

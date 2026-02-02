@@ -50,21 +50,32 @@ class Availability with EquatableMixin implements JSONable {
 class AvailabilityState {
   const AvailabilityState._(this.value);
   static const AvailabilityState available = AvailabilityState._('available');
-  static const AvailabilityState unavailable = AvailabilityState._('unavailable');
+  static const AvailabilityState unavailable = AvailabilityState._(
+    'unavailable',
+  );
   static const AvailabilityState reserved = AvailabilityState._('reserved');
   static const AvailabilityState ready = AvailabilityState._('ready');
-  static const List<AvailabilityState> _values = [available, unavailable, reserved, ready];
+  static const List<AvailabilityState> _values = [
+    available,
+    unavailable,
+    reserved,
+    ready,
+  ];
   final String value;
 
-  static AvailabilityState? from(String? value) => _values.firstWhereOrNull((state) => state.value == value);
+  static AvailabilityState? from(String? value) =>
+      _values.firstWhereOrNull((state) => state.value == value);
 }
 
-class AvailabilityJsonConverter extends JsonConverter<Availability?, Map<String, dynamic>?> {
+class AvailabilityJsonConverter
+    extends JsonConverter<Availability?, Map<String, dynamic>?> {
   const AvailabilityJsonConverter();
 
   @override
-  Availability? fromJson(Map<String, dynamic>? json) => Availability.fromJson(json);
+  Availability? fromJson(Map<String, dynamic>? json) =>
+      Availability.fromJson(json);
 
   @override
-  Map<String, dynamic>? toJson(Availability? availability) => availability?.toJson();
+  Map<String, dynamic>? toJson(Availability? availability) =>
+      availability?.toJson();
 }

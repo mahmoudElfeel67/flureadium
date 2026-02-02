@@ -8,7 +8,8 @@ abstract class AdditionalProperties {
   dynamic operator [](String key) => additionalProperties[key];
 
   /// Helper to get a DateTime from an additional property value.
-  DateTime? getAdditionalDateTime(final String key) => additionalProperties[key] != null
+  DateTime? getAdditionalDateTime(final String key) =>
+      additionalProperties[key] != null
       ? DateTime.parse(additionalProperties[key] as String)
       : null;
 

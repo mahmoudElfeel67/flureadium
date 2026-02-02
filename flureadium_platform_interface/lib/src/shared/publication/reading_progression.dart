@@ -20,8 +20,10 @@ class ReadingProgression with EquatableMixin {
     }
   }
 
-  factory ReadingProgression.fromValue(String? value) =>
-      _values.firstWhere((it) => it.value == value?.toLowerCase(), orElse: () => auto);
+  factory ReadingProgression.fromValue(String? value) => _values.firstWhere(
+    (it) => it.value == value?.toLowerCase(),
+    orElse: () => auto,
+  );
 
   /// Left-to-right reading progression.
   static const ltr = ReadingProgression._('ltr');

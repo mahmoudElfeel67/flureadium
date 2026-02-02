@@ -117,14 +117,25 @@ class Publication with EquatableMixin implements JSONable {
   );
 
   @override
-  List<Object> get props => [context, metadata, links, readingOrder, resources, tableOfContents, subCollections];
+  List<Object> get props => [
+    context,
+    metadata,
+    links,
+    readingOrder,
+    resources,
+    tableOfContents,
+    subCollections,
+  ];
 
   /// Finds the first [Link] with the given relation in the manifest's links.
   Link? linkWithRel(String rel) =>
-      readingOrder.firstWithRel(rel) ?? resources.firstWithRel(rel) ?? links.firstWithRel(rel);
+      readingOrder.firstWithRel(rel) ??
+      resources.firstWithRel(rel) ??
+      links.firstWithRel(rel);
 
   /// Finds all [Link]s having the given [rel] in the manifest's links.
-  List<Link> linksWithRel(String rel) => (readingOrder + resources + links).filterByRel(rel);
+  List<Link> linksWithRel(String rel) =>
+      (readingOrder + resources + links).filterByRel(rel);
 
   /// Serializes a [Publication] to its RWPM JSON representation.
   @override
@@ -145,7 +156,8 @@ class Publication with EquatableMixin implements JSONable {
 
   /// Returns the [links] of the first child [PublicationCollection] with the given role, or an
   /// empty list.
-  List<Link> collectionLinks(String role) => subCollections[role]?.firstOrNull?.links ?? [];
+  List<Link> collectionLinks(String role) =>
+      subCollections[role]?.firstOrNull?.links ?? [];
 
   static LinkHrefNormalizer normalizeHref(String baseUrl) =>
       (href) => Href(href, baseHref: baseUrl).string;
@@ -155,7 +167,10 @@ class Publication with EquatableMixin implements JSONable {
   /// If the publication can't be parsed, a warning will be logged with [warnings].
   /// https://readium.org/webpub-manifest/
   /// https://readium.org/webpub-manifest/schema/publication.schema.json
-  static Publication? fromJson(Map<String, dynamic>? json, {bool packaged = false}) {
+  static Publication? fromJson(
+    Map<String, dynamic>? json, {
+    bool packaged = false,
+  }) {
     if (json == null) {
       return null;
     }
@@ -166,11 +181,20 @@ class Publication with EquatableMixin implements JSONable {
     if (packaged) {
       baseUrl = '/';
     } else {
-      final href = Link.fromJsonArray(jsonObject.optJsonArray('links', remove: true)).firstWithRel('self')?.href;
-      baseUrl = href?.let((it) => Uri.tryParse(it)?.removeLastComponent().toString()) ?? '/';
+      final href = Link.fromJsonArray(
+        jsonObject.optJsonArray('links', remove: true),
+      ).firstWithRel('self')?.href;
+      baseUrl =
+          href?.let(
+            (it) => Uri.tryParse(it)?.removeLastComponent().toString(),
+          ) ??
+          '/';
     }
 
-    final context = jsonObject.optStringsFromArrayOrSingle('@context', remove: true);
+    final context = jsonObject.optStringsFromArrayOrSingle(
+      '@context',
+      remove: true,
+    );
     final metadata = Metadata.fromJson(
       jsonObject.optNullableMap('metadata', remove: true),
       normalizeHref: normalizeHref(baseUrl),
@@ -181,7 +205,10 @@ class Publication with EquatableMixin implements JSONable {
     }
 
     final links =
-        Link.fromJsonArray(jsonObject.safeRemove<List<dynamic>>('links'), normalizeHref: normalizeHref(baseUrl))
+        Link.fromJsonArray(
+              jsonObject.safeRemove<List<dynamic>>('links'),
+              normalizeHref: normalizeHref(baseUrl),
+            )
             .map(
               (it) => (!packaged || !it.rels.contains('self'))
                   ? it
@@ -193,7 +220,9 @@ class Publication with EquatableMixin implements JSONable {
             )
             .toList();
     // [readingOrder] used to be [spine], so we parse [spine] as a fallback.
-    final readingOrderJSON = jsonObject.safeRemove<List<dynamic>>('readingOrder');
+    final readingOrderJSON = jsonObject.safeRemove<List<dynamic>>(
+      'readingOrder',
+    );
     final readingOrder = Link.fromJsonArray(
       readingOrderJSON,
       normalizeHref: normalizeHref(baseUrl),
@@ -210,7 +239,10 @@ class Publication with EquatableMixin implements JSONable {
     );
 
     // Parses subcollections from the remaining JSON properties.
-    final subcollections = PublicationCollection.collectionsFromJSON(jsonObject, normalizeHref: normalizeHref(baseUrl));
+    final subcollections = PublicationCollection.collectionsFromJSON(
+      jsonObject,
+      normalizeHref: normalizeHref(baseUrl),
+    );
 
     return Publication(
       context: context,
@@ -234,7 +266,9 @@ class Publication with EquatableMixin implements JSONable {
     final hrefTail = hashIndex == -1 ? null : href.substring(hashIndex + 1);
     final resourceLink = linkWithHref(hrefHead);
     final type = resourceLink?.type ?? typeOverride?.name;
-    final linkIndex = resourceLink == null ? -1 : readingOrder.indexOf(resourceLink);
+    final linkIndex = resourceLink == null
+        ? -1
+        : readingOrder.indexOf(resourceLink);
     return type == null
         ? null
         : Locator(
@@ -243,7 +277,9 @@ class Publication with EquatableMixin implements JSONable {
             title: resourceLink!.title ?? link.title,
             text: LocatorText(),
             locations: Locations(
-              cssSelector: hrefTail != null && hrefTail.isNotEmpty ? '#$hrefTail' : null,
+              cssSelector: hrefTail != null && hrefTail.isNotEmpty
+                  ? '#$hrefTail'
+                  : null,
               fragments: hrefTail == null ? [] : [hrefTail],
               progression: hrefTail == null ? 0 : null,
               position: linkIndex == -1 ? null : linkIndex + 1,
@@ -269,7 +305,8 @@ class Publication with EquatableMixin implements JSONable {
 
     final allDeepLinks = [readingOrder, resources, links].expand(deepLinks);
 
-    Link? find(final String href) => allDeepLinks.firstWhereOrNull((final link) => link.href == href);
+    Link? find(final String href) =>
+        allDeepLinks.firstWhereOrNull((final link) => link.href == href);
     final full = find(href);
     if (full != null) {
       return full;
@@ -282,7 +319,8 @@ class Publication with EquatableMixin implements JSONable {
   Link? get coverLink => resources.firstWhereOrNull(
     (final r) =>
         (r.rels.contains('cover')) ||
-        (r.href.contains('cover') && r.type == MediaType.jpeg.type || r.type == MediaType.png.type),
+        (r.href.contains('cover') && r.type == MediaType.jpeg.type ||
+            r.type == MediaType.png.type),
   );
 
   /// Returns the cover image URI, if available.
@@ -290,27 +328,39 @@ class Publication with EquatableMixin implements JSONable {
 
   /// Returns true if this publication conforms to the Readium audiobook profile.
   bool get conformsToReadiumAudiobook =>
-      metadata.conformsTo?.any((c) => c == 'https://readium.org/webpub-manifest/profiles/audiobook') == true;
+      metadata.conformsTo?.any(
+        (c) => c == 'https://readium.org/webpub-manifest/profiles/audiobook',
+      ) ==
+      true;
 
   /// Returns true if this publication conforms to the Readium EPUB profile.
   bool get conformsToReadiumEbook =>
-      metadata.conformsTo?.any((c) => c == 'https://readium.org/webpub-manifest/profiles/epub') == true;
+      metadata.conformsTo?.any(
+        (c) => c == 'https://readium.org/webpub-manifest/profiles/epub',
+      ) ==
+      true;
 
   /// Returns true if this publication contains media overlays (synchronized narration).
-  bool get containsMediaOverlays =>
-      readingOrder.any((link) => link.alternates.any((alt) => alt.type == MediaType.syncMediaNarration.name));
+  bool get containsMediaOverlays => readingOrder.any(
+    (link) => link.alternates.any(
+      (alt) => alt.type == MediaType.syncMediaNarration.name,
+    ),
+  );
 }
 
 /// JSON converter for [Publication] objects.
 ///
 /// Used with json_serializable to automatically convert publications.
-class PublicationJsonConverter extends JsonConverter<Publication?, Map<String, dynamic>?> {
+class PublicationJsonConverter
+    extends JsonConverter<Publication?, Map<String, dynamic>?> {
   /// Creates a new publication JSON converter.
   const PublicationJsonConverter();
 
   @override
-  Publication? fromJson(Map<String, dynamic>? json) => Publication.fromJson(json);
+  Publication? fromJson(Map<String, dynamic>? json) =>
+      Publication.fromJson(json);
 
   @override
-  Map<String, dynamic>? toJson(Publication? publication) => publication?.toJson();
+  Map<String, dynamic>? toJson(Publication? publication) =>
+      publication?.toJson();
 }

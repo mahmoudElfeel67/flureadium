@@ -18,7 +18,9 @@ import '../publication.dart';
 /// @param position The position of the publication in this collection/series,
 ///     when the contributor represents a collection.
 /// @param links Used to retrieve similar publications for the given contributor.
-class Collection extends AdditionalProperties with EquatableMixin implements JSONable {
+class Collection extends AdditionalProperties
+    with EquatableMixin
+    implements JSONable {
   const Collection({
     required this.localizedName,
     this.identifier,
@@ -52,7 +54,14 @@ class Collection extends AdditionalProperties with EquatableMixin implements JSO
   String? get sortAs => localizedSortAs?.string;
 
   @override
-  List<Object?> get props => [localizedName, identifier, localizedSortAs, roles, position, links];
+  List<Object?> get props => [
+    localizedName,
+    identifier,
+    localizedSortAs,
+    roles,
+    position,
+    links,
+  ];
 
   @override
   String toString() => '$runtimeType($props)';
@@ -97,7 +106,10 @@ class Collection extends AdditionalProperties with EquatableMixin implements JSO
   /// The [links]' href and their children's will be normalized recursively using the
   /// provided [normalizeHref] closure.
   /// If the contributor can't be parsed, a warning will be logged with [warnings].
-  static Collection? fromJson(dynamic json, {LinkHrefNormalizer normalizeHref = linkHrefNormalizerIdentity}) =>
+  static Collection? fromJson(
+    dynamic json, {
+    LinkHrefNormalizer normalizeHref = linkHrefNormalizerIdentity,
+  }) =>
       Contributor.fromJson(json, normalizeHref: normalizeHref)?.toCollection();
 
   /// Creates a list of [Collection] from its RWPM JSON representation.
@@ -126,7 +138,8 @@ extension ContributorExtension on Contributor {
   );
 }
 
-class CollectionJsonConverter extends JsonConverter<Collection?, Map<String, dynamic>?> {
+class CollectionJsonConverter
+    extends JsonConverter<Collection?, Map<String, dynamic>?> {
   const CollectionJsonConverter();
 
   @override

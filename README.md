@@ -23,6 +23,10 @@ General TODO:
 - [ ] Support for custom Decoration styles
 - [ ] Full support for Sync Narration and Guided Navigation
 
+## Documentation
+
+- [Error Handling Guide](ERROR_HANDLING.md) - Exception types, logging system, and best practices
+
 ## Adding flureadium to your project
 
 To use, add to `pubspec.yaml`:

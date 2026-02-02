@@ -28,7 +28,9 @@ export 'epub/metadata_extension.dart';
 ///     publication, so it might be [ReadingProgression.AUTO]. To lay out the content, use [effectiveReadingProgression]
 ///     to get the calculated reading progression from the declared direction and the language.
 /// @param additionalProperties Additional metadata for extensions, as a JSON dictionary.
-class Metadata extends AdditionalProperties with EquatableMixin implements JSONable {
+class Metadata extends AdditionalProperties
+    with EquatableMixin
+    implements JSONable {
   Metadata({
     required this.localizedTitle,
     this.identifier,
@@ -236,34 +238,95 @@ class Metadata extends AdditionalProperties with EquatableMixin implements JSONa
     var localizedTitle = LocalizedString.fromJson(jsonObject.remove('title'));
     if (localizedTitle == null) {
       Fimber.i('[title] is missing $json');
-      localizedTitle = LocalizedString.fromString(''); // Fallback to an empty title
+      localizedTitle = LocalizedString.fromString(
+        '',
+      ); // Fallback to an empty title
     }
     final identifier = jsonObject.optNullableString('identifier', remove: true);
     final type = jsonObject.optNullableString('@type', remove: true);
-    final localizedSubtitle = LocalizedString.fromJson(jsonObject.remove('subtitle'));
-    final modified = (jsonObject.remove('modified') as String?)?.iso8601ToDate();
-    final published = (jsonObject.remove('published') as String?)?.iso8601ToDate();
-    final languages = jsonObject.optStringsFromArrayOrSingle('language', remove: true);
-    final conformsTo = jsonObject.optStringsFromArrayOrSingle('conformsTo', remove: true);
-    final localizedSortAs = LocalizedString.fromJson(jsonObject.remove('sortAs'));
-    final subjects = Subject.fromJsonArray(jsonObject.remove('subject'), normalizeHref: normalizeHref);
-    final authors = Contributor.fromJsonArray(jsonObject.remove('author'), normalizeHref: normalizeHref);
-    final translators = Contributor.fromJsonArray(jsonObject.remove('translator'), normalizeHref: normalizeHref);
-    final editors = Contributor.fromJsonArray(jsonObject.remove('editor'), normalizeHref: normalizeHref);
-    final artists = Contributor.fromJsonArray(jsonObject.remove('artist'), normalizeHref: normalizeHref);
-    final illustrators = Contributor.fromJsonArray(jsonObject.remove('illustrator'), normalizeHref: normalizeHref);
-    final letterers = Contributor.fromJsonArray(jsonObject.remove('letterer'), normalizeHref: normalizeHref);
-    final pencilers = Contributor.fromJsonArray(jsonObject.remove('penciler'), normalizeHref: normalizeHref);
-    final colorists = Contributor.fromJsonArray(jsonObject.remove('colorist'), normalizeHref: normalizeHref);
-    final inkers = Contributor.fromJsonArray(jsonObject.remove('inker'), normalizeHref: normalizeHref);
-    final narrators = Contributor.fromJsonArray(jsonObject.remove('narrator'), normalizeHref: normalizeHref);
-    final contributors = Contributor.fromJsonArray(jsonObject.remove('contributor'), normalizeHref: normalizeHref);
-    final publishers = Contributor.fromJsonArray(jsonObject.remove('publisher'), normalizeHref: normalizeHref);
-    final imprints = Contributor.fromJsonArray(jsonObject.remove('imprint'), normalizeHref: normalizeHref);
-    final readingProgression = ReadingProgression.fromValue(jsonObject.remove('readingProgression') as String?);
+    final localizedSubtitle = LocalizedString.fromJson(
+      jsonObject.remove('subtitle'),
+    );
+    final modified = (jsonObject.remove('modified') as String?)
+        ?.iso8601ToDate();
+    final published = (jsonObject.remove('published') as String?)
+        ?.iso8601ToDate();
+    final languages = jsonObject.optStringsFromArrayOrSingle(
+      'language',
+      remove: true,
+    );
+    final conformsTo = jsonObject.optStringsFromArrayOrSingle(
+      'conformsTo',
+      remove: true,
+    );
+    final localizedSortAs = LocalizedString.fromJson(
+      jsonObject.remove('sortAs'),
+    );
+    final subjects = Subject.fromJsonArray(
+      jsonObject.remove('subject'),
+      normalizeHref: normalizeHref,
+    );
+    final authors = Contributor.fromJsonArray(
+      jsonObject.remove('author'),
+      normalizeHref: normalizeHref,
+    );
+    final translators = Contributor.fromJsonArray(
+      jsonObject.remove('translator'),
+      normalizeHref: normalizeHref,
+    );
+    final editors = Contributor.fromJsonArray(
+      jsonObject.remove('editor'),
+      normalizeHref: normalizeHref,
+    );
+    final artists = Contributor.fromJsonArray(
+      jsonObject.remove('artist'),
+      normalizeHref: normalizeHref,
+    );
+    final illustrators = Contributor.fromJsonArray(
+      jsonObject.remove('illustrator'),
+      normalizeHref: normalizeHref,
+    );
+    final letterers = Contributor.fromJsonArray(
+      jsonObject.remove('letterer'),
+      normalizeHref: normalizeHref,
+    );
+    final pencilers = Contributor.fromJsonArray(
+      jsonObject.remove('penciler'),
+      normalizeHref: normalizeHref,
+    );
+    final colorists = Contributor.fromJsonArray(
+      jsonObject.remove('colorist'),
+      normalizeHref: normalizeHref,
+    );
+    final inkers = Contributor.fromJsonArray(
+      jsonObject.remove('inker'),
+      normalizeHref: normalizeHref,
+    );
+    final narrators = Contributor.fromJsonArray(
+      jsonObject.remove('narrator'),
+      normalizeHref: normalizeHref,
+    );
+    final contributors = Contributor.fromJsonArray(
+      jsonObject.remove('contributor'),
+      normalizeHref: normalizeHref,
+    );
+    final publishers = Contributor.fromJsonArray(
+      jsonObject.remove('publisher'),
+      normalizeHref: normalizeHref,
+    );
+    final imprints = Contributor.fromJsonArray(
+      jsonObject.remove('imprint'),
+      normalizeHref: normalizeHref,
+    );
+    final readingProgression = ReadingProgression.fromValue(
+      jsonObject.remove('readingProgression') as String?,
+    );
     final description = jsonObject.remove('description') as String?;
     final duration = jsonObject.optPositiveDouble('duration', remove: true);
-    final numberOfPages = jsonObject.optPositiveInt('numberOfPages', remove: true);
+    final numberOfPages = jsonObject.optPositiveInt(
+      'numberOfPages',
+      remove: true,
+    );
 
     final belongsToJson =
         (jsonObject.optNullableMap('belongsTo', remove: true) ??
@@ -273,7 +336,10 @@ class Metadata extends AdditionalProperties with EquatableMixin implements JSONa
     for (final key in belongsToJson.keys) {
       if (!belongsToJson.isNull(key)) {
         final dynamic value = belongsToJson[key];
-        belongsTo[key] = Contributor.fromJsonArray(value, normalizeHref: normalizeHref);
+        belongsTo[key] = Contributor.fromJsonArray(
+          value,
+          normalizeHref: normalizeHref,
+        );
       }
     }
 
@@ -382,7 +448,8 @@ class Metadata extends AdditionalProperties with EquatableMixin implements JSONa
   String toString() => 'Metadata($props)';
 }
 
-class MetadataJsonConverter extends JsonConverter<Metadata?, Map<String, dynamic>?> {
+class MetadataJsonConverter
+    extends JsonConverter<Metadata?, Map<String, dynamic>?> {
   const MetadataJsonConverter();
 
   @override

@@ -11,7 +11,9 @@ import 'package:json_annotation/json_annotation.dart';
 import '../../utils/additional_properties.dart';
 import '../../utils/jsonable.dart';
 
-class OpdsMetadata extends AdditionalProperties with EquatableMixin implements JSONable {
+class OpdsMetadata extends AdditionalProperties
+    with EquatableMixin
+    implements JSONable {
   const OpdsMetadata({
     required this.title,
     this.identifier,
@@ -116,11 +118,20 @@ class OpdsMetadata extends AdditionalProperties with EquatableMixin implements J
     final jsonObject = Map<String, dynamic>.of(json);
 
     final title = jsonObject.optNullableString('title', remove: true) ?? '';
-    final description = jsonObject.optNullableString('description', remove: true);
+    final description = jsonObject.optNullableString(
+      'description',
+      remove: true,
+    );
     final subtitle = jsonObject.optNullableString('subtitle', remove: true);
     final identifier = jsonObject.optNullableString('identifier', remove: true);
-    final numberOfItems = jsonObject.optNullableInt('numberOfItems', remove: true);
-    final itemsPerPage = jsonObject.optNullableInt('itemsPerPage', remove: true);
+    final numberOfItems = jsonObject.optNullableInt(
+      'numberOfItems',
+      remove: true,
+    );
+    final itemsPerPage = jsonObject.optNullableInt(
+      'itemsPerPage',
+      remove: true,
+    );
     final currentPage = jsonObject.optNullableInt('currentPage', remove: true);
     final modified = jsonObject.optNullableDateTime('modified', remove: true);
     final position = jsonObject.optNullableInt('position', remove: true);
@@ -145,11 +156,13 @@ class OpdsMetadata extends AdditionalProperties with EquatableMixin implements J
   }
 }
 
-class OpdsMetadataJsonConverter extends JsonConverter<OpdsMetadata?, Map<String, dynamic>?> {
+class OpdsMetadataJsonConverter
+    extends JsonConverter<OpdsMetadata?, Map<String, dynamic>?> {
   const OpdsMetadataJsonConverter();
 
   @override
-  OpdsMetadata? fromJson(Map<String, dynamic>? json) => OpdsMetadata.fromJson(json);
+  OpdsMetadata? fromJson(Map<String, dynamic>? json) =>
+      OpdsMetadata.fromJson(json);
 
   @override
   Map<String, dynamic>? toJson(OpdsMetadata? metadata) => metadata?.toJson();

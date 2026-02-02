@@ -46,7 +46,7 @@ linter:
     prefer_final_parameters: false
     prefer_relative_imports: true
     prefer_single_quotes: true
-    public_member_api_docs: true
+    public_member_api_docs: false
     require_trailing_commas: true
     sort_constructors_first: true
     use_super_parameters: true

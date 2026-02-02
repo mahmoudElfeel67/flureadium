@@ -18,7 +18,8 @@ abstract interface class JSONable {
 
 extension IterableJSONableExtension on Iterable<JSONable> {
   /// Serializes a list of [JSONable] into a [List<Map<String, dynamic>>].
-  List<Map<String, dynamic>> toJson() => map((it) => it.toJson()).whereNotNull().toList();
+  List<Map<String, dynamic>> toJson() =>
+      map((it) => it.toJson()).whereNotNull().toList();
 }
 
 extension MapExtension on Map<String, dynamic>? {
@@ -30,9 +31,14 @@ extension MapExtension on Map<String, dynamic>? {
     } else if (value is Map) {
       return (value)
           .takeIf((it) => it.isNotEmpty)
-          ?.map((key, value) => MapEntry<dynamic, dynamic>(key, _wrapJSON(value)));
+          ?.map(
+            (key, value) => MapEntry<dynamic, dynamic>(key, _wrapJSON(value)),
+          );
     } else if (value is List) {
-      return (value).takeIf((it) => it.isNotEmpty)?.mapNotNull(_wrapJSON).toList();
+      return (value)
+          .takeIf((it) => it.isNotEmpty)
+          ?.mapNotNull(_wrapJSON)
+          .toList();
     }
     return value;
   }
@@ -159,7 +165,8 @@ extension MapExtension on Map<String, dynamic>? {
   /// for [name] is removed.
   /// If the objects in [collection] are [JSONable], then they are converted to [Map] first.
   void putIterableIfNotEmpty(String name, Iterable<dynamic>? collection) {
-    final list = collection?.whereNotNull().mapNotNull(_wrapJSON).toList() ?? [];
+    final list =
+        collection?.whereNotNull().mapNotNull(_wrapJSON).toList() ?? [];
     if (list.isEmpty) {
       this?.remove(name);
       return;
@@ -191,7 +198,11 @@ extension MapExtension on Map<String, dynamic>? {
   /// Returns the value mapped by [name] if it exists and is a positive double or can be coerced to a
   /// positive double, or [fallback] otherwise.
   /// If [remove] is true, then the mapping will be removed from the [Map].
-  double? optPositiveDouble(String name, {double fallback = -1.0, bool remove = false}) {
+  double? optPositiveDouble(
+    String name, {
+    double fallback = -1.0,
+    bool remove = false,
+  }) {
     final d = optDouble(name, fallback: fallback, remove: remove);
     final value = (d >= 0) ? d : null;
     return value;
@@ -239,7 +250,11 @@ extension MapExtension on Map<String, dynamic>? {
   /// Returns the value mapped by {@code name} if it exists and is a double or
   /// can be coerced to a double, or {@code fallback} otherwise.
   /// If [remove] is true, then the mapping will be removed from the [Map].
-  double optDouble(String name, {double fallback = double.nan, bool remove = false}) {
+  double optDouble(
+    String name, {
+    double fallback = double.nan,
+    bool remove = false,
+  }) {
     final dynamic object = opt(name, remove: remove);
     return _toDouble(object) ?? fallback;
   }
