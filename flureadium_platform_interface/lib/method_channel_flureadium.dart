@@ -10,7 +10,9 @@ import 'flureadium_platform_interface.dart';
 class MethodChannelFlureadium extends FlureadiumPlatform {
   /// The method channel used to interact with the native platform.
   @visibleForTesting
-  MethodChannel methodChannel = const MethodChannel('dev.mulev.flureadium/main');
+  MethodChannel methodChannel = const MethodChannel(
+    'dev.mulev.flureadium/main',
+  );
 
   /// The event channel used to receive text Locator changes from the native platform.
   @visibleForTesting
