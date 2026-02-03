@@ -13,6 +13,7 @@ import 'reader_channel.dart';
 import 'src/reader/orientation_handler_mixin.dart';
 import 'src/reader/reader_lifecycle_mixin.dart';
 import 'src/reader/wakelock_manager_mixin.dart';
+import 'src/utils/toc_matcher.dart';
 
 const _viewType = 'dev.mulev.flureadium/ReadiumReaderWidget';
 
@@ -129,54 +130,92 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
 
   @override
   Future<void> skipToNext({final bool animated = true}) async {
-    List<Link>? toc = widget.publication.toc;
+    final toc = widget.publication.toc;
     if (toc.isEmpty || _currentLocator == null) {
+      R2Log.d('skipToNext: no TOC or no current locator');
       return;
     }
+
+    // Primary path: toc= fragment matching (sub-chapter granularity)
+    int curIndex = -1;
     String? currentHref = getTextLocatorHrefWithTocFragment(_currentLocator);
 
-    // Ensure we are at least 1 page into the current chapter, if not in scroll mode.
-    // TODO: Find a better way to do this, maybe a `lastVisibleLocator` ?
-    if (readium.defaultPreferences?.verticalScroll != true) {
-      await _channel?.goRight(animated: false);
-      final loc = await _channel?.getCurrentLocator();
-      currentHref = getTextLocatorHrefWithTocFragment(loc);
+    if (currentHref != null) {
+      // Ensure we are at least 1 page into the current chapter, if not in scroll mode.
+      if (readium.defaultPreferences?.verticalScroll != true) {
+        await _channel?.goRight(animated: false);
+        final loc = await _channel?.getCurrentLocator();
+        currentHref = getTextLocatorHrefWithTocFragment(loc);
+      }
+      if (currentHref != null) {
+        curIndex = toc.indexWhere((l) => l.href == currentHref);
+      }
     }
 
-    int? curIndex = toc.indexWhere((l) => l.href == currentHref);
-    if (curIndex > -1) {
-      final newIndex = (curIndex + 1).clamp(0, toc.length - 1);
-      Locator? nextChapter = widget.publication.locatorFromLink(toc[newIndex]);
-      if (nextChapter != null) {
-        await _channel?.go(
-          nextChapter,
-          isAudioBookWithText: false,
-          animated: true,
-        );
-      }
+    // Fallback: path-based matching (file-level granularity)
+    if (curIndex == -1) {
+      R2Log.d('skipToNext: toc= fragment matching failed, using path fallback');
+      curIndex = findTocIndexByPath(_currentLocator!, toc, lastMatch: true);
+    }
+
+    R2Log.d('skipToNext: curIndex=$curIndex, tocLength=${toc.length}');
+
+    if (curIndex == -1 || curIndex >= toc.length - 1) {
+      R2Log.d('skipToNext: cannot advance (not found or at last chapter)');
+      return;
+    }
+
+    final newIndex = curIndex + 1;
+    final nextChapter = widget.publication.locatorFromLink(toc[newIndex]);
+    R2Log.d('skipToNext: navigating to index $newIndex: ${toc[newIndex].href}');
+    if (nextChapter != null) {
+      await _channel?.go(
+        nextChapter,
+        isAudioBookWithText: false,
+        animated: true,
+      );
     }
   }
 
   @override
   Future<void> skipToPrevious({final bool animated = true}) async {
-    List<Link>? toc = widget.publication.toc;
+    final toc = widget.publication.toc;
     if (toc.isEmpty || _currentLocator == null) {
+      R2Log.d('skipToPrevious: no TOC or no current locator');
       return;
     }
-    String? currentHref = getTextLocatorHrefWithTocFragment(_currentLocator);
-    int? curIndex = toc.indexWhere((l) => l.href == currentHref);
-    if (curIndex > -1) {
-      final newIndex = (curIndex - 1).clamp(0, toc.length - 1);
-      Locator? previousChapter = widget.publication.locatorFromLink(
-        toc[newIndex],
+
+    // Primary path: toc= fragment matching (sub-chapter granularity)
+    int curIndex = -1;
+    final currentHref = getTextLocatorHrefWithTocFragment(_currentLocator);
+    if (currentHref != null) {
+      curIndex = toc.indexWhere((l) => l.href == currentHref);
+    }
+
+    // Fallback: path-based matching (file-level granularity)
+    if (curIndex == -1) {
+      R2Log.d(
+          'skipToPrevious: toc= fragment matching failed, using path fallback');
+      curIndex = findTocIndexByPath(_currentLocator!, toc, lastMatch: false);
+    }
+
+    R2Log.d('skipToPrevious: curIndex=$curIndex, tocLength=${toc.length}');
+
+    if (curIndex <= 0) {
+      R2Log.d('skipToPrevious: cannot go back (not found or at first chapter)');
+      return;
+    }
+
+    final newIndex = curIndex - 1;
+    final previousChapter = widget.publication.locatorFromLink(toc[newIndex]);
+    R2Log.d(
+        'skipToPrevious: navigating to index $newIndex: ${toc[newIndex].href}');
+    if (previousChapter != null) {
+      await _channel?.go(
+        previousChapter,
+        isAudioBookWithText: false,
+        animated: true,
       );
-      if (previousChapter != null) {
-        await _channel?.go(
-          previousChapter,
-          isAudioBookWithText: false,
-          animated: true,
-        );
-      }
     }
   }
 
