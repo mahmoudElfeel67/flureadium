@@ -24,7 +24,7 @@ private var userScripts: [WKUserScript] = []
 
 /// View that intercepts edge taps for page navigation when Readium's
 /// gesture recognizers fail to receive touches through Flutter's platform view.
-class TouchDebugView: UIView {
+class EdgeTapInterceptView: UIView {
     /// Callback for left edge tap
     var onLeftEdgeTap: (() -> Void)?
     /// Callback for right edge tap
@@ -172,22 +172,22 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
       initUserScripts(registrar: registrar)
     }
 
-    _view = TouchDebugView()
+    _view = EdgeTapInterceptView()
     super.init()
 
     channel.setMethodCallHandler(onMethodCall)
     readiumViewController.delegate = self
 
     // Setup fallback edge tap handlers
-    if let touchDebugView = _view as? TouchDebugView {
-        touchDebugView.onLeftEdgeTap = { [weak self] in
+    if let edgeTapView = _view as? EdgeTapInterceptView {
+        edgeTapView.onLeftEdgeTap = { [weak self] in
             guard let self = self else { return }
             print(TAG, "[FALLBACK] Triggering goLeft via fallback tap handler")
             Task { @MainActor in
                 let _ = await self.readiumViewController.goLeft(options: NavigatorGoOptions(animated: true))
             }
         }
-        touchDebugView.onRightEdgeTap = { [weak self] in
+        edgeTapView.onRightEdgeTap = { [weak self] in
             guard let self = self else { return }
             print(TAG, "[FALLBACK] Triggering goRight via fallback tap handler")
             Task { @MainActor in
