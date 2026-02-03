@@ -69,46 +69,68 @@ class TouchDebugView: UIView {
 
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         let result = super.hitTest(point, with: event)
-        print(logTag, "hitTest at \(point) -> \(result?.description ?? "nil")")
 
-        // If we have edge tap callbacks and the touch is in an edge zone,
-        // return self so our gesture recognizer receives the tap
+        // Build type chain from hit view up to self
+        var typeChain: [String] = []
+        var current: UIView? = result
+        while let v = current, v != self {
+            typeChain.append("\(type(of: v))(\(Int(v.frame.width))x\(Int(v.frame.height)))")
+            current = v.superview
+        }
+
         let edgeSize = bounds.width * edgeThresholdPercent
         let isLeftEdge = point.x < edgeSize
         let isRightEdge = point.x > bounds.width - edgeSize
+        let zone = isLeftEdge ? "LEFT_EDGE" : (isRightEdge ? "RIGHT_EDGE" : "CENTER")
 
+        print(logTag, "[PIPELINE] hitTest at \(point) zone=\(zone)")
+        print(logTag, "[PIPELINE]   chain: \(typeChain.joined(separator: " → "))")
+        print(logTag, "[PIPELINE]   interaction: \(result?.isUserInteractionEnabled ?? false)")
+
+        // If we have edge tap callbacks and the touch is in an edge zone,
+        // return self so our gesture recognizer receives the tap
         if (isLeftEdge && onLeftEdgeTap != nil) || (isRightEdge && onRightEdgeTap != nil) {
-            print(logTag, "hitTest: Intercepting edge tap (left=\(isLeftEdge), right=\(isRightEdge))")
+            print(logTag, "[PIPELINE]   → returning SELF (edge intercept)")
             return self
         }
 
-        return result
-    }
-
-    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
-        let result = super.point(inside: point, with: event)
-        print(logTag, "point(inside: \(point)) -> \(result)")
+        print(logTag, "[PIPELINE]   → returning child: \(type(of: result as Any))")
         return result
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        print(logTag, "touchesBegan: \(touches.count) touches")
+        for touch in touches {
+            let loc = touch.location(in: self)
+            print(logTag, "[PIPELINE] touchesBegan at \(loc) view=\(type(of: touch.view as Any))")
+        }
         super.touchesBegan(touches, with: event)
     }
 
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        print(logTag, "touchesMoved: \(touches.count) touches")
         super.touchesMoved(touches, with: event)
     }
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        print(logTag, "touchesEnded: \(touches.count) touches")
+        for touch in touches {
+            let loc = touch.location(in: self)
+            print(logTag, "[PIPELINE] touchesEnded at \(loc)")
+        }
         super.touchesEnded(touches, with: event)
     }
 
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-        print(logTag, "touchesCancelled: \(touches.count) touches")
+        for touch in touches {
+            let loc = touch.location(in: self)
+            print(logTag, "[PIPELINE] touchesCancelled at \(loc)")
+        }
         super.touchesCancelled(touches, with: event)
+    }
+}
+
+/// Debug message handler for JS→Xcode console bridge
+class DebugScriptMessageHandler: NSObject, WKScriptMessageHandler {
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        print("ReadiumReaderView [JS]", message.body)
     }
 }
 
@@ -282,6 +304,8 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
     for script in userScripts {
       userContentController.addUserScript(script)
     }
+    // Register debug message handler for JS→Xcode logging bridge
+    userContentController.add(DebugScriptMessageHandler(), name: "debugLog")
   }
 
   // override EPUBNavigatorDelegate::middleTapHandler
@@ -478,34 +502,22 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
     case "goLeft":
       let animated = call.arguments as! Bool
       let readiumViewController = self.readiumViewController
-      print(TAG, "[DEBUG] goLeft called, isMainThread: \(Thread.isMainThread)")
 
       Task { @MainActor in
-        print(TAG, "[DEBUG] goLeft task started, isMainThread: \(Thread.isMainThread)")
         let success = await readiumViewController.goLeft(options: NavigatorGoOptions(animated: animated))
-        print(TAG, "[DEBUG] goLeft completed, success: \(success), isMainThread: \(Thread.isMainThread)")
-        // Debug: check isUserInteractionEnabled on view hierarchy
-        print(TAG, "[DEBUG] view.isUserInteractionEnabled = \(readiumViewController.view.isUserInteractionEnabled)")
-        for (index, subview) in readiumViewController.view.subviews.enumerated() {
-          print(TAG, "[DEBUG] subview[\(index)] \(type(of: subview)).isUserInteractionEnabled = \(subview.isUserInteractionEnabled)")
-        }
+        print(TAG, "[PIPELINE] goLeft completed, success: \(success)")
+        self.logViewHierarchy(self._view, indent: 0)
         result(success)
       }
       break
     case "goRight":
       let animated = call.arguments as! Bool
       let readiumViewController = self.readiumViewController
-      print(TAG, "[DEBUG] goRight called, isMainThread: \(Thread.isMainThread)")
 
       Task { @MainActor in
-        print(TAG, "[DEBUG] goRight task started, isMainThread: \(Thread.isMainThread)")
         let success = await readiumViewController.goRight(options: NavigatorGoOptions(animated: animated))
-        print(TAG, "[DEBUG] goRight completed, success: \(success), isMainThread: \(Thread.isMainThread)")
-        // Debug: check isUserInteractionEnabled on view hierarchy
-        print(TAG, "[DEBUG] view.isUserInteractionEnabled = \(readiumViewController.view.isUserInteractionEnabled)")
-        for (index, subview) in readiumViewController.view.subviews.enumerated() {
-          print(TAG, "[DEBUG] subview[\(index)] \(type(of: subview)).isUserInteractionEnabled = \(subview.isUserInteractionEnabled)")
-        }
+        print(TAG, "[PIPELINE] goRight completed, success: \(success)")
+        self.logViewHierarchy(self._view, indent: 0)
         result(success)
       }
       break
@@ -608,6 +620,15 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
       break
     }
   }
+
+  private func logViewHierarchy(_ view: UIView, indent: Int) {
+    let prefix = String(repeating: "  ", count: indent)
+    let gestures = view.gestureRecognizers?.count ?? 0
+    print(TAG, "[HIERARCHY] \(prefix)\(type(of: view)) frame=\(Int(view.frame.width))x\(Int(view.frame.height)) interaction=\(view.isUserInteractionEnabled) gestures=\(gestures)")
+    for subview in view.subviews {
+      logViewHierarchy(subview, indent: indent + 1)
+    }
+  }
 }
 
 func initUserScripts(registrar: FlutterPluginRegistrar) {
@@ -642,6 +663,23 @@ func initUserScripts(registrar: FlutterPluginRegistrar) {
   }
   /// Add simple script used by our JS to detect OS
   userScripts.append(WKUserScript(source: "const isAndroid=false,isIos=true;", injectionTime: .atDocumentStart, forMainFrameOnly: false))
+
+  /// Debug: log all touch/click/pointer events at the JavaScript level
+  let debugTouchScript = """
+  (function() {
+      var tag = '[JS-PIPELINE]';
+      ['touchstart','touchend','click','pointerdown','pointerup'].forEach(function(evt) {
+          document.addEventListener(evt, function(e) {
+              var x = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : '?');
+              var y = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : '?');
+              var href = e.target.href || (e.target.closest && e.target.closest('a') ? e.target.closest('a').href : 'none');
+              var msg = tag + ' ' + evt + ': ' + e.target.tagName + ' at(' + x + ',' + y + ') href=' + href;
+              try { window.webkit.messageHandlers.debugLog.postMessage(msg); } catch(ex) {}
+          }, true);
+      });
+  })();
+  """
+  userScripts.append(WKUserScript(source: debugTouchScript, injectionTime: .atDocumentEnd, forMainFrameOnly: false))
 }
 
 private func canScroll(locations: Locator.Locations?) -> Bool {

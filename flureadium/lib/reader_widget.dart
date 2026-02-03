@@ -92,8 +92,12 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
     );
 
     return Listener(
-      onPointerDown: (final _) {
+      onPointerDown: (final event) {
+        R2Log.d('[TAP-DEBUG] Listener onPointerDown at ${event.position}');
         enableWakelock();
+      },
+      onPointerUp: (final event) {
+        R2Log.d('[TAP-DEBUG] Listener onPointerUp at ${event.position}');
       },
       child: _readerWidget,
     );
