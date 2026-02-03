@@ -351,6 +351,6 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
     if (tocFragment == null) {
       return null;
     }
-    return '${txtLoc.toTextLocator().hrefPath.substring(1)}#${tocFragment.substring(4)}';
+    return '${txtLoc.toTextLocator().hrefPath}#${tocFragment.substring(4)}';
   }
 }
