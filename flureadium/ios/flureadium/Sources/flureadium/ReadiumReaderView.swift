@@ -22,11 +22,9 @@ class ReadiumBugLogger: ReadiumShared.WarningLogger {
 private let readiumBugLogger = ReadiumBugLogger()
 private var userScripts: [WKUserScript] = []
 
-/// Debug view to log all touch events reaching the native layer
-/// Also provides fallback edge tap handling when Readium's gesture recognizers fail
+/// View that intercepts edge taps for page navigation when Readium's
+/// gesture recognizers fail to receive touches through Flutter's platform view.
 class TouchDebugView: UIView {
-    private let logTag = "ReadiumReaderView [TOUCH]"
-
     /// Callback for left edge tap
     var onLeftEdgeTap: (() -> Void)?
     /// Callback for right edge tap
@@ -56,13 +54,9 @@ class TouchDebugView: UIView {
         let location = gesture.location(in: self)
         let edgeSize = bounds.width * edgeThresholdPercent
 
-        print(logTag, "[FALLBACK TAP] at \(location), edgeSize=\(edgeSize), bounds=\(bounds)")
-
         if location.x < edgeSize {
-            print(logTag, "[FALLBACK TAP] LEFT edge detected")
             onLeftEdgeTap?()
         } else if location.x > bounds.width - edgeSize {
-            print(logTag, "[FALLBACK TAP] RIGHT edge detected")
             onRightEdgeTap?()
         }
     }
@@ -70,216 +64,17 @@ class TouchDebugView: UIView {
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         let result = super.hitTest(point, with: event)
 
-        // Build type chain from hit view up to self
-        var typeChain: [String] = []
-        var current: UIView? = result
-        while let v = current, v != self {
-            typeChain.append("\(type(of: v))(\(Int(v.frame.width))x\(Int(v.frame.height)))")
-            current = v.superview
-        }
-
         let edgeSize = bounds.width * edgeThresholdPercent
         let isLeftEdge = point.x < edgeSize
         let isRightEdge = point.x > bounds.width - edgeSize
-        let zone = isLeftEdge ? "LEFT_EDGE" : (isRightEdge ? "RIGHT_EDGE" : "CENTER")
-
-        print(logTag, "[PIPELINE] hitTest at \(point) zone=\(zone)")
-        print(logTag, "[PIPELINE]   chain: \(typeChain.joined(separator: " → "))")
-        print(logTag, "[PIPELINE]   interaction: \(result?.isUserInteractionEnabled ?? false)")
-
-        // Debug #4: Log coordinate space transforms when result is oversized
-        if let result = result, result.frame.width > bounds.width {
-            // Find WKScrollView and WKContentView in the chain
-            var v: UIView? = result
-            var wkScrollView: UIScrollView?
-            var wkContentView: UIView?
-            while let view = v {
-                let className = String(describing: type(of: view))
-                if className == "WKScrollView", let sv = view as? UIScrollView {
-                    wkScrollView = sv
-                }
-                if className == "WKContentView" {
-                    wkContentView = view
-                }
-                v = view.superview
-            }
-
-            let pointInResult = self.convert(point, to: result)
-            print(logTag, "[COORDS] point in TouchDebugView: \(point)")
-            print(logTag, "[COORDS] point in hitResult(\(type(of: result))): \(pointInResult)")
-            print(logTag, "[COORDS] hitResult.frame.origin: \(result.frame.origin)")
-
-            if let cv = wkContentView {
-                let pointInCV = self.convert(point, to: cv)
-                print(logTag, "[COORDS] point in WKContentView: \(pointInCV)")
-                print(logTag, "[COORDS] WKContentView.frame: \(cv.frame)")
-            }
-
-            if let sv = wkScrollView {
-                let pointInSV = self.convert(point, to: sv)
-                print(logTag, "[COORDS] point in WKScrollView: \(pointInSV)")
-                print(logTag, "[COORDS] WKScrollView.contentOffset: \(sv.contentOffset)")
-                print(logTag, "[COORDS] WKScrollView.contentSize: \(sv.contentSize)")
-                print(logTag, "[COORDS] WKScrollView.frame: \(sv.frame)")
-            }
-        }
 
         // If we have edge tap callbacks and the touch is in an edge zone,
         // return self so our gesture recognizer receives the tap
         if (isLeftEdge && onLeftEdgeTap != nil) || (isRightEdge && onRightEdgeTap != nil) {
-            print(logTag, "[PIPELINE]   → returning SELF (edge intercept)")
             return self
         }
 
-        print(logTag, "[PIPELINE]   → returning child: \(type(of: result as Any))")
         return result
-    }
-
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        for touch in touches {
-            let loc = touch.location(in: self)
-            print(logTag, "[PIPELINE] touchesBegan at \(loc) view=\(type(of: touch.view as Any))")
-
-            // Debug #4: Log touch coordinates in different coordinate spaces
-            if let touchView = touch.view, touchView.frame.width > bounds.width {
-                let locInTouchView = touch.location(in: touchView)
-                let locInWindow = touch.location(in: nil)
-                print(logTag, "[TOUCH-COORDS] in touchView(\(type(of: touchView))): \(locInTouchView)")
-                print(logTag, "[TOUCH-COORDS] in window: \(locInWindow)")
-
-                // Find WKScrollView
-                var v: UIView? = touchView
-                while let view = v {
-                    let className = String(describing: type(of: view))
-                    if className == "WKScrollView", let sv = view as? UIScrollView {
-                        let locInSV = touch.location(in: sv)
-                        print(logTag, "[TOUCH-COORDS] in WKScrollView: \(locInSV)")
-                        print(logTag, "[TOUCH-COORDS] WKScrollView.contentOffset: \(sv.contentOffset)")
-                        break
-                    }
-                    v = view.superview
-                }
-            }
-        }
-        super.touchesBegan(touches, with: event)
-    }
-
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        super.touchesMoved(touches, with: event)
-    }
-
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        for touch in touches {
-            let loc = touch.location(in: self)
-            print(logTag, "[PIPELINE] touchesEnded at \(loc)")
-        }
-        super.touchesEnded(touches, with: event)
-    }
-
-    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-        for touch in touches {
-            let loc = touch.location(in: self)
-            print(logTag, "[PIPELINE] touchesCancelled at \(loc)")
-        }
-        super.touchesCancelled(touches, with: event)
-    }
-}
-
-/// Debug message handler for JS→Xcode console bridge
-class DebugScriptMessageHandler: NSObject, WKScriptMessageHandler {
-    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        print("ReadiumReaderView [JS]", message.body)
-    }
-}
-
-/// Debug observer that tracks UIGestureRecognizer state changes on WKContentView
-/// to understand why the click gesture recognizer doesn't fire after goLeft/goRight.
-class GestureRecognizerObserver: NSObject {
-    private let logTag = "ReadiumReaderView [GR-DEBUG]"
-    private var observations: [NSKeyValueObservation] = []
-
-    /// Find WKContentView(s) in the view hierarchy and observe their gesture recognizers.
-    /// viewportWidth: only observe WKContentViews wider than this (to skip normal-sized ones).
-    /// verbose: if true, enumerate all gesture recognizers (first call only).
-    func observe(rootView: UIView, viewportWidth: CGFloat = 0, verbose: Bool = false) {
-        stopObserving()
-        let contentViews = findWKContentViews(in: rootView)
-        print(logTag, "Found \(contentViews.count) WKContentView(s)")
-
-        for contentView in contentViews {
-            let frame = contentView.frame
-            let gestures = contentView.gestureRecognizers ?? []
-
-            // Skip WKContentViews that are viewport-sized or zero-sized (not the problem)
-            if viewportWidth > 0 && frame.width <= viewportWidth {
-                print(logTag, "  Skipping WKContentView(\(Int(frame.width))x\(Int(frame.height))) — not oversized")
-                continue
-            }
-
-            print(logTag, "Observing WKContentView frame=\(Int(frame.width))x\(Int(frame.height)), \(gestures.count) gesture recognizers")
-
-            for (i, gr) in gestures.enumerated() {
-                if verbose {
-                    let desc = describeGestureRecognizer(gr)
-                    print(logTag, "  [\(i)] \(type(of: gr)) state=\(stateName(gr.state)) enabled=\(gr.isEnabled) \(desc)")
-                }
-
-                // Observe state changes — read recognizer.state directly (KVO change dict is unreliable)
-                let observation = gr.observe(\.state, options: []) { [weak self] recognizer, _ in
-                    guard let self = self else { return }
-                    let currentState = self.stateName(recognizer.state)
-                    let cvFrame = contentView.frame
-                    print(self.logTag, "  STATE CHANGE on WKContentView(\(Int(cvFrame.width))x\(Int(cvFrame.height))): \(type(of: recognizer)) → \(currentState)")
-                }
-                observations.append(observation)
-            }
-        }
-    }
-
-    func stopObserving() {
-        observations.removeAll()
-    }
-
-    private func findWKContentViews(in view: UIView) -> [UIView] {
-        var results: [UIView] = []
-        let className = String(describing: type(of: view))
-        if className == "WKContentView" {
-            results.append(view)
-        }
-        for subview in view.subviews {
-            results.append(contentsOf: findWKContentViews(in: subview))
-        }
-        return results
-    }
-
-    private func describeGestureRecognizer(_ gr: UIGestureRecognizer) -> String {
-        var parts: [String] = []
-        if let tap = gr as? UITapGestureRecognizer {
-            parts.append("taps=\(tap.numberOfTapsRequired) touches=\(tap.numberOfTouchesRequired)")
-        }
-        if let longPress = gr as? UILongPressGestureRecognizer {
-            parts.append("minDuration=\(longPress.minimumPressDuration)")
-        }
-        if gr.cancelsTouchesInView { parts.append("cancels") }
-        if gr.delaysTouchesBegan { parts.append("delaysBegin") }
-        if gr.delaysTouchesEnded { parts.append("delaysEnd") }
-        return parts.joined(separator: " ")
-    }
-
-    private func stateName(_ state: UIGestureRecognizer.State) -> String {
-        switch state {
-        case .possible: return "possible"
-        case .began: return "began"
-        case .changed: return "changed"
-        case .ended: return "ended/recognized"
-        case .cancelled: return "cancelled"
-        case .failed: return "failed"
-        @unknown default: return "unknown(\(state.rawValue))"
-        }
-    }
-
-    deinit {
-        stopObserving()
     }
 }
 
@@ -296,9 +91,6 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
 
   // Retain the navigation adapter to prevent ARC deallocation
   private var directionalNavigationAdapter: DirectionalNavigationAdapter?
-
-  // Debug: observe gesture recognizer state changes on WKContentView
-  private let gestureObserver = GestureRecognizerObserver()
 
   var publicationIdentifier: String?
 
@@ -456,8 +248,6 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
     for script in userScripts {
       userContentController.addUserScript(script)
     }
-    // Register debug message handler for JS→Xcode logging bridge
-    userContentController.add(DebugScriptMessageHandler(), name: "debugLog")
   }
 
   // override EPUBNavigatorDelegate::middleTapHandler
@@ -491,8 +281,6 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
     if (!hasSentReady) {
       self.readerStatusStreamHandler?.sendEvent(ReadiumReaderStatusReady)
       hasSentReady = true
-      // Start observing gesture recognizers on initial load (verbose on first call for reference)
-      self.gestureObserver.observe(rootView: self._view, viewportWidth: self._view.bounds.width, verbose: true)
     }
     emitOnPageChanged(locator: locator)
   }
@@ -659,9 +447,6 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
 
       Task { @MainActor in
         let success = await readiumViewController.goLeft(options: NavigatorGoOptions(animated: animated))
-        print(TAG, "[PIPELINE] goLeft completed, success: \(success)")
-        self.logViewHierarchy(self._view, indent: 0)
-        self.gestureObserver.observe(rootView: self._view, viewportWidth: self._view.bounds.width)
         result(success)
       }
       break
@@ -671,9 +456,6 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
 
       Task { @MainActor in
         let success = await readiumViewController.goRight(options: NavigatorGoOptions(animated: animated))
-        print(TAG, "[PIPELINE] goRight completed, success: \(success)")
-        self.logViewHierarchy(self._view, indent: 0)
-        self.gestureObserver.observe(rootView: self._view, viewportWidth: self._view.bounds.width)
         result(success)
       }
       break
@@ -777,14 +559,6 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
     }
   }
 
-  private func logViewHierarchy(_ view: UIView, indent: Int) {
-    let prefix = String(repeating: "  ", count: indent)
-    let gestures = view.gestureRecognizers?.count ?? 0
-    print(TAG, "[HIERARCHY] \(prefix)\(type(of: view)) frame=\(Int(view.frame.width))x\(Int(view.frame.height)) interaction=\(view.isUserInteractionEnabled) gestures=\(gestures)")
-    for subview in view.subviews {
-      logViewHierarchy(subview, indent: indent + 1)
-    }
-  }
 }
 
 func initUserScripts(registrar: FlutterPluginRegistrar) {
@@ -820,25 +594,53 @@ func initUserScripts(registrar: FlutterPluginRegistrar) {
   /// Add simple script used by our JS to detect OS
   userScripts.append(WKUserScript(source: "const isAndroid=false,isIos=true;", injectionTime: .atDocumentStart, forMainFrameOnly: false))
 
-  /// Debug: log all touch/click/pointer events at the JavaScript level
-  let debugTouchScript = """
+  /// Click synthesis: Flutter's synthetic touch delivery prevents WKWebView from
+  /// dispatching native click events after goLeft/goRight (when WKContentView is oversized).
+  /// This script monitors pointerup events and synthesizes a click if the native one
+  /// doesn't fire within 50ms.
+  let clickSynthesisScript = """
   (function() {
-      var tag = '[JS-PIPELINE]';
-      ['touchstart','touchend','click','pointerdown','pointerup'].forEach(function(evt) {
-          document.addEventListener(evt, function(e) {
-              var x = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : '?');
-              var y = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : '?');
-              var href = e.target.href || (e.target.closest && e.target.closest('a') ? e.target.closest('a').href : 'none');
-              var scrollX = window.scrollX || 0;
-              var scrollLeft = document.scrollingElement ? document.scrollingElement.scrollLeft : '?';
-              var pageX = e.pageX || '?';
-              var msg = tag + ' ' + evt + ': ' + e.target.tagName.toLowerCase() + ' client(' + x + ',' + y + ') page(' + pageX + ',' + (e.pageY || '?') + ') scrollX=' + scrollX + ' scrollLeft=' + scrollLeft + ' href=' + href;
-              try { window.webkit.messageHandlers.debugLog.postMessage(msg); } catch(ex) {}
-          }, true);
-      });
+      var pendingClickTimer = null;
+      var lastPointerDownPos = null;
+
+      document.addEventListener('pointerdown', function(e) {
+          lastPointerDownPos = { x: e.clientX, y: e.clientY };
+      }, true);
+
+      document.addEventListener('pointerup', function(e) {
+          if (!lastPointerDownPos) return;
+          var dx = e.clientX - lastPointerDownPos.x;
+          var dy = e.clientY - lastPointerDownPos.y;
+          if (Math.sqrt(dx * dx + dy * dy) > 10) return;
+
+          var x = e.clientX;
+          var y = e.clientY;
+          var target = e.target;
+
+          if (pendingClickTimer) clearTimeout(pendingClickTimer);
+          pendingClickTimer = setTimeout(function() {
+              pendingClickTimer = null;
+              var clickEvent = new MouseEvent('click', {
+                  bubbles: true,
+                  cancelable: true,
+                  view: window,
+                  clientX: x,
+                  clientY: y,
+                  button: 0
+              });
+              target.dispatchEvent(clickEvent);
+          }, 50);
+      }, true);
+
+      document.addEventListener('click', function(e) {
+          if (pendingClickTimer) {
+              clearTimeout(pendingClickTimer);
+              pendingClickTimer = null;
+          }
+      }, true);
   })();
   """
-  userScripts.append(WKUserScript(source: debugTouchScript, injectionTime: .atDocumentEnd, forMainFrameOnly: false))
+  userScripts.append(WKUserScript(source: clickSynthesisScript, injectionTime: .atDocumentEnd, forMainFrameOnly: false))
 }
 
 private func canScroll(locations: Locator.Locations?) -> Bool {
