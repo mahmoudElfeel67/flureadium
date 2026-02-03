@@ -87,6 +87,43 @@ class TouchDebugView: UIView {
         print(logTag, "[PIPELINE]   chain: \(typeChain.joined(separator: " → "))")
         print(logTag, "[PIPELINE]   interaction: \(result?.isUserInteractionEnabled ?? false)")
 
+        // Debug #4: Log coordinate space transforms when result is oversized
+        if let result = result, result.frame.width > bounds.width {
+            // Find WKScrollView and WKContentView in the chain
+            var v: UIView? = result
+            var wkScrollView: UIScrollView?
+            var wkContentView: UIView?
+            while let view = v {
+                let className = String(describing: type(of: view))
+                if className == "WKScrollView", let sv = view as? UIScrollView {
+                    wkScrollView = sv
+                }
+                if className == "WKContentView" {
+                    wkContentView = view
+                }
+                v = view.superview
+            }
+
+            let pointInResult = self.convert(point, to: result)
+            print(logTag, "[COORDS] point in TouchDebugView: \(point)")
+            print(logTag, "[COORDS] point in hitResult(\(type(of: result))): \(pointInResult)")
+            print(logTag, "[COORDS] hitResult.frame.origin: \(result.frame.origin)")
+
+            if let cv = wkContentView {
+                let pointInCV = self.convert(point, to: cv)
+                print(logTag, "[COORDS] point in WKContentView: \(pointInCV)")
+                print(logTag, "[COORDS] WKContentView.frame: \(cv.frame)")
+            }
+
+            if let sv = wkScrollView {
+                let pointInSV = self.convert(point, to: sv)
+                print(logTag, "[COORDS] point in WKScrollView: \(pointInSV)")
+                print(logTag, "[COORDS] WKScrollView.contentOffset: \(sv.contentOffset)")
+                print(logTag, "[COORDS] WKScrollView.contentSize: \(sv.contentSize)")
+                print(logTag, "[COORDS] WKScrollView.frame: \(sv.frame)")
+            }
+        }
+
         // If we have edge tap callbacks and the touch is in an edge zone,
         // return self so our gesture recognizer receives the tap
         if (isLeftEdge && onLeftEdgeTap != nil) || (isRightEdge && onRightEdgeTap != nil) {
@@ -102,6 +139,27 @@ class TouchDebugView: UIView {
         for touch in touches {
             let loc = touch.location(in: self)
             print(logTag, "[PIPELINE] touchesBegan at \(loc) view=\(type(of: touch.view as Any))")
+
+            // Debug #4: Log touch coordinates in different coordinate spaces
+            if let touchView = touch.view, touchView.frame.width > bounds.width {
+                let locInTouchView = touch.location(in: touchView)
+                let locInWindow = touch.location(in: nil)
+                print(logTag, "[TOUCH-COORDS] in touchView(\(type(of: touchView))): \(locInTouchView)")
+                print(logTag, "[TOUCH-COORDS] in window: \(locInWindow)")
+
+                // Find WKScrollView
+                var v: UIView? = touchView
+                while let view = v {
+                    let className = String(describing: type(of: view))
+                    if className == "WKScrollView", let sv = view as? UIScrollView {
+                        let locInSV = touch.location(in: sv)
+                        print(logTag, "[TOUCH-COORDS] in WKScrollView: \(locInSV)")
+                        print(logTag, "[TOUCH-COORDS] WKScrollView.contentOffset: \(sv.contentOffset)")
+                        break
+                    }
+                    v = view.superview
+                }
+            }
         }
         super.touchesBegan(touches, with: event)
     }
@@ -771,7 +829,10 @@ func initUserScripts(registrar: FlutterPluginRegistrar) {
               var x = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : '?');
               var y = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : '?');
               var href = e.target.href || (e.target.closest && e.target.closest('a') ? e.target.closest('a').href : 'none');
-              var msg = tag + ' ' + evt + ': ' + e.target.tagName + ' at(' + x + ',' + y + ') href=' + href;
+              var scrollX = window.scrollX || 0;
+              var scrollLeft = document.scrollingElement ? document.scrollingElement.scrollLeft : '?';
+              var pageX = e.pageX || '?';
+              var msg = tag + ' ' + evt + ': ' + e.target.tagName.toLowerCase() + ' client(' + x + ',' + y + ') page(' + pageX + ',' + (e.pageY || '?') + ') scrollX=' + scrollX + ' scrollLeft=' + scrollLeft + ' href=' + href;
               try { window.webkit.messageHandlers.debugLog.postMessage(msg); } catch(ex) {}
           }, true);
       });
