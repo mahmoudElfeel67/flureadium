@@ -32,8 +32,7 @@ export class ComicBookPage {
       container = this.renameElementName(figureQuerySelector, 'div');
       container.classList.add('page');
 
-      // WORKAROUND: Hide all figures elements to make sure there is no duplicated images on the page.
-      // TODO: remove this when this issue is solved: https://notalib.atlassian.net/browse/NOTA-9997
+      // WORKAROUND: Hide all figure elements to make sure there is no duplicated images on the page.
       for (const figureElement of this.document.querySelectorAll('figure')) {
         figureElement.setAttribute('style', 'display: none;');
       }

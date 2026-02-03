@@ -3,7 +3,7 @@
 A comprehensive Flutter plugin for reading EPUB ebooks, audiobooks, and comics using the [Readium](https://readium.org/) toolkits.
 
 [![pub package](https://img.shields.io/pub/v/flureadium.svg)](https://pub.dev/packages/flureadium)
-[![CI](https://github.com/nickvnota/flureadium/actions/workflows/test.yml/badge.svg)](https://github.com/nickvnota/flureadium/actions)
+[![CI](https://github.com/mulev/flureadium/actions/workflows/test.yml/badge.svg)](https://github.com/mulev/flureadium/actions)
 
 ## Features
 
@@ -129,7 +129,7 @@ flureadium.onTextLocatorChanged.listen((locator) {
 ## Documentation
 
 - [API Reference](https://pub.dev/documentation/flureadium/latest/)
-- [Example App](https://github.com/nickvnota/flureadium/tree/main/flureadium/example)
+- [Example App](https://github.com/mulev/flureadium/tree/main/flureadium/example)
 
 ## Supported Formats
 
@@ -151,7 +151,7 @@ Run this from the root of the plugin directory.
 
 ## Contributing
 
-Contributions are welcome! Please read our [Contributing Guide](https://github.com/nickvnota/flureadium/blob/main/CONTRIBUTING.md).
+Contributions are welcome! Please read our [Contributing Guide](https://github.com/mulev/flureadium/blob/main/CONTRIBUTING.md).
 
 ## License
 

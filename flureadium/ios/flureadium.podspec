@@ -9,9 +9,9 @@ Pod::Spec.new do |s|
   s.description      = <<-DESC
 A new Flutter plugin project.
                        DESC
-  s.homepage         = 'http://github.com/notalib/flureadium'
+  s.homepage         = 'http://github.com/mulev/flureadium'
   s.license          = { :file => '../LICENSE' }
-  s.author           = { 'Your Company' => 'tech-contact@nota.dk' }
+  s.author           = { 'Mikhail Mulev' => 'm.mulev@gmail.com' }
   s.source           = { :http => 'https://github.com/readium/podspecs' }
   s.source_files     = 'flureadium/Sources/flureadium/**/*.swift'
   s.resource_bundles = {'flureadium_privacy' => ['flureadium/Sources/flureadium/PrivacyInfo.xcprivacy']}

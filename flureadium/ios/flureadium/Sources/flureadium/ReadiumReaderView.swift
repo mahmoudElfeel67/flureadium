@@ -11,7 +11,7 @@ private let ReadiumReaderStatusLoading = "loading"
 private let ReadiumReaderStatusClosed = "closed"
 private let ReadiumReaderStatusError = "error"
 
-let readiumReaderViewType = "dk.nota.flureadium/ReadiumReaderWidget"
+let readiumReaderViewType = "dev.mulev.flureadium/ReadiumReaderWidget"
 
 class ReadiumBugLogger: ReadiumShared.WarningLogger {
   func log(_ warning: Warning) {
@@ -21,6 +21,62 @@ class ReadiumBugLogger: ReadiumShared.WarningLogger {
 
 private let readiumBugLogger = ReadiumBugLogger()
 private var userScripts: [WKUserScript] = []
+
+/// View that intercepts edge taps for page navigation when Readium's
+/// gesture recognizers fail to receive touches through Flutter's platform view.
+class EdgeTapInterceptView: UIView {
+    /// Callback for left edge tap
+    var onLeftEdgeTap: (() -> Void)?
+    /// Callback for right edge tap
+    var onRightEdgeTap: (() -> Void)?
+    /// Edge threshold as percentage of width (default 30%)
+    var edgeThresholdPercent: CGFloat = 0.3
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupGestureRecognizer()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupGestureRecognizer()
+    }
+
+    private func setupGestureRecognizer() {
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+        tapGesture.cancelsTouchesInView = false
+        tapGesture.delaysTouchesBegan = false
+        tapGesture.delaysTouchesEnded = false
+        addGestureRecognizer(tapGesture)
+    }
+
+    @objc private func handleTap(_ gesture: UITapGestureRecognizer) {
+        let location = gesture.location(in: self)
+        let edgeSize = bounds.width * edgeThresholdPercent
+
+        if location.x < edgeSize {
+            onLeftEdgeTap?()
+        } else if location.x > bounds.width - edgeSize {
+            onRightEdgeTap?()
+        }
+    }
+
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        let result = super.hitTest(point, with: event)
+
+        let edgeSize = bounds.width * edgeThresholdPercent
+        let isLeftEdge = point.x < edgeSize
+        let isRightEdge = point.x > bounds.width - edgeSize
+
+        // If we have edge tap callbacks and the touch is in an edge zone,
+        // return self so our gesture recognizer receives the tap
+        if (isLeftEdge && onLeftEdgeTap != nil) || (isRightEdge && onRightEdgeTap != nil) {
+            return self
+        }
+
+        return result
+    }
+}
 
 class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, VisualNavigatorDelegate {
 
@@ -32,6 +88,9 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
   private let readiumViewController: EPUBNavigatorViewController
   private var isVerticalScroll = false
   private var hasSentReady = false
+
+  // Retain the navigation adapter to prevent ARC deallocation
+  private var directionalNavigationAdapter: DirectionalNavigationAdapter?
 
   var publicationIdentifier: String?
 
@@ -113,11 +172,29 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
       initUserScripts(registrar: registrar)
     }
 
-    _view = UIView()
+    _view = EdgeTapInterceptView()
     super.init()
 
     channel.setMethodCallHandler(onMethodCall)
     readiumViewController.delegate = self
+
+    // Setup fallback edge tap handlers
+    if let edgeTapView = _view as? EdgeTapInterceptView {
+        edgeTapView.onLeftEdgeTap = { [weak self] in
+            guard let self = self else { return }
+            print(TAG, "[FALLBACK] Triggering goLeft via fallback tap handler")
+            Task { @MainActor in
+                let _ = await self.readiumViewController.goLeft(options: NavigatorGoOptions(animated: true))
+            }
+        }
+        edgeTapView.onRightEdgeTap = { [weak self] in
+            guard let self = self else { return }
+            print(TAG, "[FALLBACK] Triggering goRight via fallback tap handler")
+            Task { @MainActor in
+                let _ = await self.readiumViewController.goRight(options: NavigatorGoOptions(animated: true))
+            }
+        }
+    }
 
     let child: UIView = readiumViewController.view
     let view = _view
@@ -142,9 +219,11 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
     ///
     /// Bind it to the navigator before adding your own observers to prevent
     /// triggering your actions when turning pages.
-    DirectionalNavigationAdapter(
+    /// NOTE: Store in property to prevent ARC deallocation
+    directionalNavigationAdapter = DirectionalNavigationAdapter(
         pointerPolicy: .init(types: [.mouse, .touch])
-    ).bind(to: readiumViewController)
+    )
+    directionalNavigationAdapter?.bind(to: readiumViewController)
 
     print(TAG, "::init success")
   }
@@ -356,34 +435,28 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
       let animated = args[1] as! Bool
       let isAudioBookWithText = args[2] as? Bool ?? false
 
-      Task.detached(priority: .high) {
+      Task { @MainActor in
         await self.goToLocator(locator: locator, animated: animated)
         let _ = await self.setLocation(locator: locator, isAudioBookWithText: isAudioBookWithText)
-        await MainActor.run() {
-          result(true)
-        }
+        result(true)
       }
       break
     case "goLeft":
       let animated = call.arguments as! Bool
       let readiumViewController = self.readiumViewController
 
-      Task.detached(priority: .high) {
+      Task { @MainActor in
         let success = await readiumViewController.goLeft(options: NavigatorGoOptions(animated: animated))
-        await MainActor.run() {
-          result(success)
-        }
+        result(success)
       }
       break
     case "goRight":
       let animated = call.arguments as! Bool
       let readiumViewController = self.readiumViewController
 
-      Task.detached(priority: .high) {
+      Task { @MainActor in
         let success = await readiumViewController.goRight(options: NavigatorGoOptions(animated: animated))
-        await MainActor.run() {
-          result(success)
-        }
+        result(success)
       }
       break
     case "setLocation":
@@ -485,6 +558,7 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
       break
     }
   }
+
 }
 
 func initUserScripts(registrar: FlutterPluginRegistrar) {
@@ -519,6 +593,54 @@ func initUserScripts(registrar: FlutterPluginRegistrar) {
   }
   /// Add simple script used by our JS to detect OS
   userScripts.append(WKUserScript(source: "const isAndroid=false,isIos=true;", injectionTime: .atDocumentStart, forMainFrameOnly: false))
+
+  /// Click synthesis: Flutter's synthetic touch delivery prevents WKWebView from
+  /// dispatching native click events after goLeft/goRight (when WKContentView is oversized).
+  /// This script monitors pointerup events and synthesizes a click if the native one
+  /// doesn't fire within 50ms.
+  let clickSynthesisScript = """
+  (function() {
+      var pendingClickTimer = null;
+      var lastPointerDownPos = null;
+
+      document.addEventListener('pointerdown', function(e) {
+          lastPointerDownPos = { x: e.clientX, y: e.clientY };
+      }, true);
+
+      document.addEventListener('pointerup', function(e) {
+          if (!lastPointerDownPos) return;
+          var dx = e.clientX - lastPointerDownPos.x;
+          var dy = e.clientY - lastPointerDownPos.y;
+          if (Math.sqrt(dx * dx + dy * dy) > 10) return;
+
+          var x = e.clientX;
+          var y = e.clientY;
+          var target = e.target;
+
+          if (pendingClickTimer) clearTimeout(pendingClickTimer);
+          pendingClickTimer = setTimeout(function() {
+              pendingClickTimer = null;
+              var clickEvent = new MouseEvent('click', {
+                  bubbles: true,
+                  cancelable: true,
+                  view: window,
+                  clientX: x,
+                  clientY: y,
+                  button: 0
+              });
+              target.dispatchEvent(clickEvent);
+          }, 50);
+      }, true);
+
+      document.addEventListener('click', function(e) {
+          if (pendingClickTimer) {
+              clearTimeout(pendingClickTimer);
+              pendingClickTimer = null;
+          }
+      }, true);
+  })();
+  """
+  userScripts.append(WKUserScript(source: clickSynthesisScript, injectionTime: .atDocumentEnd, forMainFrameOnly: false))
 }
 
 private func canScroll(locations: Locator.Locations?) -> Bool {

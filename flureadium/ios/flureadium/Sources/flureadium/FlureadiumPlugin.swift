@@ -43,7 +43,7 @@ public class FlureadiumPlugin: NSObject, FlutterPlugin, ReadiumShared.WarningLog
   ])
 
   public static func register(with registrar: FlutterPluginRegistrar) {
-    let channel = FlutterMethodChannel(name: "dk.nota.flureadium/main", binaryMessenger: registrar.messenger())
+    let channel = FlutterMethodChannel(name: "dev.mulev.flureadium/main", binaryMessenger: registrar.messenger())
     let instance = FlureadiumPlugin()
     registrar.addMethodCallDelegate(instance, channel: channel)
     instance.timebasedPlayerStateStreamHandler = EventStreamHandler(withName: "timebased-state", messenger: registrar.messenger())

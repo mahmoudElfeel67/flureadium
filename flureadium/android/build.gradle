@@ -1,4 +1,4 @@
-group 'dk.nota.lyt.flureadium'
+group 'dev.mulev.lyt.flureadium'
 version '1.0-SNAPSHOT'
 
 buildscript {
@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 android {
   if (project.android.hasProperty('namespace')) {
-    namespace 'dk.nota.flureadium'
+    namespace 'dev.mulev.flureadium'
   }
 
   compileOptions {
