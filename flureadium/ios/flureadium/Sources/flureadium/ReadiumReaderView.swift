@@ -11,7 +11,7 @@ private let ReadiumReaderStatusLoading = "loading"
 private let ReadiumReaderStatusClosed = "closed"
 private let ReadiumReaderStatusError = "error"
 
-let readiumReaderViewType = "dk.nota.flureadium/ReadiumReaderWidget"
+let readiumReaderViewType = "dev.mulev.flureadium/ReadiumReaderWidget"
 
 class ReadiumBugLogger: ReadiumShared.WarningLogger {
   func log(_ warning: Warning) {
@@ -21,6 +21,96 @@ class ReadiumBugLogger: ReadiumShared.WarningLogger {
 
 private let readiumBugLogger = ReadiumBugLogger()
 private var userScripts: [WKUserScript] = []
+
+/// Debug view to log all touch events reaching the native layer
+/// Also provides fallback edge tap handling when Readium's gesture recognizers fail
+class TouchDebugView: UIView {
+    private let logTag = "ReadiumReaderView [TOUCH]"
+
+    /// Callback for left edge tap
+    var onLeftEdgeTap: (() -> Void)?
+    /// Callback for right edge tap
+    var onRightEdgeTap: (() -> Void)?
+    /// Edge threshold as percentage of width (default 30%)
+    var edgeThresholdPercent: CGFloat = 0.3
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupGestureRecognizer()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupGestureRecognizer()
+    }
+
+    private func setupGestureRecognizer() {
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+        tapGesture.cancelsTouchesInView = false
+        tapGesture.delaysTouchesBegan = false
+        tapGesture.delaysTouchesEnded = false
+        addGestureRecognizer(tapGesture)
+    }
+
+    @objc private func handleTap(_ gesture: UITapGestureRecognizer) {
+        let location = gesture.location(in: self)
+        let edgeSize = bounds.width * edgeThresholdPercent
+
+        print(logTag, "[FALLBACK TAP] at \(location), edgeSize=\(edgeSize), bounds=\(bounds)")
+
+        if location.x < edgeSize {
+            print(logTag, "[FALLBACK TAP] LEFT edge detected")
+            onLeftEdgeTap?()
+        } else if location.x > bounds.width - edgeSize {
+            print(logTag, "[FALLBACK TAP] RIGHT edge detected")
+            onRightEdgeTap?()
+        }
+    }
+
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        let result = super.hitTest(point, with: event)
+        print(logTag, "hitTest at \(point) -> \(result?.description ?? "nil")")
+
+        // If we have edge tap callbacks and the touch is in an edge zone,
+        // return self so our gesture recognizer receives the tap
+        let edgeSize = bounds.width * edgeThresholdPercent
+        let isLeftEdge = point.x < edgeSize
+        let isRightEdge = point.x > bounds.width - edgeSize
+
+        if (isLeftEdge && onLeftEdgeTap != nil) || (isRightEdge && onRightEdgeTap != nil) {
+            print(logTag, "hitTest: Intercepting edge tap (left=\(isLeftEdge), right=\(isRightEdge))")
+            return self
+        }
+
+        return result
+    }
+
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        let result = super.point(inside: point, with: event)
+        print(logTag, "point(inside: \(point)) -> \(result)")
+        return result
+    }
+
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        print(logTag, "touchesBegan: \(touches.count) touches")
+        super.touchesBegan(touches, with: event)
+    }
+
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        print(logTag, "touchesMoved: \(touches.count) touches")
+        super.touchesMoved(touches, with: event)
+    }
+
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        print(logTag, "touchesEnded: \(touches.count) touches")
+        super.touchesEnded(touches, with: event)
+    }
+
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        print(logTag, "touchesCancelled: \(touches.count) touches")
+        super.touchesCancelled(touches, with: event)
+    }
+}
 
 class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, VisualNavigatorDelegate {
 
@@ -32,6 +122,9 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
   private let readiumViewController: EPUBNavigatorViewController
   private var isVerticalScroll = false
   private var hasSentReady = false
+
+  // Retain the navigation adapter to prevent ARC deallocation
+  private var directionalNavigationAdapter: DirectionalNavigationAdapter?
 
   var publicationIdentifier: String?
 
@@ -113,11 +206,29 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
       initUserScripts(registrar: registrar)
     }
 
-    _view = UIView()
+    _view = TouchDebugView()
     super.init()
 
     channel.setMethodCallHandler(onMethodCall)
     readiumViewController.delegate = self
+
+    // Setup fallback edge tap handlers
+    if let touchDebugView = _view as? TouchDebugView {
+        touchDebugView.onLeftEdgeTap = { [weak self] in
+            guard let self = self else { return }
+            print(TAG, "[FALLBACK] Triggering goLeft via fallback tap handler")
+            Task { @MainActor in
+                let _ = await self.readiumViewController.goLeft(options: NavigatorGoOptions(animated: true))
+            }
+        }
+        touchDebugView.onRightEdgeTap = { [weak self] in
+            guard let self = self else { return }
+            print(TAG, "[FALLBACK] Triggering goRight via fallback tap handler")
+            Task { @MainActor in
+                let _ = await self.readiumViewController.goRight(options: NavigatorGoOptions(animated: true))
+            }
+        }
+    }
 
     let child: UIView = readiumViewController.view
     let view = _view
@@ -142,9 +253,11 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
     ///
     /// Bind it to the navigator before adding your own observers to prevent
     /// triggering your actions when turning pages.
-    DirectionalNavigationAdapter(
+    /// NOTE: Store in property to prevent ARC deallocation
+    directionalNavigationAdapter = DirectionalNavigationAdapter(
         pointerPolicy: .init(types: [.mouse, .touch])
-    ).bind(to: readiumViewController)
+    )
+    directionalNavigationAdapter?.bind(to: readiumViewController)
 
     print(TAG, "::init success")
   }
@@ -356,34 +469,44 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
       let animated = args[1] as! Bool
       let isAudioBookWithText = args[2] as? Bool ?? false
 
-      Task.detached(priority: .high) {
+      Task { @MainActor in
         await self.goToLocator(locator: locator, animated: animated)
         let _ = await self.setLocation(locator: locator, isAudioBookWithText: isAudioBookWithText)
-        await MainActor.run() {
-          result(true)
-        }
+        result(true)
       }
       break
     case "goLeft":
       let animated = call.arguments as! Bool
       let readiumViewController = self.readiumViewController
+      print(TAG, "[DEBUG] goLeft called, isMainThread: \(Thread.isMainThread)")
 
-      Task.detached(priority: .high) {
+      Task { @MainActor in
+        print(TAG, "[DEBUG] goLeft task started, isMainThread: \(Thread.isMainThread)")
         let success = await readiumViewController.goLeft(options: NavigatorGoOptions(animated: animated))
-        await MainActor.run() {
-          result(success)
+        print(TAG, "[DEBUG] goLeft completed, success: \(success), isMainThread: \(Thread.isMainThread)")
+        // Debug: check isUserInteractionEnabled on view hierarchy
+        print(TAG, "[DEBUG] view.isUserInteractionEnabled = \(readiumViewController.view.isUserInteractionEnabled)")
+        for (index, subview) in readiumViewController.view.subviews.enumerated() {
+          print(TAG, "[DEBUG] subview[\(index)] \(type(of: subview)).isUserInteractionEnabled = \(subview.isUserInteractionEnabled)")
         }
+        result(success)
       }
       break
     case "goRight":
       let animated = call.arguments as! Bool
       let readiumViewController = self.readiumViewController
+      print(TAG, "[DEBUG] goRight called, isMainThread: \(Thread.isMainThread)")
 
-      Task.detached(priority: .high) {
+      Task { @MainActor in
+        print(TAG, "[DEBUG] goRight task started, isMainThread: \(Thread.isMainThread)")
         let success = await readiumViewController.goRight(options: NavigatorGoOptions(animated: animated))
-        await MainActor.run() {
-          result(success)
+        print(TAG, "[DEBUG] goRight completed, success: \(success), isMainThread: \(Thread.isMainThread)")
+        // Debug: check isUserInteractionEnabled on view hierarchy
+        print(TAG, "[DEBUG] view.isUserInteractionEnabled = \(readiumViewController.view.isUserInteractionEnabled)")
+        for (index, subview) in readiumViewController.view.subviews.enumerated() {
+          print(TAG, "[DEBUG] subview[\(index)] \(type(of: subview)).isUserInteractionEnabled = \(subview.isUserInteractionEnabled)")
         }
+        result(success)
       }
       break
     case "setLocation":
