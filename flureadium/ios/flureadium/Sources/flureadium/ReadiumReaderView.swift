@@ -94,6 +94,22 @@ class TouchDebugView: UIView {
             return self
         }
 
+        // For center taps: if the hit view has an oversized frame (e.g. WKContentView
+        // at 32226x759 for paginated EPUB), walk up the chain to find the first ancestor
+        // with a viewport-compatible frame. This ensures Flutter's synthetic touch
+        // delivery targets a properly-sized view, allowing WKWebView's internal click
+        // gesture recognizer to fire correctly.
+        if let result = result, result.frame.width > bounds.width {
+            var candidate: UIView? = result
+            while let v = candidate, v != self {
+                if v.frame.width <= bounds.width {
+                    print(logTag, "[PIPELINE][CURRENT FIX]   → returning viewport-sized ancestor: \(type(of: v))(\(Int(v.frame.width))x\(Int(v.frame.height)))")
+                    return v
+                }
+                candidate = v.superview
+            }
+        }
+
         print(logTag, "[PIPELINE]   → returning child: \(type(of: result as Any))")
         return result
     }
