@@ -94,22 +94,6 @@ class TouchDebugView: UIView {
             return self
         }
 
-        // For center taps: if the hit view has an oversized frame (e.g. WKContentView
-        // at 32226x759 for paginated EPUB), walk up the chain to find the first ancestor
-        // with a viewport-compatible frame. This ensures Flutter's synthetic touch
-        // delivery targets a properly-sized view, allowing WKWebView's internal click
-        // gesture recognizer to fire correctly.
-        if let result = result, result.frame.width > bounds.width {
-            var candidate: UIView? = result
-            while let v = candidate, v != self {
-                if v.frame.width <= bounds.width {
-                    print(logTag, "[PIPELINE][CURRENT FIX]   → returning viewport-sized ancestor: \(type(of: v))(\(Int(v.frame.width))x\(Int(v.frame.height)))")
-                    return v
-                }
-                candidate = v.superview
-            }
-        }
-
         print(logTag, "[PIPELINE]   → returning child: \(type(of: result as Any))")
         return result
     }
@@ -150,6 +134,97 @@ class DebugScriptMessageHandler: NSObject, WKScriptMessageHandler {
     }
 }
 
+/// Debug observer that tracks UIGestureRecognizer state changes on WKContentView
+/// to understand why the click gesture recognizer doesn't fire after goLeft/goRight.
+class GestureRecognizerObserver: NSObject {
+    private let logTag = "ReadiumReaderView [GR-DEBUG]"
+    private var observations: [NSKeyValueObservation] = []
+
+    /// Find WKContentView(s) in the view hierarchy and observe their gesture recognizers.
+    /// viewportWidth: only observe WKContentViews wider than this (to skip normal-sized ones).
+    /// verbose: if true, enumerate all gesture recognizers (first call only).
+    func observe(rootView: UIView, viewportWidth: CGFloat = 0, verbose: Bool = false) {
+        stopObserving()
+        let contentViews = findWKContentViews(in: rootView)
+        print(logTag, "Found \(contentViews.count) WKContentView(s)")
+
+        for contentView in contentViews {
+            let frame = contentView.frame
+            let gestures = contentView.gestureRecognizers ?? []
+
+            // Skip WKContentViews that are viewport-sized or zero-sized (not the problem)
+            if viewportWidth > 0 && frame.width <= viewportWidth {
+                print(logTag, "  Skipping WKContentView(\(Int(frame.width))x\(Int(frame.height))) — not oversized")
+                continue
+            }
+
+            print(logTag, "Observing WKContentView frame=\(Int(frame.width))x\(Int(frame.height)), \(gestures.count) gesture recognizers")
+
+            for (i, gr) in gestures.enumerated() {
+                if verbose {
+                    let desc = describeGestureRecognizer(gr)
+                    print(logTag, "  [\(i)] \(type(of: gr)) state=\(stateName(gr.state)) enabled=\(gr.isEnabled) \(desc)")
+                }
+
+                // Observe state changes — read recognizer.state directly (KVO change dict is unreliable)
+                let observation = gr.observe(\.state, options: []) { [weak self] recognizer, _ in
+                    guard let self = self else { return }
+                    let currentState = self.stateName(recognizer.state)
+                    let cvFrame = contentView.frame
+                    print(self.logTag, "  STATE CHANGE on WKContentView(\(Int(cvFrame.width))x\(Int(cvFrame.height))): \(type(of: recognizer)) → \(currentState)")
+                }
+                observations.append(observation)
+            }
+        }
+    }
+
+    func stopObserving() {
+        observations.removeAll()
+    }
+
+    private func findWKContentViews(in view: UIView) -> [UIView] {
+        var results: [UIView] = []
+        let className = String(describing: type(of: view))
+        if className == "WKContentView" {
+            results.append(view)
+        }
+        for subview in view.subviews {
+            results.append(contentsOf: findWKContentViews(in: subview))
+        }
+        return results
+    }
+
+    private func describeGestureRecognizer(_ gr: UIGestureRecognizer) -> String {
+        var parts: [String] = []
+        if let tap = gr as? UITapGestureRecognizer {
+            parts.append("taps=\(tap.numberOfTapsRequired) touches=\(tap.numberOfTouchesRequired)")
+        }
+        if let longPress = gr as? UILongPressGestureRecognizer {
+            parts.append("minDuration=\(longPress.minimumPressDuration)")
+        }
+        if gr.cancelsTouchesInView { parts.append("cancels") }
+        if gr.delaysTouchesBegan { parts.append("delaysBegin") }
+        if gr.delaysTouchesEnded { parts.append("delaysEnd") }
+        return parts.joined(separator: " ")
+    }
+
+    private func stateName(_ state: UIGestureRecognizer.State) -> String {
+        switch state {
+        case .possible: return "possible"
+        case .began: return "began"
+        case .changed: return "changed"
+        case .ended: return "ended/recognized"
+        case .cancelled: return "cancelled"
+        case .failed: return "failed"
+        @unknown default: return "unknown(\(state.rawValue))"
+        }
+    }
+
+    deinit {
+        stopObserving()
+    }
+}
+
 class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, VisualNavigatorDelegate {
 
   private let channel: ReadiumReaderChannel
@@ -163,6 +238,9 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
 
   // Retain the navigation adapter to prevent ARC deallocation
   private var directionalNavigationAdapter: DirectionalNavigationAdapter?
+
+  // Debug: observe gesture recognizer state changes on WKContentView
+  private let gestureObserver = GestureRecognizerObserver()
 
   var publicationIdentifier: String?
 
@@ -355,6 +433,8 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
     if (!hasSentReady) {
       self.readerStatusStreamHandler?.sendEvent(ReadiumReaderStatusReady)
       hasSentReady = true
+      // Start observing gesture recognizers on initial load (verbose on first call for reference)
+      self.gestureObserver.observe(rootView: self._view, viewportWidth: self._view.bounds.width, verbose: true)
     }
     emitOnPageChanged(locator: locator)
   }
@@ -523,6 +603,7 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
         let success = await readiumViewController.goLeft(options: NavigatorGoOptions(animated: animated))
         print(TAG, "[PIPELINE] goLeft completed, success: \(success)")
         self.logViewHierarchy(self._view, indent: 0)
+        self.gestureObserver.observe(rootView: self._view, viewportWidth: self._view.bounds.width)
         result(success)
       }
       break
@@ -534,6 +615,7 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
         let success = await readiumViewController.goRight(options: NavigatorGoOptions(animated: animated))
         print(TAG, "[PIPELINE] goRight completed, success: \(success)")
         self.logViewHierarchy(self._view, indent: 0)
+        self.gestureObserver.observe(rootView: self._view, viewportWidth: self._view.bounds.width)
         result(success)
       }
       break
