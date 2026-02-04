@@ -10,6 +10,8 @@ class ReadiumReaderWidget extends StatelessWidget {
     this.onGoLeft,
     this.onGoRight,
     this.onSwipe,
+    this.onExternalLinkActivated,
+    this.onLocatorChanged,
     super.key,
   });
 
@@ -20,6 +22,8 @@ class ReadiumReaderWidget extends StatelessWidget {
   final VoidCallback? onGoLeft;
   final VoidCallback? onGoRight;
   final VoidCallback? onSwipe;
+  final Function(String)? onExternalLinkActivated;
+  final void Function(Locator)? onLocatorChanged;
 
   @override
   Widget build(final BuildContext context) =>

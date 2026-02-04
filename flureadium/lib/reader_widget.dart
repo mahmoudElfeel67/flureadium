@@ -28,6 +28,7 @@ class ReadiumReaderWidget extends StatefulWidget {
     this.onGoRight,
     this.onSwipe,
     this.onExternalLinkActivated,
+    this.onLocatorChanged,
     super.key,
   });
 
@@ -39,6 +40,7 @@ class ReadiumReaderWidget extends StatefulWidget {
   final VoidCallback? onGoRight;
   final VoidCallback? onSwipe;
   final Function(String)? onExternalLinkActivated;
+  final void Function(Locator)? onLocatorChanged;
 
   @override
   State<StatefulWidget> createState() => _ReadiumReaderWidgetState();
@@ -136,23 +138,32 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
       return;
     }
 
-    // Primary path: toc= fragment matching (sub-chapter granularity)
     int curIndex = -1;
-    String? currentHref = getTextLocatorHrefWithTocFragment(_currentLocator);
 
-    if (currentHref != null) {
-      // Ensure we are at least 1 page into the current chapter, if not in scroll mode.
-      if (readium.defaultPreferences?.verticalScroll != true) {
-        await _channel?.goRight(animated: false);
-        final loc = await _channel?.getCurrentLocator();
-        currentHref = getTextLocatorHrefWithTocFragment(loc);
+    // Priority 1: stored index from last chapter navigation
+    if (_lastNavigatedTocIndex != null &&
+        _lastNavigatedTocIndex! < toc.length) {
+      final expectedPath = normalizePath(toc[_lastNavigatedTocIndex!].hrefPart);
+      final currentPath = normalizePath(_currentLocator!.hrefPath);
+      if (currentPath == expectedPath) {
+        curIndex = _lastNavigatedTocIndex!;
+        R2Log.d('skipToNext: using stored index $curIndex');
+      } else {
+        R2Log.d('skipToNext: stored index invalid (file changed)');
+        _lastNavigatedTocIndex = null;
       }
+    }
+
+    // Priority 2: toc= fragment matching (sub-chapter granularity)
+    if (curIndex == -1) {
+      final currentHref =
+          getTextLocatorHrefWithTocFragment(_currentLocator);
       if (currentHref != null) {
         curIndex = toc.indexWhere((l) => l.href == currentHref);
       }
     }
 
-    // Fallback: path-based matching (file-level granularity)
+    // Priority 3: path-based fallback (file-level granularity)
     if (curIndex == -1) {
       R2Log.d('skipToNext: toc= fragment matching failed, using path fallback');
       curIndex = findTocIndexByPath(_currentLocator!, toc, lastMatch: true);
@@ -174,6 +185,7 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
         isAudioBookWithText: false,
         animated: true,
       );
+      _lastNavigatedTocIndex = newIndex;
     }
   }
 
@@ -185,14 +197,32 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
       return;
     }
 
-    // Primary path: toc= fragment matching (sub-chapter granularity)
     int curIndex = -1;
-    final currentHref = getTextLocatorHrefWithTocFragment(_currentLocator);
-    if (currentHref != null) {
-      curIndex = toc.indexWhere((l) => l.href == currentHref);
+
+    // Priority 1: stored index from last chapter navigation
+    if (_lastNavigatedTocIndex != null &&
+        _lastNavigatedTocIndex! < toc.length) {
+      final expectedPath = normalizePath(toc[_lastNavigatedTocIndex!].hrefPart);
+      final currentPath = normalizePath(_currentLocator!.hrefPath);
+      if (currentPath == expectedPath) {
+        curIndex = _lastNavigatedTocIndex!;
+        R2Log.d('skipToPrevious: using stored index $curIndex');
+      } else {
+        R2Log.d('skipToPrevious: stored index invalid (file changed)');
+        _lastNavigatedTocIndex = null;
+      }
     }
 
-    // Fallback: path-based matching (file-level granularity)
+    // Priority 2: toc= fragment matching (sub-chapter granularity)
+    if (curIndex == -1) {
+      final currentHref =
+          getTextLocatorHrefWithTocFragment(_currentLocator);
+      if (currentHref != null) {
+        curIndex = toc.indexWhere((l) => l.href == currentHref);
+      }
+    }
+
+    // Priority 3: path-based fallback (file-level granularity)
     if (curIndex == -1) {
       R2Log.d(
           'skipToPrevious: toc= fragment matching failed, using path fallback');
@@ -216,6 +246,7 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
         isAudioBookWithText: false,
         animated: true,
       );
+      _lastNavigatedTocIndex = newIndex;
     }
   }
 
@@ -305,12 +336,18 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
 
   Locator? _currentLocator;
 
+  /// Tracks the last TOC index navigated to via skipToNext/skipToPrevious.
+  /// Used as highest-priority source for determining current position,
+  /// since the JS-reported toc= heading may differ from the navigation target.
+  int? _lastNavigatedTocIndex;
+
   void _onPlatformViewCreated(final int id) {
     _channel = ReadiumReaderChannel(
       '$_viewType:$id',
       onPageChanged: (final locator) {
         debugPrint('onPageChanged: ${locator.toJson()}');
         _currentLocator = locator;
+        widget.onLocatorChanged?.call(locator);
 
         if (isReady == false) {
           setState(() {
