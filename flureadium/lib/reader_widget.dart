@@ -157,8 +157,7 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
 
     // Priority 2: toc= fragment matching (sub-chapter granularity)
     if (curIndex == -1) {
-      final currentHref =
-          getTextLocatorHrefWithTocFragment(_currentLocator);
+      final currentHref = getTextLocatorHrefWithTocFragment(_currentLocator);
       if (currentHref != null) {
         curIndex = toc.indexWhere((l) => l.href == currentHref);
       }
@@ -187,7 +186,9 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
     }
 
     // Navigate to the target
-    final targetLocator = widget.publication.locatorFromLink(decision.targetLink!);
+    final targetLocator = widget.publication.locatorFromLink(
+      decision.targetLink!,
+    );
     if (targetLocator != null) {
       R2Log.d('skipToNext: navigating to ${decision.targetLink!.href}');
       await _channel?.go(
@@ -225,8 +226,7 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
 
     // Priority 2: toc= fragment matching (sub-chapter granularity)
     if (curIndex == -1) {
-      final currentHref =
-          getTextLocatorHrefWithTocFragment(_currentLocator);
+      final currentHref = getTextLocatorHrefWithTocFragment(_currentLocator);
       if (currentHref != null) {
         curIndex = toc.indexWhere((l) => l.href == currentHref);
       }
@@ -235,7 +235,8 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
     // Priority 3: path-based fallback (file-level granularity)
     if (curIndex == -1) {
       R2Log.d(
-          'skipToPrevious: toc= fragment matching failed, using path fallback');
+        'skipToPrevious: toc= fragment matching failed, using path fallback',
+      );
       curIndex = findTocIndexByPath(_currentLocator!, toc, lastMatch: false);
     }
 
@@ -256,7 +257,9 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
     }
 
     // Navigate to the target
-    final targetLocator = widget.publication.locatorFromLink(decision.targetLink!);
+    final targetLocator = widget.publication.locatorFromLink(
+      decision.targetLink!,
+    );
     if (targetLocator != null) {
       R2Log.d('skipToPrevious: navigating to ${decision.targetLink!.href}');
       await _channel?.go(

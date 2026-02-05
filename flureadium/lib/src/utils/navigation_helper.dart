@@ -4,13 +4,13 @@ import 'toc_matcher.dart';
 /// Result of navigation decision for chapter skip operations.
 class NavigationDecision {
   const NavigationDecision.navigate(this.targetLink, this.targetTocIndex)
-      : canNavigate = true,
-        reason = null;
+    : canNavigate = true,
+      reason = null;
 
   const NavigationDecision.abort(this.reason)
-      : canNavigate = false,
-        targetLink = null,
-        targetTocIndex = null;
+    : canNavigate = false,
+      targetLink = null,
+      targetTocIndex = null;
 
   /// Whether navigation should proceed.
   final bool canNavigate;
