@@ -13,6 +13,7 @@ import 'reader_channel.dart';
 import 'src/reader/orientation_handler_mixin.dart';
 import 'src/reader/reader_lifecycle_mixin.dart';
 import 'src/reader/wakelock_manager_mixin.dart';
+import 'src/utils/navigation_helper.dart';
 import 'src/utils/toc_matcher.dart';
 
 const _viewType = 'dev.mulev.flureadium/ReadiumReaderWidget';
@@ -171,21 +172,30 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
 
     R2Log.d('skipToNext: curIndex=$curIndex, tocLength=${toc.length}');
 
-    if (curIndex == -1 || curIndex >= toc.length - 1) {
-      R2Log.d('skipToNext: cannot advance (not found or at last chapter)');
+    // Use navigation helper to decide where to navigate
+    final decision = decideSkipToNext(
+      currentLocator: _currentLocator!,
+      toc: toc,
+      readingOrder: widget.publication.readingOrder,
+      currentTocIndex: curIndex,
+      publication: widget.publication,
+    );
+
+    if (!decision.canNavigate) {
+      R2Log.d('skipToNext: ${decision.reason}');
       return;
     }
 
-    final newIndex = curIndex + 1;
-    final nextChapter = widget.publication.locatorFromLink(toc[newIndex]);
-    R2Log.d('skipToNext: navigating to index $newIndex: ${toc[newIndex].href}');
-    if (nextChapter != null) {
+    // Navigate to the target
+    final targetLocator = widget.publication.locatorFromLink(decision.targetLink!);
+    if (targetLocator != null) {
+      R2Log.d('skipToNext: navigating to ${decision.targetLink!.href}');
       await _channel?.go(
-        nextChapter,
+        targetLocator,
         isAudioBookWithText: false,
         animated: true,
       );
-      _lastNavigatedTocIndex = newIndex;
+      _lastNavigatedTocIndex = decision.targetTocIndex;
     }
   }
 
@@ -231,22 +241,30 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
 
     R2Log.d('skipToPrevious: curIndex=$curIndex, tocLength=${toc.length}');
 
-    if (curIndex <= 0) {
-      R2Log.d('skipToPrevious: cannot go back (not found or at first chapter)');
+    // Use navigation helper to decide where to navigate
+    final decision = decideSkipToPrevious(
+      currentLocator: _currentLocator!,
+      toc: toc,
+      readingOrder: widget.publication.readingOrder,
+      currentTocIndex: curIndex,
+      publication: widget.publication,
+    );
+
+    if (!decision.canNavigate) {
+      R2Log.d('skipToPrevious: ${decision.reason}');
       return;
     }
 
-    final newIndex = curIndex - 1;
-    final previousChapter = widget.publication.locatorFromLink(toc[newIndex]);
-    R2Log.d(
-        'skipToPrevious: navigating to index $newIndex: ${toc[newIndex].href}');
-    if (previousChapter != null) {
+    // Navigate to the target
+    final targetLocator = widget.publication.locatorFromLink(decision.targetLink!);
+    if (targetLocator != null) {
+      R2Log.d('skipToPrevious: navigating to ${decision.targetLink!.href}');
       await _channel?.go(
-        previousChapter,
+        targetLocator,
         isAudioBookWithText: false,
         animated: true,
       );
-      _lastNavigatedTocIndex = newIndex;
+      _lastNavigatedTocIndex = decision.targetTocIndex;
     }
   }
 
