@@ -13,6 +13,8 @@ import 'reader_channel.dart';
 import 'src/reader/orientation_handler_mixin.dart';
 import 'src/reader/reader_lifecycle_mixin.dart';
 import 'src/reader/wakelock_manager_mixin.dart';
+import 'src/utils/navigation_helper.dart';
+import 'src/utils/toc_matcher.dart';
 
 const _viewType = 'dev.mulev.flureadium/ReadiumReaderWidget';
 
@@ -27,6 +29,7 @@ class ReadiumReaderWidget extends StatefulWidget {
     this.onGoRight,
     this.onSwipe,
     this.onExternalLinkActivated,
+    this.onLocatorChanged,
     super.key,
   });
 
@@ -38,6 +41,7 @@ class ReadiumReaderWidget extends StatefulWidget {
   final VoidCallback? onGoRight;
   final VoidCallback? onSwipe;
   final Function(String)? onExternalLinkActivated;
+  final void Function(Locator)? onLocatorChanged;
 
   @override
   State<StatefulWidget> createState() => _ReadiumReaderWidgetState();
@@ -129,54 +133,141 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
 
   @override
   Future<void> skipToNext({final bool animated = true}) async {
-    List<Link>? toc = widget.publication.toc;
+    final toc = widget.publication.toc;
     if (toc.isEmpty || _currentLocator == null) {
+      R2Log.d('skipToNext: no TOC or no current locator');
       return;
     }
-    String? currentHref = getTextLocatorHrefWithTocFragment(_currentLocator);
 
-    // Ensure we are at least 1 page into the current chapter, if not in scroll mode.
-    // TODO: Find a better way to do this, maybe a `lastVisibleLocator` ?
-    if (readium.defaultPreferences?.verticalScroll != true) {
-      await _channel?.goRight(animated: false);
-      final loc = await _channel?.getCurrentLocator();
-      currentHref = getTextLocatorHrefWithTocFragment(loc);
+    int curIndex = -1;
+
+    // Priority 1: stored index from last chapter navigation
+    if (_lastNavigatedTocIndex != null &&
+        _lastNavigatedTocIndex! < toc.length) {
+      final expectedPath = normalizePath(toc[_lastNavigatedTocIndex!].hrefPart);
+      final currentPath = normalizePath(_currentLocator!.hrefPath);
+      if (currentPath == expectedPath) {
+        curIndex = _lastNavigatedTocIndex!;
+        R2Log.d('skipToNext: using stored index $curIndex');
+      } else {
+        R2Log.d('skipToNext: stored index invalid (file changed)');
+        _lastNavigatedTocIndex = null;
+      }
     }
 
-    int? curIndex = toc.indexWhere((l) => l.href == currentHref);
-    if (curIndex > -1) {
-      final newIndex = (curIndex + 1).clamp(0, toc.length - 1);
-      Locator? nextChapter = widget.publication.locatorFromLink(toc[newIndex]);
-      if (nextChapter != null) {
-        await _channel?.go(
-          nextChapter,
-          isAudioBookWithText: false,
-          animated: true,
-        );
+    // Priority 2: toc= fragment matching (sub-chapter granularity)
+    if (curIndex == -1) {
+      final currentHref = getTextLocatorHrefWithTocFragment(_currentLocator);
+      if (currentHref != null) {
+        curIndex = toc.indexWhere((l) => l.href == currentHref);
       }
+    }
+
+    // Priority 3: path-based fallback (file-level granularity)
+    if (curIndex == -1) {
+      R2Log.d('skipToNext: toc= fragment matching failed, using path fallback');
+      curIndex = findTocIndexByPath(_currentLocator!, toc, lastMatch: true);
+    }
+
+    R2Log.d('skipToNext: curIndex=$curIndex, tocLength=${toc.length}');
+
+    // Use navigation helper to decide where to navigate
+    final decision = decideSkipToNext(
+      currentLocator: _currentLocator!,
+      toc: toc,
+      readingOrder: widget.publication.readingOrder,
+      currentTocIndex: curIndex,
+      publication: widget.publication,
+    );
+
+    if (!decision.canNavigate) {
+      R2Log.d('skipToNext: ${decision.reason}');
+      return;
+    }
+
+    // Navigate to the target
+    final targetLocator = widget.publication.locatorFromLink(
+      decision.targetLink!,
+    );
+    if (targetLocator != null) {
+      R2Log.d('skipToNext: navigating to ${decision.targetLink!.href}');
+      await _channel?.go(
+        targetLocator,
+        isAudioBookWithText: false,
+        animated: true,
+      );
+      _lastNavigatedTocIndex = decision.targetTocIndex;
     }
   }
 
   @override
   Future<void> skipToPrevious({final bool animated = true}) async {
-    List<Link>? toc = widget.publication.toc;
+    final toc = widget.publication.toc;
     if (toc.isEmpty || _currentLocator == null) {
+      R2Log.d('skipToPrevious: no TOC or no current locator');
       return;
     }
-    String? currentHref = getTextLocatorHrefWithTocFragment(_currentLocator);
-    int? curIndex = toc.indexWhere((l) => l.href == currentHref);
-    if (curIndex > -1) {
-      final newIndex = (curIndex - 1).clamp(0, toc.length - 1);
-      Locator? previousChapter = widget.publication.locatorFromLink(
-        toc[newIndex],
-      );
-      if (previousChapter != null) {
-        await _channel?.go(
-          previousChapter,
-          isAudioBookWithText: false,
-          animated: true,
-        );
+
+    int curIndex = -1;
+
+    // Priority 1: stored index from last chapter navigation
+    if (_lastNavigatedTocIndex != null &&
+        _lastNavigatedTocIndex! < toc.length) {
+      final expectedPath = normalizePath(toc[_lastNavigatedTocIndex!].hrefPart);
+      final currentPath = normalizePath(_currentLocator!.hrefPath);
+      if (currentPath == expectedPath) {
+        curIndex = _lastNavigatedTocIndex!;
+        R2Log.d('skipToPrevious: using stored index $curIndex');
+      } else {
+        R2Log.d('skipToPrevious: stored index invalid (file changed)');
+        _lastNavigatedTocIndex = null;
       }
+    }
+
+    // Priority 2: toc= fragment matching (sub-chapter granularity)
+    if (curIndex == -1) {
+      final currentHref = getTextLocatorHrefWithTocFragment(_currentLocator);
+      if (currentHref != null) {
+        curIndex = toc.indexWhere((l) => l.href == currentHref);
+      }
+    }
+
+    // Priority 3: path-based fallback (file-level granularity)
+    if (curIndex == -1) {
+      R2Log.d(
+        'skipToPrevious: toc= fragment matching failed, using path fallback',
+      );
+      curIndex = findTocIndexByPath(_currentLocator!, toc, lastMatch: false);
+    }
+
+    R2Log.d('skipToPrevious: curIndex=$curIndex, tocLength=${toc.length}');
+
+    // Use navigation helper to decide where to navigate
+    final decision = decideSkipToPrevious(
+      currentLocator: _currentLocator!,
+      toc: toc,
+      readingOrder: widget.publication.readingOrder,
+      currentTocIndex: curIndex,
+      publication: widget.publication,
+    );
+
+    if (!decision.canNavigate) {
+      R2Log.d('skipToPrevious: ${decision.reason}');
+      return;
+    }
+
+    // Navigate to the target
+    final targetLocator = widget.publication.locatorFromLink(
+      decision.targetLink!,
+    );
+    if (targetLocator != null) {
+      R2Log.d('skipToPrevious: navigating to ${decision.targetLink!.href}');
+      await _channel?.go(
+        targetLocator,
+        isAudioBookWithText: false,
+        animated: true,
+      );
+      _lastNavigatedTocIndex = decision.targetTocIndex;
     }
   }
 
@@ -266,12 +357,18 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
 
   Locator? _currentLocator;
 
+  /// Tracks the last TOC index navigated to via skipToNext/skipToPrevious.
+  /// Used as highest-priority source for determining current position,
+  /// since the JS-reported toc= heading may differ from the navigation target.
+  int? _lastNavigatedTocIndex;
+
   void _onPlatformViewCreated(final int id) {
     _channel = ReadiumReaderChannel(
       '$_viewType:$id',
       onPageChanged: (final locator) {
         debugPrint('onPageChanged: ${locator.toJson()}');
         _currentLocator = locator;
+        widget.onLocatorChanged?.call(locator);
 
         if (isReady == false) {
           setState(() {
@@ -312,6 +409,6 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
     if (tocFragment == null) {
       return null;
     }
-    return '${txtLoc.toTextLocator().hrefPath.substring(1)}#${tocFragment.substring(4)}';
+    return '${txtLoc.toTextLocator().hrefPath}#${tocFragment.substring(4)}';
   }
 }
