@@ -458,6 +458,192 @@ void main() {
       expect(decision.reason, 'Already at end');
     });
   });
+
+  group('boundary detection scenarios', () {
+    group('skipToNext boundaries', () {
+      test('canNavigate is false when at last chapter with no post-TOC pages', () {
+        // Publication: ch1, ch2, ch3 (ch3 is last file in readingOrder)
+        final readingOrder = [
+          Link(href: 'ch1.xhtml'),
+          Link(href: 'ch2.xhtml'),
+          Link(href: 'ch3.xhtml'),
+        ];
+        final toc = [
+          Link(href: 'ch1.xhtml', title: 'Chapter 1'),
+          Link(href: 'ch2.xhtml', title: 'Chapter 2'),
+          Link(href: 'ch3.xhtml', title: 'Chapter 3'),
+        ];
+        final publication = _createPublication(toc, readingOrder);
+
+        // At ch3 (last TOC entry, index 2)
+        final currentLocator = Locator(href: 'ch3.xhtml', type: 'application/xhtml+xml');
+
+        final decision = decideSkipToNext(
+          currentLocator: currentLocator,
+          toc: toc,
+          readingOrder: readingOrder,
+          currentTocIndex: 2,
+          publication: publication,
+        );
+
+        expect(decision.canNavigate, isFalse);
+        expect(decision.reason, 'Already at last page');
+      });
+
+      test('canNavigate is true when at last chapter with post-TOC pages', () {
+        // Publication: ch1, ch2, ch3, epilogue (epilogue not in TOC)
+        final readingOrder = [
+          Link(href: 'ch1.xhtml'),
+          Link(href: 'ch2.xhtml'),
+          Link(href: 'ch3.xhtml'),
+          Link(href: 'epilogue.xhtml'),
+        ];
+        final toc = [
+          Link(href: 'ch1.xhtml', title: 'Chapter 1'),
+          Link(href: 'ch2.xhtml', title: 'Chapter 2'),
+          Link(href: 'ch3.xhtml', title: 'Chapter 3'),
+        ];
+        final publication = _createPublication(toc, readingOrder);
+
+        // At ch3 (last TOC entry, but epilogue exists after)
+        final currentLocator = Locator(href: 'ch3.xhtml', type: 'application/xhtml+xml');
+
+        final decision = decideSkipToNext(
+          currentLocator: currentLocator,
+          toc: toc,
+          readingOrder: readingOrder,
+          currentTocIndex: 2,
+          publication: publication,
+        );
+
+        expect(decision.canNavigate, isTrue);
+        expect(decision.targetLink?.href, 'epilogue.xhtml');
+        expect(decision.targetTocIndex, isNull);
+      });
+
+      test('canNavigate is true when at second-to-last chapter', () {
+        // Publication: ch1, ch2, ch3
+        final readingOrder = [
+          Link(href: 'ch1.xhtml'),
+          Link(href: 'ch2.xhtml'),
+          Link(href: 'ch3.xhtml'),
+        ];
+        final toc = [
+          Link(href: 'ch1.xhtml', title: 'Chapter 1'),
+          Link(href: 'ch2.xhtml', title: 'Chapter 2'),
+          Link(href: 'ch3.xhtml', title: 'Chapter 3'),
+        ];
+        final publication = _createPublication(toc, readingOrder);
+
+        // At ch2 (second-to-last chapter)
+        final currentLocator = Locator(href: 'ch2.xhtml', type: 'application/xhtml+xml');
+
+        final decision = decideSkipToNext(
+          currentLocator: currentLocator,
+          toc: toc,
+          readingOrder: readingOrder,
+          currentTocIndex: 1,
+          publication: publication,
+        );
+
+        expect(decision.canNavigate, isTrue);
+        expect(decision.targetLink?.href, 'ch3.xhtml');
+        expect(decision.targetTocIndex, 2);
+      });
+    });
+
+    group('skipToPrevious boundaries', () {
+      test('canNavigate is false when at first chapter with no pre-TOC pages', () {
+        // Publication: ch1, ch2, ch3 (ch1 is first file in readingOrder)
+        final readingOrder = [
+          Link(href: 'ch1.xhtml'),
+          Link(href: 'ch2.xhtml'),
+          Link(href: 'ch3.xhtml'),
+        ];
+        final toc = [
+          Link(href: 'ch1.xhtml', title: 'Chapter 1'),
+          Link(href: 'ch2.xhtml', title: 'Chapter 2'),
+          Link(href: 'ch3.xhtml', title: 'Chapter 3'),
+        ];
+        final publication = _createPublication(toc, readingOrder);
+
+        // At ch1 (first TOC entry, index 0)
+        final currentLocator = Locator(href: 'ch1.xhtml', type: 'application/xhtml+xml');
+
+        final decision = decideSkipToPrevious(
+          currentLocator: currentLocator,
+          toc: toc,
+          readingOrder: readingOrder,
+          currentTocIndex: 0,
+          publication: publication,
+        );
+
+        expect(decision.canNavigate, isFalse);
+        expect(decision.reason, 'Already at first page');
+      });
+
+      test('canNavigate is true when at first chapter with pre-TOC pages', () {
+        // Publication: cover, ch1, ch2, ch3 (cover not in TOC)
+        final readingOrder = [
+          Link(href: 'cover.xhtml'),
+          Link(href: 'ch1.xhtml'),
+          Link(href: 'ch2.xhtml'),
+          Link(href: 'ch3.xhtml'),
+        ];
+        final toc = [
+          Link(href: 'ch1.xhtml', title: 'Chapter 1'),
+          Link(href: 'ch2.xhtml', title: 'Chapter 2'),
+          Link(href: 'ch3.xhtml', title: 'Chapter 3'),
+        ];
+        final publication = _createPublication(toc, readingOrder);
+
+        // At ch1 (first TOC entry, but cover exists before)
+        final currentLocator = Locator(href: 'ch1.xhtml', type: 'application/xhtml+xml');
+
+        final decision = decideSkipToPrevious(
+          currentLocator: currentLocator,
+          toc: toc,
+          readingOrder: readingOrder,
+          currentTocIndex: 0,
+          publication: publication,
+        );
+
+        expect(decision.canNavigate, isTrue);
+        expect(decision.targetLink?.href, 'cover.xhtml');
+        expect(decision.targetTocIndex, isNull);
+      });
+
+      test('canNavigate is true when at second chapter', () {
+        // Publication: ch1, ch2, ch3
+        final readingOrder = [
+          Link(href: 'ch1.xhtml'),
+          Link(href: 'ch2.xhtml'),
+          Link(href: 'ch3.xhtml'),
+        ];
+        final toc = [
+          Link(href: 'ch1.xhtml', title: 'Chapter 1'),
+          Link(href: 'ch2.xhtml', title: 'Chapter 2'),
+          Link(href: 'ch3.xhtml', title: 'Chapter 3'),
+        ];
+        final publication = _createPublication(toc, readingOrder);
+
+        // At ch2 (second chapter)
+        final currentLocator = Locator(href: 'ch2.xhtml', type: 'application/xhtml+xml');
+
+        final decision = decideSkipToPrevious(
+          currentLocator: currentLocator,
+          toc: toc,
+          readingOrder: readingOrder,
+          currentTocIndex: 1,
+          publication: publication,
+        );
+
+        expect(decision.canNavigate, isTrue);
+        expect(decision.targetLink?.href, 'ch1.xhtml');
+        expect(decision.targetTocIndex, 0);
+      });
+    });
+  });
 }
 
 /// Helper to create a test publication.
