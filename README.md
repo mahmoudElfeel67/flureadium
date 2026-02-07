@@ -25,7 +25,8 @@ General TODO:
 
 ## Documentation
 
-- [Error Handling Guide](ERROR_HANDLING.md) - Exception types, logging system, and best practices
+- **[Full Documentation](flureadium/docs/)** - Comprehensive guides, API reference, and tutorials
+- [Error Handling Guide](flureadium/docs/guides/error-handling.md) - Exception types and best practices
 
 ## Adding flureadium to your project
 
