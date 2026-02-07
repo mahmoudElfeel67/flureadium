@@ -178,23 +178,9 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
     channel.setMethodCallHandler(onMethodCall)
     readiumViewController.delegate = self
 
-    // Setup fallback edge tap handlers
-    if let edgeTapView = _view as? EdgeTapInterceptView {
-        edgeTapView.onLeftEdgeTap = { [weak self] in
-            guard let self = self else { return }
-            print(TAG, "[FALLBACK] Triggering goLeft via fallback tap handler")
-            Task { @MainActor in
-                let _ = await self.readiumViewController.goLeft(options: NavigatorGoOptions(animated: true))
-            }
-        }
-        edgeTapView.onRightEdgeTap = { [weak self] in
-            guard let self = self else { return }
-            print(TAG, "[FALLBACK] Triggering goRight via fallback tap handler")
-            Task { @MainActor in
-                let _ = await self.readiumViewController.goRight(options: NavigatorGoOptions(animated: true))
-            }
-        }
-    }
+    // Set initial scroll mode from preferences and configure edge tap handlers accordingly
+    isVerticalScroll = defaultPreferences?.scroll ?? false
+    configureEdgeTapHandlers(isScrollMode: isVerticalScroll)
 
     let child: UIView = readiumViewController.view
     let view = _view
@@ -334,6 +320,36 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
   private func setUserPreferences(preferences: EPUBPreferences) {
     isVerticalScroll = preferences.scroll ?? false
     self.readiumViewController.submitPreferences(preferences)
+    configureEdgeTapHandlers(isScrollMode: isVerticalScroll)
+  }
+
+  /// Configure edge tap handlers based on scroll mode.
+  /// In scroll mode, edge taps are disabled since there are no pages to turn.
+  /// In paginated mode, edge taps trigger goLeft/goRight for page navigation.
+  private func configureEdgeTapHandlers(isScrollMode: Bool) {
+    guard let edgeTapView = _view as? EdgeTapInterceptView else { return }
+
+    if isScrollMode {
+      // Disable edge tap navigation in scroll mode
+      edgeTapView.onLeftEdgeTap = nil
+      edgeTapView.onRightEdgeTap = nil
+    } else {
+      // Enable edge tap navigation in paginated mode
+      edgeTapView.onLeftEdgeTap = { [weak self] in
+        guard let self = self else { return }
+        print(TAG, "[FALLBACK] Triggering goLeft via fallback tap handler")
+        Task { @MainActor in
+          let _ = await self.readiumViewController.goLeft(options: NavigatorGoOptions(animated: true))
+        }
+      }
+      edgeTapView.onRightEdgeTap = { [weak self] in
+        guard let self = self else { return }
+        print(TAG, "[FALLBACK] Triggering goRight via fallback tap handler")
+        Task { @MainActor in
+          let _ = await self.readiumViewController.goRight(options: NavigatorGoOptions(animated: true))
+        }
+      }
+    }
   }
 
   private func emitOnPageChanged(locator: Locator) -> Void {
