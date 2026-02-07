@@ -22,6 +22,10 @@ General TODO:
 - [x] Simplified support for MediaOverlays. Assumptions: Continuous audio playlist /w 1 overlay file per mp3.
 - [ ] Support for custom Decoration styles
 - [ ] Full support for Sync Narration and Guided Navigation
+- [x] PDF format detection and preferences API
+- [x] PDF navigator implementation (Android)
+- [ ] PDF navigator implementation (iOS)
+- [ ] PDF Flutter widget layer integration
 
 ## Documentation
 
