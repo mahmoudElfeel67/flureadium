@@ -61,10 +61,9 @@ Flureadium is a Flutter plugin that wraps the Readium toolkits for reading EPUB 
 | WebPub | Yes | Yes | Yes | Yes |
 | PDF | Android, iOS | - | - | - |
 
-> **Note:** PDF support is in active development:
-> - **Completed:** Format detection, preferences API, Android native navigator, iOS native navigator, Flutter widget layer integration
+> **Note:** PDF support status:
+> - **Completed:** Format detection, preferences API, Android native navigator, iOS native navigator, Flutter widget layer integration, Epist migration
 > - **In Progress:** Manual testing on both platforms
-> - **Planned:** Epist migration to use Flureadium for PDF
 
 ## Minimum Requirements
 
