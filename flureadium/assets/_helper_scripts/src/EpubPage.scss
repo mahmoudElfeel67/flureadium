@@ -138,3 +138,18 @@ table {
     }
   }
 }
+
+// Fix for link colors when custom textColor is applied.
+// ReadiumCSS's --USER__textColor rule applies `color: inherit !important` to all elements
+// including <a> tags, which overrides the default link styling.
+// This restores proper link colors and adds underline for visibility.
+:root[style*='--USER__textColor'] a[href],
+:root[style*='--USER__textColor'] a[href] * {
+  color: var(--RS__linkColor, #0066cc) !important;
+  text-decoration: underline !important;
+}
+
+:root[style*='--USER__textColor'] a[href]:visited,
+:root[style*='--USER__textColor'] a[href]:visited * {
+  color: var(--RS__visitedColor, #551a8b) !important;
+}
