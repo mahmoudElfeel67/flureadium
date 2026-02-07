@@ -14,6 +14,8 @@ import androidx.fragment.app.commitNow
 import dev.mulev.flureadium.events.TextLocatorEventChannel
 import dev.mulev.flureadium.fragments.EpubReaderFragment
 import dev.mulev.flureadium.navigators.EpubNavigator
+import dev.mulev.flureadium.navigators.PdfNavigator
+import org.readium.r2.shared.publication.Publication
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -42,7 +44,7 @@ class ReadiumReaderWidget(
     messenger: BinaryMessenger,
     attrs: AttributeSet? = null
 ) : PlatformView, MethodChannel.MethodCallHandler,
-    EpubReaderFragment.Listener, EpubNavigator.VisualListener {
+    EpubReaderFragment.Listener, EpubNavigator.VisualListener, PdfNavigator.VisualListener {
 
     private val channel: ReadiumReaderChannel
     private var textLocatorEventChannel: TextLocatorEventChannel? = null
@@ -56,6 +58,9 @@ class ReadiumReaderWidget(
     private val mainScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    private val isPdf: Boolean
+        get() = ReadiumReader.currentPublication?.conformsTo(Publication.Profile.PDF) == true
+
     override fun getView(): View {
         //Log.d(TAG, "::getView")
         return layout
@@ -63,7 +68,11 @@ class ReadiumReaderWidget(
 
     override fun dispose() {
         Log.d(TAG, "::dispose")
-        ReadiumReader.epubClose()
+        if (isPdf) {
+            ReadiumReader.pdfClose()
+        } else {
+            ReadiumReader.epubClose()
+        }
         textLocatorEventChannel?.dispose()
         textLocatorEventChannel = null
         channel.setMethodCallHandler(null)
@@ -130,14 +139,30 @@ class ReadiumReaderWidget(
         }
 
         mainScope.launch {
-            ReadiumReader.epubEnable(
-                initialLocator,
-                initialPreferences,
-                messenger,
-                fragmentManager,
-                layout,
-                this@ReadiumReaderWidget,
-            )
+            if (isPdf) {
+                val pdfPreferences = if (initPrefsMap == null) {
+                    FlutterPdfPreferences()
+                } else {
+                    FlutterPdfPreferences.fromMap(initPrefsMap)
+                }
+                ReadiumReader.pdfEnable(
+                    initialLocator,
+                    pdfPreferences,
+                    messenger,
+                    fragmentManager,
+                    layout,
+                    this@ReadiumReaderWidget,
+                )
+            } else {
+                ReadiumReader.epubEnable(
+                    initialLocator,
+                    initialPreferences,
+                    messenger,
+                    fragmentManager,
+                    layout,
+                    this@ReadiumReaderWidget,
+                )
+            }
         }
     }
 
@@ -190,16 +215,22 @@ class ReadiumReaderWidget(
 
     private suspend fun emitOnPageChanged(locator: Locator) {
         try {
-            val locatorWithFragments = ReadiumReader.getEpubLocatorFragments(locator)
-            if (locatorWithFragments == null) {
-                Log.e(TAG, "emitOnPageChanged: window.epubPage.getVisibleRange failed!")
-                return
-            }
+            if (isPdf) {
+                // PDF locators don't need fragment extraction
+                channel.onPageChanged(locator)
+                textLocatorEventChannel?.sendEvent(locator)
+            } else {
+                val locatorWithFragments = ReadiumReader.getEpubLocatorFragments(locator)
+                if (locatorWithFragments == null) {
+                    Log.e(TAG, "emitOnPageChanged: window.epubPage.getVisibleRange failed!")
+                    return
+                }
 
-            channel.onPageChanged(locatorWithFragments)
-            textLocatorEventChannel?.sendEvent(locatorWithFragments)
+                channel.onPageChanged(locatorWithFragments)
+                textLocatorEventChannel?.sendEvent(locatorWithFragments)
+            }
         } catch (e: Exception) {
-            Log.e(TAG, "emitOnPageChanged: window.epubPage.getVisibleRange failed! $e")
+            Log.e(TAG, "emitOnPageChanged: ${if (isPdf) "PDF" else "EPUB"} page change failed! $e")
         }
     }
 
@@ -227,7 +258,12 @@ class ReadiumReaderWidget(
                     @Suppress("UNCHECKED_CAST")
                     val prefsMap = call.arguments as Map<String, String>
                     try {
-                        setPreferencesFromMap(prefsMap)
+                        if (isPdf) {
+                            val pdfPrefs = FlutterPdfPreferences.fromMap(prefsMap)
+                            ReadiumReader.pdfSetPreferences(pdfPrefs)
+                        } else {
+                            setPreferencesFromMap(prefsMap)
+                        }
                         result.success(null)
                     } catch (ex: Exception) {
                         result.error("Flureadium", "Failed to set preferences", ex.message)
@@ -247,20 +283,32 @@ class ReadiumReaderWidget(
                         )
                     }
                     val locator = Locator.fromJSON(locatorJson)!!
-                    ReadiumReader.epubGoToLocator(locator, animated)
-                    setLocation(locator, isAudioBookWithText)
+                    if (isPdf) {
+                        ReadiumReader.pdfGoToLocator(locator, animated)
+                    } else {
+                        ReadiumReader.epubGoToLocator(locator, animated)
+                        setLocation(locator, isAudioBookWithText)
+                    }
                     result.success(null)
                 }
 
                 "goLeft" -> {
                     val animated = call.arguments as Boolean
-                    goLeft(animated)
+                    if (isPdf) {
+                        ReadiumReader.pdfGoLeft(animated)
+                    } else {
+                        goLeft(animated)
+                    }
                     result.success(null)
                 }
 
                 "goRight" -> {
                     val animated = call.arguments as Boolean
-                    goRight(animated)
+                    if (isPdf) {
+                        ReadiumReader.pdfGoRight(animated)
+                    } else {
+                        goRight(animated)
+                    }
                     result.success(null)
                 }
 
@@ -332,7 +380,12 @@ class ReadiumReaderWidget(
                 }
 
                 "getCurrentLocator" -> {
-                    result.success(ReadiumReader.epubCurrentLocator?.let { jsonEncode(it.toJSON()) })
+                    val locator = if (isPdf) {
+                        ReadiumReader.pdfCurrentLocator
+                    } else {
+                        ReadiumReader.epubCurrentLocator
+                    }
+                    result.success(locator?.let { jsonEncode(it.toJSON()) })
                 }
 
                 else -> {

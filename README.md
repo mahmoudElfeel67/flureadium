@@ -25,7 +25,7 @@ General TODO:
 - [x] PDF format detection and preferences API
 - [x] PDF navigator implementation (Android)
 - [x] PDF navigator implementation (iOS)
-- [ ] PDF Flutter widget layer integration
+- [x] PDF Flutter widget layer integration
 - [ ] PDF manual testing (Android & iOS)
 
 ## Documentation

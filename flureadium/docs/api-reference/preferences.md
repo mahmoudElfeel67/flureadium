@@ -370,10 +370,11 @@ await flureadium.audioSeekBy(Duration(seconds: 30));
 
 ## PDFPreferences
 
-> **Note:** PDF support is in active development:
-> - **Android:** Native navigator implemented via Pdfium adapter
-> - **iOS:** In progress
-> - **Flutter widget layer:** Integration pending
+> **Note:** PDF support is available on Android and iOS:
+> - **Android:** Native navigator via Pdfium adapter
+> - **iOS:** Native navigator via PDFKit
+> - **Flutter widget layer:** `setPDFPreferences()` method available
+> - **Status:** Manual testing in progress
 
 Controls PDF reader behavior.
 

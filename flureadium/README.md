@@ -140,9 +140,9 @@ flureadium.onTextLocatorChanged.listen((locator) {
 | EPUB 2 | Yes | Yes | - | Yes |
 | EPUB 3 | Yes | Yes | Yes | Yes |
 | WebPub | Yes | Yes | Yes | Yes |
-| PDF | Android, iOS* | - | - | - |
+| PDF | Android, iOS | - | - | - |
 
-*PDF support requires Flutter widget layer integration (in progress). See [documentation](docs/) for details.
+PDF support is available on Android (via Pdfium) and iOS (via PDFKit). See [documentation](docs/) for details.
 
 ## Web Development
 

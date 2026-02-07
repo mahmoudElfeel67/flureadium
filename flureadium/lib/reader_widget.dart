@@ -292,6 +292,11 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
   }
 
   @override
+  Future<void> setPDFPreferences(PDFPreferences preferences) async {
+    _channel?.setPDFPreferences(preferences);
+  }
+
+  @override
   Future<void> applyDecorations(
     String id,
     List<ReaderDecoration> decorations,

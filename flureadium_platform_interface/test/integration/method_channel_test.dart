@@ -444,6 +444,13 @@ class MockReaderWidget implements ReadiumReaderWidgetInterface {
     setEPUBPreferencesCalled = true;
   }
 
+  bool setPDFPreferencesCalled = false;
+
+  @override
+  Future<void> setPDFPreferences(PDFPreferences preferences) async {
+    setPDFPreferencesCalled = true;
+  }
+
   @override
   Future<void> applyDecorations(
     String id,
