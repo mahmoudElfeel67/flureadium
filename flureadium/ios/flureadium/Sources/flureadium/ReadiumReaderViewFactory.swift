@@ -1,6 +1,7 @@
 import Flutter
 import Foundation
 import UIKit
+import ReadiumShared
 
 class ReadiumReaderViewFactory: NSObject, @preconcurrency FlutterPlatformViewFactory {
     private weak var registrar: FlutterPluginRegistrar?
@@ -15,6 +16,17 @@ class ReadiumReaderViewFactory: NSObject, @preconcurrency FlutterPlatformViewFac
         viewIdentifier viewId: Int64,
         arguments args: Any?
     ) -> FlutterPlatformView {
+        // Check if current publication is PDF
+        if let publication = getCurrentPublication(),
+           publication.conforms(to: .pdf) {
+            return PdfReaderView(
+                frame: frame,
+                viewIdentifier: viewId,
+                arguments: args,
+                registrar: registrar!)
+        }
+
+        // Default to EPUB reader
         return ReadiumReaderView(
             frame: frame,
             viewIdentifier: viewId,

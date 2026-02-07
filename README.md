@@ -24,8 +24,9 @@ General TODO:
 - [ ] Full support for Sync Narration and Guided Navigation
 - [x] PDF format detection and preferences API
 - [x] PDF navigator implementation (Android)
-- [ ] PDF navigator implementation (iOS)
+- [x] PDF navigator implementation (iOS)
 - [ ] PDF Flutter widget layer integration
+- [ ] PDF manual testing (Android & iOS)
 
 ## Documentation
 

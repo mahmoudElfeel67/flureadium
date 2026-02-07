@@ -8,7 +8,7 @@ A comprehensive Flutter plugin for reading EPUB ebooks, audiobooks, and comics u
 ## Features
 
 - **EPUB Reading**: Full EPUB 2/3 support with customizable typography
-- **PDF Reading**: PDF support via Readium's Pdfium adapter (Android, iOS in progress)
+- **PDF Reading**: PDF support via Readium's PDF adapters (Android via Pdfium, iOS via PDFKit)
 - **Audiobook Playback**: Native audio with background playback support
 - **Text-to-Speech**: Platform TTS with voice selection and rate control
 - **Synchronized Audio**: Media overlay support for read-along experiences
@@ -140,9 +140,9 @@ flureadium.onTextLocatorChanged.listen((locator) {
 | EPUB 2 | Yes | Yes | - | Yes |
 | EPUB 3 | Yes | Yes | Yes | Yes |
 | WebPub | Yes | Yes | Yes | Yes |
-| PDF | Android* | - | - | - |
+| PDF | Android, iOS* | - | - | - |
 
-*PDF support on iOS is in progress. See [documentation](docs/) for details.
+*PDF support requires Flutter widget layer integration (in progress). See [documentation](docs/) for details.
 
 ## Web Development
 
