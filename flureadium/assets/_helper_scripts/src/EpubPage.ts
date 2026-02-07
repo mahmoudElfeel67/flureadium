@@ -78,17 +78,27 @@ export class EpubPage {
   // already visible, only scrolls to the start of it if toStart is true.
   public scrollToLocations(locations: Locations, isVerticalScroll: boolean, toStart: boolean): boolean {
     try {
+      // In scroll mode, prefer explicit progression for precise positioning.
+      // CSS selector path calculates position from element bounding rect which loses precision.
+      if (isVerticalScroll) {
+        const progression = locations.progression;
+        if (progression != null) {
+          readium?.scrollToPosition(progression);
+          return true;
+        }
+      }
+
+      // Paginated mode or no progression: use CSS selector for element-based navigation
       const range = this._processLocations(locations);
       if (range != null) {
         this._scrollToProcessedRange(range, isVerticalScroll, toStart);
-
         return true;
       }
 
+      // Fallback for paginated mode without CSS selector
       const progression = locations.progression;
       if (progression != null) {
         readium?.scrollToPosition(progression);
-
         return true;
       }
 
