@@ -27,6 +27,7 @@ Flureadium is a Flutter plugin that wraps the Readium toolkits for reading EPUB 
 - **[Highlights & Annotations](guides/highlights-annotations.md)** - Adding visual decorations
 - **[Saving Progress](guides/saving-progress.md)** - Persisting reading position
 - **[Reader Preferences](guides/preferences.md)** - Customizing appearance
+- **[Error Handling](guides/error-handling.md)** - Exception types and best practices
 
 ## API Reference
 
@@ -70,7 +71,6 @@ Flureadium is a Flutter plugin that wraps the Readium toolkits for reading EPUB 
 ## Related Resources
 
 - [Main README](../README.md) - Project overview
-- [Error Handling Guide](../../ERROR_HANDLING.md) - Exception types and best practices
 - [Contributing Guide](../../CONTRIBUTING.md) - How to contribute
 - [Example App](../example/) - Working demo application
 

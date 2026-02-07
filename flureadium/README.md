@@ -128,7 +128,8 @@ flureadium.onTextLocatorChanged.listen((locator) {
 
 ## Documentation
 
-- [API Reference](https://pub.dev/documentation/flureadium/latest/)
+- **[Full Documentation](docs/)** - Comprehensive guides and API reference
+- [API Reference](https://pub.dev/documentation/flureadium/latest/) - Generated dartdoc
 - [Example App](https://github.com/mulev/flureadium/tree/main/flureadium/example)
 
 ## Supported Formats
