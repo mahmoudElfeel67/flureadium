@@ -1,7 +1,7 @@
 # Plugin: flureadium
 
 A Flutter wrapper for the Readium toolkits for ebooks, audiobooks and comics (kotlin-toolkit & swift-toolkit).
-This project is a fork of [Notalib/flureadium](https://github.com/Notalib/flureadium)
+This project is a fork of [Notalib/flutter_readium](https://github.com/Notalib/flutter_readium)
 
 This branch is under active development and meant to replace the `nota-lyt4` branch,
 which implements both TTS and Text+Audio sync on top of the native toolkits via other Flutter plugins.
@@ -22,6 +22,13 @@ General TODO:
 - [x] Simplified support for MediaOverlays. Assumptions: Continuous audio playlist /w 1 overlay file per mp3.
 - [ ] Support for custom Decoration styles
 - [ ] Full support for Sync Narration and Guided Navigation
+- [x] PDF format detection and preferences API
+- [x] PDF navigator implementation (Android)
+- [x] PDF navigator implementation (iOS)
+- [x] PDF Flutter widget layer integration
+- [x] Epist migration to Flureadium PDF
+- [ ] PDF manual testing (Android & iOS)
+- [ ] PDF page rendering to image (for cover generation)
 
 ## Documentation
 

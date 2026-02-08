@@ -135,7 +135,10 @@ void main() {
         expect(prefs.pitch, equals(1.2));
         expect(prefs.voiceIdentifier, equals('com.apple.voice.en-US.Samantha'));
         expect(prefs.languageOverride, equals('en-US'));
-        expect(prefs.controlPanelInfoType, equals(ControlPanelInfoType.chapterTitle));
+        expect(
+          prefs.controlPanelInfoType,
+          equals(ControlPanelInfoType.chapterTitle),
+        );
       });
 
       test('creates instance with null parameters', () {
@@ -182,7 +185,10 @@ void main() {
           controlPanelInfoType: ControlPanelInfoType.chapterTitleAuthor,
         );
 
-        expect(prefs1.toMap()['controlPanelInfoType'], equals('chapterTitleAuthor'));
+        expect(
+          prefs1.toMap()['controlPanelInfoType'],
+          equals('chapterTitleAuthor'),
+        );
 
         final prefs2 = TTSPreferences(
           controlPanelInfoType: ControlPanelInfoType.standardWCh,
@@ -226,7 +232,10 @@ void main() {
         expect(prefs.pitch, equals(1.0));
         expect(prefs.seekInterval, equals(30.0));
         expect(prefs.allowExternalSeeking, isTrue);
-        expect(prefs.controlPanelInfoType, equals(ControlPanelInfoType.titleChapter));
+        expect(
+          prefs.controlPanelInfoType,
+          equals(ControlPanelInfoType.titleChapter),
+        );
       });
 
       test('creates instance with null parameters', () {
@@ -263,8 +272,7 @@ void main() {
       });
 
       test('includes updateIntervalSecs in map', () {
-        final prefs = AudioPreferences()
-          ..updateIntervalSecs = 0.5;
+        final prefs = AudioPreferences()..updateIntervalSecs = 0.5;
 
         final map = prefs.toMap();
 
@@ -293,18 +301,391 @@ void main() {
 
   group('ControlPanelInfoType', () {
     test('has correct enum values', () {
-      expect(ControlPanelInfoType.values, containsAll([
-        ControlPanelInfoType.standard,
-        ControlPanelInfoType.standardWCh,
-        ControlPanelInfoType.chapterTitleAuthor,
-        ControlPanelInfoType.chapterTitle,
-        ControlPanelInfoType.titleChapter,
-      ]));
+      expect(
+        ControlPanelInfoType.values,
+        containsAll([
+          ControlPanelInfoType.standard,
+          ControlPanelInfoType.standardWCh,
+          ControlPanelInfoType.chapterTitleAuthor,
+          ControlPanelInfoType.chapterTitle,
+          ControlPanelInfoType.titleChapter,
+        ]),
+      );
     });
 
     test('enum name extraction works correctly', () {
-      expect(ControlPanelInfoType.standard.toString().split('.').last, equals('standard'));
-      expect(ControlPanelInfoType.chapterTitleAuthor.toString().split('.').last, equals('chapterTitleAuthor'));
+      expect(
+        ControlPanelInfoType.standard.toString().split('.').last,
+        equals('standard'),
+      );
+      expect(
+        ControlPanelInfoType.chapterTitleAuthor.toString().split('.').last,
+        equals('chapterTitleAuthor'),
+      );
+    });
+  });
+
+  group('PDFPreferences', () {
+    group('constructor', () {
+      test('creates instance with all parameters', () {
+        final prefs = PDFPreferences(
+          fit: PDFFit.width,
+          scrollMode: PDFScrollMode.vertical,
+          pageLayout: PDFPageLayout.single,
+          offsetFirstPage: true,
+          disableDoubleTapZoom: true,
+          disableTextSelection: true,
+        );
+
+        expect(prefs.fit, equals(PDFFit.width));
+        expect(prefs.scrollMode, equals(PDFScrollMode.vertical));
+        expect(prefs.pageLayout, equals(PDFPageLayout.single));
+        expect(prefs.offsetFirstPage, isTrue);
+        expect(prefs.disableDoubleTapZoom, isTrue);
+        expect(prefs.disableTextSelection, isTrue);
+      });
+
+      test('creates instance with null parameters', () {
+        final prefs = PDFPreferences();
+
+        expect(prefs.fit, isNull);
+        expect(prefs.scrollMode, isNull);
+        expect(prefs.pageLayout, isNull);
+        expect(prefs.offsetFirstPage, isNull);
+        expect(prefs.disableDoubleTapZoom, isNull);
+        expect(prefs.disableTextSelection, isNull);
+      });
+
+      test('creates instance with disableDoubleTapZoom only', () {
+        final prefs = PDFPreferences(disableDoubleTapZoom: true);
+
+        expect(prefs.disableDoubleTapZoom, isTrue);
+        expect(prefs.fit, isNull);
+        expect(prefs.scrollMode, isNull);
+      });
+
+      test('creates instance with disableTextSelection', () {
+        final prefs = PDFPreferences(
+          disableDoubleTapZoom: true,
+          disableTextSelection: true,
+        );
+
+        expect(prefs.disableDoubleTapZoom, isTrue);
+        expect(prefs.disableTextSelection, isTrue);
+      });
+
+      test('creates instance with disableDragGestures', () {
+        final prefs = PDFPreferences(
+          disableDoubleTapZoom: true,
+          disableTextSelection: true,
+          disableDragGestures: true,
+        );
+
+        expect(prefs.disableDoubleTapZoom, isTrue);
+        expect(prefs.disableTextSelection, isTrue);
+        expect(prefs.disableDragGestures, isTrue);
+      });
+    });
+
+    group('toJson', () {
+      test('serializes preferences with all values', () {
+        final prefs = PDFPreferences(
+          fit: PDFFit.contain,
+          scrollMode: PDFScrollMode.horizontal,
+          pageLayout: PDFPageLayout.double,
+          offsetFirstPage: false,
+          disableDoubleTapZoom: true,
+          disableTextSelection: true,
+        );
+
+        final json = prefs.toJson();
+
+        expect(json['fit'], equals('contain'));
+        expect(json['scrollMode'], equals('horizontal'));
+        expect(json['pageLayout'], equals('double'));
+        expect(json['offsetFirstPage'], isFalse);
+        expect(json['disableDoubleTapZoom'], isTrue);
+        expect(json['disableTextSelection'], isTrue);
+      });
+
+      test('omits null values from JSON', () {
+        final prefs = PDFPreferences(fit: PDFFit.width);
+
+        final json = prefs.toJson();
+
+        expect(json.containsKey('fit'), isTrue);
+        expect(json.containsKey('scrollMode'), isFalse);
+        expect(json.containsKey('pageLayout'), isFalse);
+        expect(json.containsKey('offsetFirstPage'), isFalse);
+        expect(json.containsKey('disableDoubleTapZoom'), isFalse);
+        expect(json.containsKey('disableTextSelection'), isFalse);
+      });
+
+      test('serializes disableDoubleTapZoom when set', () {
+        final prefs = PDFPreferences(disableDoubleTapZoom: false);
+
+        final json = prefs.toJson();
+
+        expect(json['disableDoubleTapZoom'], isFalse);
+        expect(json.containsKey('fit'), isFalse);
+      });
+
+      test('serializes disableTextSelection when set', () {
+        final prefs = PDFPreferences(disableTextSelection: true);
+
+        final json = prefs.toJson();
+
+        expect(json['disableTextSelection'], isTrue);
+        expect(json.containsKey('fit'), isFalse);
+      });
+
+      test('serializes disableDragGestures when set', () {
+        final prefs = PDFPreferences(disableDragGestures: true);
+
+        final json = prefs.toJson();
+
+        expect(json['disableDragGestures'], isTrue);
+        expect(json.containsKey('fit'), isFalse);
+      });
+
+      test('returns empty map when all values are null', () {
+        final prefs = PDFPreferences();
+
+        final json = prefs.toJson();
+
+        expect(json, isEmpty);
+      });
+    });
+
+    group('fromJsonMap', () {
+      test('parses JSON with all values', () {
+        final json = {
+          'fit': 'width',
+          'scrollMode': 'vertical',
+          'pageLayout': 'automatic',
+          'offsetFirstPage': true,
+          'disableDoubleTapZoom': true,
+          'disableTextSelection': true,
+          'disableDragGestures': true,
+        };
+
+        final prefs = PDFPreferences.fromJsonMap(json);
+
+        expect(prefs.fit, equals(PDFFit.width));
+        expect(prefs.scrollMode, equals(PDFScrollMode.vertical));
+        expect(prefs.pageLayout, equals(PDFPageLayout.automatic));
+        expect(prefs.offsetFirstPage, isTrue);
+        expect(prefs.disableDoubleTapZoom, isTrue);
+        expect(prefs.disableTextSelection, isTrue);
+        expect(prefs.disableDragGestures, isTrue);
+      });
+
+      test('handles partial JSON with missing values', () {
+        final json = {'fit': 'contain'};
+
+        final prefs = PDFPreferences.fromJsonMap(json);
+
+        expect(prefs.fit, equals(PDFFit.contain));
+        expect(prefs.scrollMode, isNull);
+        expect(prefs.pageLayout, isNull);
+        expect(prefs.offsetFirstPage, isNull);
+        expect(prefs.disableDoubleTapZoom, isNull);
+        expect(prefs.disableTextSelection, isNull);
+      });
+
+      test('parses disableDoubleTapZoom when present', () {
+        final json = {'disableDoubleTapZoom': false};
+
+        final prefs = PDFPreferences.fromJsonMap(json);
+
+        expect(prefs.disableDoubleTapZoom, isFalse);
+        expect(prefs.fit, isNull);
+      });
+
+      test('parses disableTextSelection when present', () {
+        final json = {'disableTextSelection': true};
+
+        final prefs = PDFPreferences.fromJsonMap(json);
+
+        expect(prefs.disableTextSelection, isTrue);
+        expect(prefs.fit, isNull);
+      });
+
+      test('parses disableDragGestures when present', () {
+        final json = {'disableDragGestures': true};
+
+        final prefs = PDFPreferences.fromJsonMap(json);
+
+        expect(prefs.disableDragGestures, isTrue);
+        expect(prefs.fit, isNull);
+      });
+
+      test('handles empty JSON', () {
+        final prefs = PDFPreferences.fromJsonMap({});
+
+        expect(prefs.fit, isNull);
+        expect(prefs.scrollMode, isNull);
+        expect(prefs.disableDoubleTapZoom, isNull);
+        expect(prefs.disableTextSelection, isNull);
+      });
+    });
+
+    group('copyWith', () {
+      test('creates copy with overridden values', () {
+        final original = PDFPreferences(
+          fit: PDFFit.width,
+          scrollMode: PDFScrollMode.vertical,
+          disableDoubleTapZoom: false,
+        );
+
+        final copy = original.copyWith(
+          fit: PDFFit.contain,
+          disableDoubleTapZoom: true,
+        );
+
+        expect(copy.fit, equals(PDFFit.contain));
+        expect(copy.scrollMode, equals(PDFScrollMode.vertical));
+        expect(copy.disableDoubleTapZoom, isTrue);
+        expect(original.fit, equals(PDFFit.width)); // Original unchanged
+        expect(original.disableDoubleTapZoom, isFalse);
+      });
+
+      test('creates copy preserving all values when no overrides', () {
+        final original = PDFPreferences(
+          fit: PDFFit.width,
+          scrollMode: PDFScrollMode.horizontal,
+          pageLayout: PDFPageLayout.double,
+          offsetFirstPage: true,
+          disableDoubleTapZoom: true,
+          disableTextSelection: true,
+          disableDragGestures: true,
+        );
+
+        final copy = original.copyWith();
+
+        expect(copy.fit, equals(original.fit));
+        expect(copy.scrollMode, equals(original.scrollMode));
+        expect(copy.pageLayout, equals(original.pageLayout));
+        expect(copy.offsetFirstPage, equals(original.offsetFirstPage));
+        expect(
+          copy.disableDoubleTapZoom,
+          equals(original.disableDoubleTapZoom),
+        );
+        expect(
+          copy.disableTextSelection,
+          equals(original.disableTextSelection),
+        );
+        expect(copy.disableDragGestures, equals(original.disableDragGestures));
+      });
+
+      test('can override disableDoubleTapZoom independently', () {
+        final original = PDFPreferences(
+          fit: PDFFit.width,
+          disableDoubleTapZoom: false,
+        );
+
+        final copy = original.copyWith(disableDoubleTapZoom: true);
+
+        expect(copy.fit, equals(PDFFit.width));
+        expect(copy.disableDoubleTapZoom, isTrue);
+      });
+
+      test('can override disableTextSelection independently', () {
+        final original = PDFPreferences(
+          fit: PDFFit.width,
+          disableTextSelection: false,
+        );
+
+        final copy = original.copyWith(disableTextSelection: true);
+
+        expect(copy.fit, equals(PDFFit.width));
+        expect(copy.disableTextSelection, isTrue);
+      });
+
+      test('can override disableDragGestures independently', () {
+        final original = PDFPreferences(
+          fit: PDFFit.width,
+          disableDragGestures: false,
+        );
+
+        final copy = original.copyWith(disableDragGestures: true);
+
+        expect(copy.fit, equals(PDFFit.width));
+        expect(copy.disableDragGestures, isTrue);
+      });
+    });
+
+    group('mutable properties', () {
+      test('properties can be modified', () {
+        final prefs = PDFPreferences();
+
+        // ignore: cascade_invocations
+        prefs
+          ..fit = PDFFit.contain
+          ..scrollMode = PDFScrollMode.horizontal
+          ..pageLayout = PDFPageLayout.automatic
+          ..offsetFirstPage = true
+          ..disableDoubleTapZoom = true
+          ..disableTextSelection = true
+          ..disableDragGestures = true;
+
+        expect(prefs.fit, equals(PDFFit.contain));
+        expect(prefs.scrollMode, equals(PDFScrollMode.horizontal));
+        expect(prefs.pageLayout, equals(PDFPageLayout.automatic));
+        expect(prefs.offsetFirstPage, isTrue);
+        expect(prefs.disableDoubleTapZoom, isTrue);
+        expect(prefs.disableTextSelection, isTrue);
+        expect(prefs.disableDragGestures, isTrue);
+      });
+
+      test('disableDoubleTapZoom can be modified', () {
+        final prefs = PDFPreferences(disableDoubleTapZoom: false)
+          ..disableDoubleTapZoom = true;
+
+        expect(prefs.disableDoubleTapZoom, isTrue);
+      });
+
+      test('disableTextSelection can be modified', () {
+        final prefs = PDFPreferences(disableTextSelection: false)
+          ..disableTextSelection = true;
+
+        expect(prefs.disableTextSelection, isTrue);
+      });
+
+      test('disableDragGestures can be modified', () {
+        final prefs = PDFPreferences(disableDragGestures: false)
+          ..disableDragGestures = true;
+
+        expect(prefs.disableDragGestures, isTrue);
+      });
+    });
+  });
+
+  group('PDFFit', () {
+    test('has correct enum values', () {
+      expect(PDFFit.values, containsAll([PDFFit.width, PDFFit.contain]));
+    });
+  });
+
+  group('PDFScrollMode', () {
+    test('has correct enum values', () {
+      expect(
+        PDFScrollMode.values,
+        containsAll([PDFScrollMode.horizontal, PDFScrollMode.vertical]),
+      );
+    });
+  });
+
+  group('PDFPageLayout', () {
+    test('has correct enum values', () {
+      expect(
+        PDFPageLayout.values,
+        containsAll([
+          PDFPageLayout.single,
+          PDFPageLayout.double,
+          PDFPageLayout.automatic,
+        ]),
+      );
     });
   });
 }

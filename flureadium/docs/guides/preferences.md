@@ -517,8 +517,73 @@ class SystemAwareSettings extends StatelessWidget {
 }
 ```
 
+## PDF Preferences
+
+PDF documents have different preference options than EPUBs, focused on page layout and navigation rather than typography.
+
+### Basic PDF Settings
+
+```dart
+PDFPreferences(
+  fit: PDFFit.width,           // How page fits in viewport
+  scrollMode: PDFScrollMode.horizontal,  // Swipe direction
+  pageLayout: PDFPageLayout.single,      // Single or double pages
+  offsetFirstPage: true,       // Cover page alone in spreads
+)
+```
+
+### Fit Modes
+
+- `PDFFit.width` - Fit page width to screen width (best for reading)
+- `PDFFit.contain` - Fit entire page on screen (best for overview)
+
+### Scroll Modes
+
+- `PDFScrollMode.horizontal` - Swipe left/right between pages
+- `PDFScrollMode.vertical` - Scroll up/down continuously
+
+### Page Layouts
+
+- `PDFPageLayout.single` - One page at a time
+- `PDFPageLayout.double` - Two pages side-by-side (book spreads)
+- `PDFPageLayout.automatic` - Choose based on screen size
+
+### Applying PDF Preferences
+
+```dart
+// Set default PDF preferences before opening
+flureadium.setDefaultPdfPreferences(PDFPreferences(
+  fit: PDFFit.width,
+  scrollMode: PDFScrollMode.horizontal,
+  pageLayout: PDFPageLayout.single,
+));
+
+// Update during reading
+await flureadium.setPDFPreferences(PDFPreferences(
+  fit: PDFFit.contain,
+  scrollMode: PDFScrollMode.vertical,
+));
+```
+
+### iOS-Specific Options
+
+On iOS, additional gesture controls are available:
+
+```dart
+PDFPreferences(
+  // ... basic options
+  disableDoubleTapZoom: true,      // Disable double-tap to zoom
+  disableTextSelection: true,       // Disable long-press text selection
+  disableDragGestures: true,        // Disable drag gestures
+  disableTextSelectionMenu: true,   // Disable Copy/Translate menu
+)
+```
+
+These are useful for creating a simplified reading experience or when your app handles gestures differently.
+
 ## See Also
 
 - [EPUBPreferences Reference](../api-reference/preferences.md#epubpreferences)
+- [PDFPreferences Reference](../api-reference/preferences.md#pdfpreferences)
 - [Flureadium Class](../api-reference/flureadium-class.md) - API for applying preferences
 - [EPUB Reading Guide](epub-reading.md) - Visual reading customization

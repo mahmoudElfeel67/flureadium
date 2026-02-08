@@ -92,6 +92,14 @@ class ReadiumReaderChannel extends MethodChannel {
     );
   }
 
+  /// Set PDF preferences.
+  Future<void> setPDFPreferences(PDFPreferences preferences) async {
+    await _invokeMethod(
+      _ReaderChannelMethodInvoke.setPreferences,
+      preferences.toJson(),
+    );
+  }
+
   /// Apply decorations to the reader.
   Future<void> applyDecorations(
     String id,

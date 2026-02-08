@@ -14,6 +14,7 @@ import dev.mulev.flureadium.events.TimedBasedStateEventChannel
 import dev.mulev.flureadium.models.ReadiumTimebasedState
 import dev.mulev.flureadium.navigators.AudiobookNavigator
 import dev.mulev.flureadium.navigators.EpubNavigator
+import dev.mulev.flureadium.navigators.PdfNavigator
 import dev.mulev.flureadium.navigators.SyncAudiobookNavigator
 import dev.mulev.flureadium.navigators.TTSNavigator
 import dev.mulev.flureadium.navigators.TimebasedNavigator
@@ -56,6 +57,7 @@ import org.readium.r2.shared.util.http.HttpRequest
 import org.readium.r2.shared.util.http.HttpTry
 import org.readium.r2.shared.util.resource.Resource
 import org.readium.r2.shared.util.resource.TransformingContainer
+import org.readium.adapter.pdfium.document.PdfiumDocumentFactory
 import org.readium.r2.streamer.PublicationOpener
 import org.readium.r2.streamer.PublicationOpener.OpenError
 import org.readium.r2.streamer.parser.DefaultPublicationParser
@@ -77,13 +79,15 @@ private const val ttsNavigatorStateKey = "ttsState"
 private const val audioNavigatorStateKey = "audioState"
 private const val syncAudioNavigatorStateKey = "syncAudioState"
 private const val epubNavigatorStateKey = "epubState"
+private const val pdfEnabledKey = "pdfEnabled"
+private const val pdfNavigatorStateKey = "pdfState"
 private const val decorationStyleKey = "decorationStyle"
 
 // TODO: Support custom headers and authentication header for content files.
 
 @ExperimentalCoroutinesApi
 @OptIn(ExperimentalReadiumApi::class)
-object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.VisualListener {
+object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.VisualListener, PdfNavigator.VisualListener {
     private val mainScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     private val jobs = mutableListOf<Job>()
@@ -169,6 +173,17 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
     val epubCurrentLocator: Locator?
         get() = epubNavigator?.currentLocator?.value
 
+    private var pdfNavigator: PdfNavigator? = null
+
+    val pdfCurrentLocator: Locator?
+        get() = pdfNavigator?.currentLocator?.value
+
+    private var _pdfPreferences: FlutterPdfPreferences = FlutterPdfPreferences()
+
+    /** Current PDF preferences (defaults if PDF hasn't been enabled yet). */
+    val pdfPreferences: FlutterPdfPreferences
+        get() = _pdfPreferences
+
     private var _audioPreferences: FlutterAudioPreferences = FlutterAudioPreferences()
 
     /** Current audio preferences (defaults if audio hasn't been enabled yet). */
@@ -186,8 +201,8 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
                         context,
                         assetRetriever = assetRetriever,
                         httpClient = httpClient,
-                        // Only required if you want to support PDF files using the PDFium adapter.
-                        pdfFactory = null, //PdfiumDocumentFactory(context)
+                        // PDF support via PDFium adapter
+                        pdfFactory = PdfiumDocumentFactory(context)
                     ),
                 )
             }
@@ -237,6 +252,8 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
             putString(currentPublicationUrlKey, currentPublicationUrl)
             putBoolean(epubEnabledKey, epubNavigator != null)
             putBundle(epubNavigatorStateKey, epubNavigator?.storeState())
+            putBoolean(pdfEnabledKey, pdfNavigator != null)
+            putBundle(pdfNavigatorStateKey, pdfNavigator?.storeState())
             putBoolean(ttsEnabledKey, ttsNavigator != null)
             putBundle(ttsNavigatorStateKey, ttsNavigator?.storeState())
             putBoolean(audioEnabledKey, audiobookNavigator != null)
@@ -277,6 +294,17 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
                         EpubNavigator.restoreState(pub, this@ReadiumReader, state).apply {
                             initNavigator()
                             Log.d(TAG, ":storeState - epubNavigator restored")
+                        }
+                }
+            }
+
+            if (bundle.getBoolean(pdfEnabledKey)) {
+                Log.d(TAG, ":storeState - restore pdf navigator")
+                bundle.getBundle(pdfNavigatorStateKey)?.let { state ->
+                    pdfNavigator =
+                        PdfNavigator.restoreState(pub, this@ReadiumReader, state).apply {
+                            initNavigator()
+                            Log.d(TAG, ":storeState - pdfNavigator restored")
                         }
                 }
             }
@@ -552,8 +580,11 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
             audiobookNavigator = null
             syncAudiobookNavigator?.dispose()
             syncAudiobookNavigator = null
+            pdfNavigator?.dispose()
+            pdfNavigator = null
 
             _audioPreferences = FlutterAudioPreferences()
+            _pdfPreferences = FlutterPdfPreferences()
 
             state.clear()
         }.await()
@@ -650,6 +681,99 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
 
         isReadyEventChannel?.dispose()
         isReadyEventChannel = null
+    }
+
+    @OptIn(InternalReadiumApi::class)
+    suspend fun pdfEnable(
+        initialLocator: Locator?,
+        initialPreferences: FlutterPdfPreferences,
+        messenger: BinaryMessenger,
+        fragmentManager: FragmentManager,
+        viewGroup: ViewGroup,
+        readerWidget: ReadiumReaderWidget
+    ) {
+        val pub = currentPublication ?: throw Exception("Publication not opened cannot enable pdf")
+
+        isReadyEventChannel?.dispose()
+        isReadyEventChannel = EpubIsReadyEventChannel(messenger)
+        currentReaderWidget = readerWidget
+
+        val isPdf = pub.conformsTo(Publication.Profile.PDF)
+        if (!isPdf) {
+            throw Exception("Publication is not a PDF, cannot enable pdf navigator")
+        }
+
+        _pdfPreferences = initialPreferences
+
+        withScope(mainScope) {
+            pdfNavigator?.let {
+                attachPdfNavigator(fragmentManager, viewGroup)
+                return@withScope
+            } // Already enabled - assume from restored state.
+
+            PdfNavigator(pub, initialLocator, this@ReadiumReader, initialPreferences).apply {
+                initNavigator()
+                pdfNavigator = this
+                attachPdfNavigator(fragmentManager, viewGroup)
+                return@withScope
+            }
+        }
+    }
+
+    suspend fun attachPdfNavigator(fragmentManager: FragmentManager?, viewGroup: ViewGroup?) {
+        if (fragmentManager == null || viewGroup == null) {
+            Log.d(TAG, "attachPdfNavigator: Missing fragmentManager or viewGroup")
+            return
+        }
+
+        mainScope.async {
+            pdfNavigator?.attachNavigator(fragmentManager, viewGroup)
+        }.await()
+    }
+
+    fun pdfClose() {
+        currentReaderWidget = null
+        pdfNavigator?.dispose()
+        pdfNavigator = null
+
+        isReadyEventChannel?.dispose()
+        isReadyEventChannel = null
+    }
+
+    /**
+     * Update PDF navigator preferences.
+     */
+    fun pdfUpdatePreferences(preferences: FlutterPdfPreferences) {
+        _pdfPreferences = preferences
+        pdfNavigator?.updatePreferences(preferences)
+    }
+
+    /**
+     * Go to a specific locator in the PDF navigator.
+     */
+    suspend fun pdfGo(locator: Locator, animated: Boolean) {
+        pdfNavigator?.go(locator, animated)
+    }
+
+    /**
+     * Go left (previous page) in the PDF navigator.
+     */
+    fun pdfGoLeft(animated: Boolean) {
+        pdfNavigator?.goLeft(animated)
+    }
+
+    /**
+     * Go right (next page) in the PDF navigator.
+     */
+    fun pdfGoRight(animated: Boolean) {
+        pdfNavigator?.goRight(animated)
+    }
+
+    /**
+     * Go to a specific locator in the PDF navigator, scrolling to position if needed.
+     */
+    suspend fun pdfGoToLocator(locator: Locator, animated: Boolean) {
+        pdfNavigator?.goToLocator(locator, animated)
     }
 
     suspend fun ttsEnable(ttsPrefs: FlutterTtsPreferences) {

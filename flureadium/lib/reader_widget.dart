@@ -62,6 +62,10 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
     return readium.defaultPreferences;
   }
 
+  PDFPreferences? get _defaultPdfPreferences {
+    return readium.defaultPdfPreferences;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -165,8 +169,14 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
 
     // Priority 3: path-based fallback (file-level granularity)
     if (curIndex == -1) {
-      R2Log.d('skipToNext: toc= fragment matching failed, using path fallback');
-      curIndex = findTocIndexByPath(_currentLocator!, toc, lastMatch: true);
+      R2Log.d('skipToNext: toc= fragment matching failed, using fallback');
+      // Check if this is a PDF (page-based matching)
+      if (isPdfToc(toc)) {
+        curIndex = findTocIndexByPage(_currentLocator!, toc);
+        R2Log.d('skipToNext: PDF page matching returned index $curIndex');
+      } else {
+        curIndex = findTocIndexByPath(_currentLocator!, toc, lastMatch: true);
+      }
     }
 
     R2Log.d('skipToNext: curIndex=$curIndex, tocLength=${toc.length}');
@@ -234,10 +244,14 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
 
     // Priority 3: path-based fallback (file-level granularity)
     if (curIndex == -1) {
-      R2Log.d(
-        'skipToPrevious: toc= fragment matching failed, using path fallback',
-      );
-      curIndex = findTocIndexByPath(_currentLocator!, toc, lastMatch: false);
+      R2Log.d('skipToPrevious: toc= fragment matching failed, using fallback');
+      // Check if this is a PDF (page-based matching)
+      if (isPdfToc(toc)) {
+        curIndex = findTocIndexByPage(_currentLocator!, toc);
+        R2Log.d('skipToPrevious: PDF page matching returned index $curIndex');
+      } else {
+        curIndex = findTocIndexByPath(_currentLocator!, toc, lastMatch: false);
+      }
     }
 
     R2Log.d('skipToPrevious: curIndex=$curIndex, tocLength=${toc.length}');
@@ -292,6 +306,11 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
   }
 
   @override
+  Future<void> setPDFPreferences(PDFPreferences preferences) async {
+    _channel?.setPDFPreferences(preferences);
+  }
+
+  @override
   Future<void> applyDecorations(
     String id,
     List<ReaderDecoration> decorations,
@@ -304,7 +323,15 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
 
     R2Log.d(publication.identifier);
 
-    final defaultPreferences = _defaultPreferences?.toJson();
+    // Check if this is a PDF publication by looking at reading order media types
+    final isPdf = publication.readingOrder.any(
+      (link) => link.type?.contains('pdf') ?? false,
+    );
+
+    // Use PDF preferences for PDF publications, EPUB preferences for others
+    final defaultPreferences = isPdf
+        ? _defaultPdfPreferences?.toJson()
+        : _defaultPreferences?.toJson();
 
     final creationParams = <String, dynamic>{
       'pubIdentifier': publication.identifier,

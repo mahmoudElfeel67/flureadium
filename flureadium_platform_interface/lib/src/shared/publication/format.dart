@@ -10,6 +10,7 @@ class PublicationFormat extends Equatable {
   const PublicationFormat(this.value);
   static const epub = PublicationFormat(PublicationFormatEnum.epub);
   static const video = PublicationFormat(PublicationFormatEnum.video);
+  static const pdf = PublicationFormat(PublicationFormatEnum.pdf);
 
   /// Underlying enum value for [Format]. To be used with `switch` to make sure the cases match all values.
   final PublicationFormatEnum value;
@@ -40,6 +41,8 @@ class PublicationFormat extends Equatable {
         case 'application/epub+zip':
         case 'application/oebps-package+xml':
           return PublicationFormat.epub;
+        case 'application/pdf':
+          return PublicationFormat.pdf;
         default:
           break;
       }
@@ -49,6 +52,8 @@ class PublicationFormat extends Equatable {
     switch (fileExtension?.toLowerCase()) {
       case 'epub':
         return PublicationFormat.epub;
+      case 'pdf':
+        return PublicationFormat.pdf;
       default:
         return null;
     }
@@ -68,4 +73,4 @@ class PublicationFormat extends Equatable {
   }
 }
 
-enum PublicationFormatEnum { epub, video }
+enum PublicationFormatEnum { epub, video, pdf }

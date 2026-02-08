@@ -28,6 +28,9 @@ class TestLifecycleManager with ReaderLifecycleMixin implements ReadiumReaderWid
   Future<void> setEPUBPreferences(EPUBPreferences preferences) async {}
 
   @override
+  Future<void> setPDFPreferences(PDFPreferences preferences) async {}
+
+  @override
   Future<void> skipToNext({bool animated = true}) async {}
 
   @override

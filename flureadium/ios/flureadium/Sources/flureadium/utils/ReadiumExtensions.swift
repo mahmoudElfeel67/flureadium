@@ -243,3 +243,51 @@ extension AudioPreferences {
     )
   }
 }
+
+// Map Flutter PDF preferences to Readium PDFPreferences.
+extension PDFPreferences {
+  init(fromMap jsonMap: [String: Any]) {
+    self.init()
+
+    for (key, value) in jsonMap {
+      switch key {
+      case "fit":
+        // fit controls scroll mode: width=scroll, contain=paginated
+        if let fitStr = value as? String,
+           let fit = FlutterPdfFit.fromString(fitStr) {
+          scroll = fit.toReadiumScroll()
+        }
+      case "scrollMode":
+        // scrollMode controls scroll axis: horizontal/vertical
+        if let scrollModeStr = value as? String,
+           let scrollMode = FlutterPdfScrollMode.fromString(scrollModeStr) {
+          scrollAxis = scrollMode.toReadiumScrollAxis()
+        }
+      case "pageLayout":
+        // pageLayout controls spread: single/double/automatic
+        if let pageLayoutStr = value as? String,
+           let pageLayout = FlutterPdfPageLayout.fromString(pageLayoutStr) {
+          spread = pageLayout.toReadiumSpread()
+        }
+      case "offsetFirstPage":
+        if let offsetValue = value as? Bool {
+          offsetFirstPage = offsetValue
+        }
+      case "backgroundColor":
+        if let hexStr = value as? String {
+          backgroundColor = Color(hex: hexStr)
+        }
+      case "pageSpacing":
+        if let spacingValue = value as? Double {
+          pageSpacing = spacingValue
+        }
+      case "visibleScrollbar":
+        if let visibleValue = value as? Bool {
+          visibleScrollbar = visibleValue
+        }
+      default:
+        print("PDFPreferences", "WARN: Cannot map property: \(key): \(value)")
+      }
+    }
+  }
+}

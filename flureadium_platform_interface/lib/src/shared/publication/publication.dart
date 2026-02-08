@@ -264,17 +264,35 @@ class Publication with EquatableMixin implements JSONable {
     final hashIndex = href.indexOf(_hrefEnd);
     final hrefHead = hashIndex == -1 ? href : href.substring(0, hashIndex);
     final hrefTail = hashIndex == -1 ? null : href.substring(hashIndex + 1);
-    final resourceLink = linkWithHref(hrefHead);
+
+    // For fragment-only links (e.g., "#page=35"), use first readingOrder resource
+    final resourceLink = hrefHead.isEmpty && readingOrder.isNotEmpty
+        ? readingOrder.first
+        : linkWithHref(hrefHead);
     final type = resourceLink?.type ?? typeOverride?.name;
+
+    // Parse PDF page number from fragment (e.g., "page=5")
+    int? pagePosition;
+    if (hrefTail != null && hrefTail.startsWith('page=')) {
+      final parsed = int.tryParse(hrefTail.substring(5));
+      if (parsed != null && parsed > 0) {
+        pagePosition = parsed;
+      }
+    }
+
     final linkIndex = resourceLink == null
         ? -1
         : readingOrder.indexOf(resourceLink);
+
+    // Use page position from fragment if available, otherwise use reading order index
+    final position = pagePosition ?? (linkIndex == -1 ? null : linkIndex + 1);
+
     return type == null
         ? null
         : Locator(
-            href: hrefHead,
+            href: resourceLink?.href ?? hrefHead,
             type: type,
-            title: resourceLink!.title ?? link.title,
+            title: resourceLink?.title ?? link.title,
             text: LocatorText(),
             locations: Locations(
               cssSelector: hrefTail != null && hrefTail.isNotEmpty
@@ -282,7 +300,7 @@ class Publication with EquatableMixin implements JSONable {
                   : null,
               fragments: hrefTail == null ? [] : [hrefTail],
               progression: hrefTail == null ? 0 : null,
-              position: linkIndex == -1 ? null : linkIndex + 1,
+              position: position,
             ),
           );
   }

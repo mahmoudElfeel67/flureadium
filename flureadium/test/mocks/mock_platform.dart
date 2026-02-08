@@ -71,6 +71,9 @@ class MockFlureadiumPlatform
   @override
   EPUBPreferences? defaultPreferences;
 
+  @override
+  PDFPreferences? defaultPdfPreferences;
+
   // Publication Management
   @override
   Future<void> setCustomHeaders(Map<String, String> headers) async {
@@ -81,6 +84,12 @@ class MockFlureadiumPlatform
   void setDefaultPreferences(EPUBPreferences preferences) {
     calls.add(MockMethodCall('setDefaultPreferences', {'preferences': preferences}));
     defaultPreferences = preferences;
+  }
+
+  @override
+  void setDefaultPdfPreferences(PDFPreferences preferences) {
+    calls.add(MockMethodCall('setDefaultPdfPreferences', {'preferences': preferences}));
+    defaultPdfPreferences = preferences;
   }
 
   @override

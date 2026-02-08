@@ -246,6 +246,14 @@ Apply EPUB visual preferences.
 Future<void> setEPUBPreferences(EPUBPreferences preferences)
 ```
 
+### setPDFPreferences
+
+Apply PDF visual preferences.
+
+```dart
+Future<void> setPDFPreferences(PDFPreferences preferences)
+```
+
 ### applyDecorations
 
 Apply decorations to the content.

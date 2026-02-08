@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flureadium_platform_interface/flureadium_platform_interface.dart';
 
 export 'package:flureadium_platform_interface/flureadium_platform_interface.dart';
@@ -77,6 +76,13 @@ class Flureadium {
     _platform.setDefaultPreferences(preferences);
   }
 
+  /// Sets default PDF preferences for all PDF publications.
+  ///
+  /// These preferences will be applied when opening new PDF publications.
+  void setDefaultPdfPreferences(PDFPreferences preferences) {
+    _platform.setDefaultPdfPreferences(preferences);
+  }
+
   /// Loads a publication without opening it in the reader.
   ///
   /// Returns the [Publication] metadata without displaying it.
@@ -98,7 +104,6 @@ class Flureadium {
   /// ```
   Future<Publication> openPublication(String pubUrl) {
     return _platform.openPublication(pubUrl).onError((err, _) {
-      debugPrint('OpenPublication error: ${err.toString()}');
       throw ReadiumException.fromError(err);
     });
   }

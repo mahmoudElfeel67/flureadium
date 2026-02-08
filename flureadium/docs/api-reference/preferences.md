@@ -1,6 +1,6 @@
 # Preferences
 
-Flureadium provides three preference classes for customizing the reader experience: EPUB visual preferences, TTS preferences, and Audio preferences.
+Flureadium provides preference classes for customizing the reader experience: EPUB visual preferences, TTS preferences, Audio preferences, and PDF preferences.
 
 ## EPUBPreferences
 
@@ -366,6 +366,235 @@ await flureadium.audioSetPreferences(AudioPreferences(
 
 // Seek forward
 await flureadium.audioSeekBy(Duration(seconds: 30));
+```
+
+## PDFPreferences
+
+> **Note:** PDF support is available on Android and iOS:
+> - **Android:** Native navigator via Pdfium adapter
+> - **iOS:** Native navigator via PDFKit
+> - **Flutter widget layer:** `setPDFPreferences()` method available
+> - **Status:** Manual testing in progress
+
+Controls PDF reader behavior.
+
+**Source:** [reader_pdf_preferences.dart](../../../flureadium_platform_interface/lib/src/reader/reader_pdf_preferences.dart)
+
+### Constructor
+
+```dart
+PDFPreferences({
+  PDFFit? fit,
+  PDFScrollMode? scrollMode,
+  PDFPageLayout? pageLayout,
+  bool? offsetFirstPage,
+  bool? disableDoubleTapZoom,      // iOS only
+  bool? disableTextSelection,      // iOS only
+  bool? disableDragGestures,       // iOS only
+  bool? disableTextSelectionMenu,  // iOS only
+})
+```
+
+### Properties
+
+#### fit
+
+**Type:** `PDFFit?`
+
+How the PDF page fits within the viewport.
+
+```dart
+fit: PDFFit.width    // Fit page width to viewport width
+fit: PDFFit.contain  // Fit entire page in viewport
+```
+
+#### scrollMode
+
+**Type:** `PDFScrollMode?`
+
+Scroll direction for PDF navigation.
+
+```dart
+scrollMode: PDFScrollMode.horizontal  // Swipe left/right between pages
+scrollMode: PDFScrollMode.vertical    // Scroll up/down through pages
+```
+
+#### pageLayout
+
+**Type:** `PDFPageLayout?`
+
+Page layout mode for PDF display.
+
+```dart
+pageLayout: PDFPageLayout.single     // Display one page at a time
+pageLayout: PDFPageLayout.double     // Display two pages side-by-side (spreads)
+pageLayout: PDFPageLayout.automatic  // Automatically choose based on viewport
+```
+
+#### offsetFirstPage
+
+**Type:** `bool?`
+
+Whether to offset the first page in double-page spreads (useful for cover pages).
+
+```dart
+offsetFirstPage: true   // First page displayed alone, then pairs
+offsetFirstPage: false  // All pages displayed in pairs
+```
+
+#### disableDoubleTapZoom (iOS only)
+
+**Type:** `bool?`
+
+Whether to disable the built-in double-tap-to-zoom gesture. When true, double-tap won't zoom the PDF content.
+
+```dart
+disableDoubleTapZoom: false  // Zoom enabled (default)
+disableDoubleTapZoom: true   // Zoom disabled
+```
+
+#### disableTextSelection (iOS only)
+
+**Type:** `bool?`
+
+Whether to disable text selection gestures. When true, long-press won't select text in the PDF.
+
+```dart
+disableTextSelection: false  // Text selection enabled (default)
+disableTextSelection: true   // Text selection disabled
+```
+
+#### disableDragGestures (iOS only)
+
+**Type:** `bool?`
+
+Whether to disable drag gestures. When true, drag gestures won't trigger text selection or drag-and-drop.
+
+```dart
+disableDragGestures: false  // Drag gestures enabled (default)
+disableDragGestures: true   // Drag gestures disabled
+```
+
+#### disableTextSelectionMenu (iOS only)
+
+**Type:** `bool?`
+
+Whether to disable the text selection menu. When true, the Copy/Look Up/Translate menu won't appear when text is selected.
+
+```dart
+disableTextSelectionMenu: false  // Selection menu enabled (default)
+disableTextSelectionMenu: true   // Selection menu disabled
+```
+
+### Methods
+
+#### toJson
+
+Converts to JSON for platform communication.
+
+```dart
+Map<String, dynamic> toJson()
+```
+
+#### fromJsonMap
+
+Creates preferences from a JSON map.
+
+```dart
+factory PDFPreferences.fromJsonMap(Map<String, dynamic> map)
+```
+
+#### copyWith
+
+Creates a copy with specified values overridden.
+
+```dart
+PDFPreferences copyWith({
+  PDFFit? fit,
+  PDFScrollMode? scrollMode,
+  PDFPageLayout? pageLayout,
+  bool? offsetFirstPage,
+  bool? disableDoubleTapZoom,
+  bool? disableTextSelection,
+  bool? disableDragGestures,
+  bool? disableTextSelectionMenu,
+})
+```
+
+### Example Usage
+
+```dart
+// Default reading mode
+final defaultPrefs = PDFPreferences(
+  fit: PDFFit.width,
+  scrollMode: PDFScrollMode.horizontal,
+  pageLayout: PDFPageLayout.single,
+);
+
+// Document viewing mode (vertical scroll, fit whole page)
+final documentPrefs = PDFPreferences(
+  fit: PDFFit.contain,
+  scrollMode: PDFScrollMode.vertical,
+  pageLayout: PDFPageLayout.single,
+);
+
+// Book spread mode (two pages side-by-side)
+final spreadPrefs = PDFPreferences(
+  fit: PDFFit.contain,
+  scrollMode: PDFScrollMode.horizontal,
+  pageLayout: PDFPageLayout.double,
+  offsetFirstPage: true,  // Cover page alone
+);
+
+// Modify existing preferences
+final updated = defaultPrefs.copyWith(
+  scrollMode: PDFScrollMode.vertical,
+);
+
+// iOS: Disable interactive gestures for read-only mode
+final readOnlyPrefs = PDFPreferences(
+  fit: PDFFit.width,
+  scrollMode: PDFScrollMode.horizontal,
+  pageLayout: PDFPageLayout.single,
+  disableDoubleTapZoom: true,
+  disableTextSelection: true,
+  disableDragGestures: true,
+  disableTextSelectionMenu: true,
+);
+```
+
+## PDFFit
+
+Enum for page fit modes.
+
+```dart
+enum PDFFit {
+  width,    // Fit page width to viewport width
+  contain,  // Fit entire page in viewport
+}
+```
+
+## PDFScrollMode
+
+Enum for scroll direction.
+
+```dart
+enum PDFScrollMode {
+  horizontal,  // Scroll horizontally between pages
+  vertical,    // Scroll vertically through pages
+}
+```
+
+## PDFPageLayout
+
+Enum for page layout modes.
+
+```dart
+enum PDFPageLayout {
+  single,     // Display one page at a time
+  double,     // Display two pages side-by-side (spreads)
+  automatic,  // Automatically choose based on viewport
+}
 ```
 
 ## ControlPanelInfoType

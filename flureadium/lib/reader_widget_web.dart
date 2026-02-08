@@ -112,6 +112,11 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
   }
 
   @override
+  Future<void> setPDFPreferences(PDFPreferences preferences) async {
+    R2Log.d('setPDFPreferences not implemented in web version');
+  }
+
+  @override
   Future<void> applyDecorations(
     String id,
     List<ReaderDecoration> decorations,
