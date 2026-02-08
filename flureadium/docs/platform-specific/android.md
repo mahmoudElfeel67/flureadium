@@ -74,8 +74,15 @@ android/src/main/kotlin/dev/mulev/flureadium/
 ├── MethodCallHandler.kt         # Method channel handler
 ├── ReadiumManager.kt            # Readium lifecycle
 ├── ReadiumReaderViewFactory.kt  # Platform view factory
-├── ReadiumReaderView.kt         # Native reader view
-└── NavigatorWrapper.kt          # Navigator abstraction
+├── ReadiumReaderView.kt         # Native reader view (EPUB)
+├── ReadiumReaderWidget.kt       # Widget wrapper
+├── FlutterPdfPreferences.kt     # PDF preferences mapping
+├── fragments/
+│   └── PdfReaderFragment.kt     # PDF reader fragment
+├── models/
+│   └── PdfReaderViewModel.kt    # PDF reader state
+└── navigators/
+    └── PdfNavigator.kt          # PDF navigation controller
 ```
 
 ### Platform View
@@ -98,6 +105,36 @@ Uses Readium Kotlin Toolkit:
 - `Streamer` for EPUB parsing
 - `Navigator` for content display
 - `TTS` and `MediaPlayer` for audio
+- `PdfiumNavigator` for PDF rendering (via Pdfium adapter)
+
+### PDF Support
+
+PDF support is implemented using Readium's Pdfium adapter, which provides native PDF rendering via Android's Pdfium library.
+
+**How It Works:**
+
+The `PdfNavigator` class wraps Readium's PDF navigator and provides:
+- Page-by-page navigation with edge tap detection
+- Horizontal and vertical scroll modes
+- Single page and double-page spread layouts
+- Zoom and pan gestures
+
+**Configuration:**
+
+PDF preferences can be set via `setPDFPreferences()`:
+
+```dart
+await flureadium.setPDFPreferences(PDFPreferences(
+  fit: PDFFit.width,
+  scrollMode: PDFScrollMode.horizontal,
+  pageLayout: PDFPageLayout.single,
+));
+```
+
+**Files:**
+- `PdfNavigator.kt` - Main PDF navigation controller
+- `PdfReaderFragment.kt` - Android Fragment hosting the PDF view
+- `FlutterPdfPreferences.kt` - Maps Flutter preferences to Readium
 
 ## Troubleshooting
 

@@ -388,6 +388,10 @@ PDFPreferences({
   PDFScrollMode? scrollMode,
   PDFPageLayout? pageLayout,
   bool? offsetFirstPage,
+  bool? disableDoubleTapZoom,      // iOS only
+  bool? disableTextSelection,      // iOS only
+  bool? disableDragGestures,       // iOS only
+  bool? disableTextSelectionMenu,  // iOS only
 })
 ```
 
@@ -438,6 +442,50 @@ offsetFirstPage: true   // First page displayed alone, then pairs
 offsetFirstPage: false  // All pages displayed in pairs
 ```
 
+#### disableDoubleTapZoom (iOS only)
+
+**Type:** `bool?`
+
+Whether to disable the built-in double-tap-to-zoom gesture. When true, double-tap won't zoom the PDF content.
+
+```dart
+disableDoubleTapZoom: false  // Zoom enabled (default)
+disableDoubleTapZoom: true   // Zoom disabled
+```
+
+#### disableTextSelection (iOS only)
+
+**Type:** `bool?`
+
+Whether to disable text selection gestures. When true, long-press won't select text in the PDF.
+
+```dart
+disableTextSelection: false  // Text selection enabled (default)
+disableTextSelection: true   // Text selection disabled
+```
+
+#### disableDragGestures (iOS only)
+
+**Type:** `bool?`
+
+Whether to disable drag gestures. When true, drag gestures won't trigger text selection or drag-and-drop.
+
+```dart
+disableDragGestures: false  // Drag gestures enabled (default)
+disableDragGestures: true   // Drag gestures disabled
+```
+
+#### disableTextSelectionMenu (iOS only)
+
+**Type:** `bool?`
+
+Whether to disable the text selection menu. When true, the Copy/Look Up/Translate menu won't appear when text is selected.
+
+```dart
+disableTextSelectionMenu: false  // Selection menu enabled (default)
+disableTextSelectionMenu: true   // Selection menu disabled
+```
+
 ### Methods
 
 #### toJson
@@ -466,6 +514,10 @@ PDFPreferences copyWith({
   PDFScrollMode? scrollMode,
   PDFPageLayout? pageLayout,
   bool? offsetFirstPage,
+  bool? disableDoubleTapZoom,
+  bool? disableTextSelection,
+  bool? disableDragGestures,
+  bool? disableTextSelectionMenu,
 })
 ```
 
@@ -497,6 +549,17 @@ final spreadPrefs = PDFPreferences(
 // Modify existing preferences
 final updated = defaultPrefs.copyWith(
   scrollMode: PDFScrollMode.vertical,
+);
+
+// iOS: Disable interactive gestures for read-only mode
+final readOnlyPrefs = PDFPreferences(
+  fit: PDFFit.width,
+  scrollMode: PDFScrollMode.horizontal,
+  pageLayout: PDFPageLayout.single,
+  disableDoubleTapZoom: true,
+  disableTextSelection: true,
+  disableDragGestures: true,
+  disableTextSelectionMenu: true,
 );
 ```
 
