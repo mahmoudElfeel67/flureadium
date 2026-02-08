@@ -35,6 +35,7 @@ abstract class FlureadiumPlatform extends PlatformInterface {
 
   ReadiumReaderWidgetInterface? currentReaderWidget;
   EPUBPreferences? defaultPreferences;
+  PDFPreferences? defaultPdfPreferences;
 
   Future<void> setCustomHeaders(Map<String, String> headers) =>
       throw UnimplementedError(
@@ -43,6 +44,10 @@ abstract class FlureadiumPlatform extends PlatformInterface {
 
   void setDefaultPreferences(EPUBPreferences preferences) {
     defaultPreferences = preferences;
+  }
+
+  void setDefaultPdfPreferences(PDFPreferences preferences) {
+    defaultPdfPreferences = preferences;
   }
 
   /// Load publication manifest from URL, which is usually a packaged ebook or direct URL to a manifest.

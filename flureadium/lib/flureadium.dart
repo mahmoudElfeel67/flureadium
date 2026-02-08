@@ -77,6 +77,13 @@ class Flureadium {
     _platform.setDefaultPreferences(preferences);
   }
 
+  /// Sets default PDF preferences for all PDF publications.
+  ///
+  /// These preferences will be applied when opening new PDF publications.
+  void setDefaultPdfPreferences(PDFPreferences preferences) {
+    _platform.setDefaultPdfPreferences(preferences);
+  }
+
   /// Loads a publication without opening it in the reader.
   ///
   /// Returns the [Publication] metadata without displaying it.

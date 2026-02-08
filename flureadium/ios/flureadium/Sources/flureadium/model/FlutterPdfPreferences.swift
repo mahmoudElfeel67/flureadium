@@ -96,17 +96,24 @@ public struct FlutterPdfPreferences {
     /// Whether to offset the first page in double-page spreads (for covers).
     var offsetFirstPage: Bool?
 
+    /// Whether to disable the built-in double-tap-to-zoom gesture (iOS only).
+    /// When true, double-tap won't zoom the PDF content.
+    /// Defaults to false (zoom enabled).
+    var disableDoubleTapZoom: Bool?
+
     /// Creates FlutterPdfPreferences with default values.
     init(
         fit: FlutterPdfFit? = nil,
         scrollMode: FlutterPdfScrollMode? = nil,
         pageLayout: FlutterPdfPageLayout? = nil,
-        offsetFirstPage: Bool? = nil
+        offsetFirstPage: Bool? = nil,
+        disableDoubleTapZoom: Bool? = nil
     ) {
         self.fit = fit
         self.scrollMode = scrollMode
         self.pageLayout = pageLayout
         self.offsetFirstPage = offsetFirstPage
+        self.disableDoubleTapZoom = disableDoubleTapZoom
     }
 
     /// Creates FlutterPdfPreferences from a Flutter dictionary.
@@ -120,7 +127,8 @@ public struct FlutterPdfPreferences {
             fit: FlutterPdfFit.fromString(map["fit"] as? String),
             scrollMode: FlutterPdfScrollMode.fromString(map["scrollMode"] as? String),
             pageLayout: FlutterPdfPageLayout.fromString(map["pageLayout"] as? String),
-            offsetFirstPage: map["offsetFirstPage"] as? Bool
+            offsetFirstPage: map["offsetFirstPage"] as? Bool,
+            disableDoubleTapZoom: map["disableDoubleTapZoom"] as? Bool
         )
     }
 
@@ -158,6 +166,9 @@ public struct FlutterPdfPreferences {
         if let scrollMode = scrollMode { map["scrollMode"] = scrollMode.rawValue }
         if let pageLayout = pageLayout { map["pageLayout"] = pageLayout.rawValue }
         if let offsetFirstPage = offsetFirstPage { map["offsetFirstPage"] = offsetFirstPage }
+        if let disableDoubleTapZoom = disableDoubleTapZoom {
+            map["disableDoubleTapZoom"] = disableDoubleTapZoom
+        }
         return map
     }
 }

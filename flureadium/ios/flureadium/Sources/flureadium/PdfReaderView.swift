@@ -28,6 +28,7 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
   private let _view: UIView
   private let pdfViewController: PDFNavigatorViewController
   private var hasSentReady = false
+  private let disableDoubleTapZoom: Bool
 
   var publicationIdentifier: String?
 
@@ -64,12 +65,16 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
     let preferencesMap = creationParams["preferences"] as? Dictionary<String, Any>
     let pdfPreferences = preferencesMap != nil ? PDFPreferences(fromMap: preferencesMap!) : PDFPreferences()
 
+    // Read Flutter PDF preferences for double-tap zoom setting
+    let flutterPrefs = FlutterPdfPreferences(fromMap: preferencesMap)
+    disableDoubleTapZoom = flutterPrefs.disableDoubleTapZoom ?? false
+
     let locatorStr = creationParams["initialLocator"] as? String
     let locator = locatorStr == nil ? nil : try! Locator.init(jsonString: locatorStr!)
     print(TAG, "publication = \(publication)")
 
     channel = ReadiumReaderChannel(
-      name: "\(pdfReaderViewType):\(viewId)", binaryMessenger: registrar.messenger())
+      name: "\(readiumReaderViewType):\(viewId)", binaryMessenger: registrar.messenger())
     textLocatorStreamHandler = EventStreamHandler(withName: "pdf-text-locator", messenger: registrar.messenger())
     readerStatusStreamHandler = EventStreamHandler(withName: "pdf-reader-status", messenger: registrar.messenger())
     errorStreamHandler = EventStreamHandler(withName: "pdf-error", messenger: registrar.messenger())
@@ -155,6 +160,14 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
     emitOnExternalLinkActivated(url: url)
   }
 
+  // MARK: - PDFNavigatorDelegate
+
+  func navigator(_ navigator: PDFNavigatorViewController, setupPDFView view: PDFDocumentView) {
+    if disableDoubleTapZoom {
+      disableDoubleTapZoomGesture(in: view)
+    }
+  }
+
   // MARK: - Public Methods
 
   func getCurrentLocation() -> Locator? {
@@ -169,6 +182,20 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
 
   private func setUserPreferences(preferences: PDFPreferences) {
     self.pdfViewController.submitPreferences(preferences)
+  }
+
+  private func disableDoubleTapZoomGesture(in view: UIView) {
+    // Disable double-tap gesture recognizers on this view
+    for gestureRecognizer in view.gestureRecognizers ?? [] {
+      if let tapGesture = gestureRecognizer as? UITapGestureRecognizer,
+         tapGesture.numberOfTapsRequired == 2 {
+        tapGesture.isEnabled = false
+      }
+    }
+    // Recursively disable on all subviews
+    for subview in view.subviews {
+      disableDoubleTapZoomGesture(in: subview)
+    }
   }
 
   private func emitOnPageChanged(locator: Locator) -> Void {

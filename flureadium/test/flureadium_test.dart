@@ -24,7 +24,9 @@ void main() {
   group('Flureadium', () {
     group('Publication Management', () {
       test('loadPublication calls platform method', () async {
-        final publication = await flureadium.loadPublication('file:///test.epub');
+        final publication = await flureadium.loadPublication(
+          'file:///test.epub',
+        );
 
         expect(mockPlatform.wasCalled('loadPublication'), isTrue);
         expect(publication, isNotNull);
@@ -32,11 +34,15 @@ void main() {
       });
 
       test('openPublication calls platform method', () async {
-        final publication = await flureadium.openPublication('https://example.com/book.epub');
+        final publication = await flureadium.openPublication(
+          'https://example.com/book.epub',
+        );
 
         expect(mockPlatform.wasCalled('openPublication'), isTrue);
-        expect(mockPlatform.lastCallArgs('openPublication')?['pubUrl'],
-               equals('https://example.com/book.epub'));
+        expect(
+          mockPlatform.lastCallArgs('openPublication')?['pubUrl'],
+          equals('https://example.com/book.epub'),
+        );
         expect(publication, isNotNull);
       });
 
@@ -52,7 +58,10 @@ void main() {
         await flureadium.setCustomHeaders(headers);
 
         expect(mockPlatform.wasCalled('setCustomHeaders'), isTrue);
-        expect(mockPlatform.lastCallArgs('setCustomHeaders')?['headers'], equals(headers));
+        expect(
+          mockPlatform.lastCallArgs('setCustomHeaders')?['headers'],
+          equals(headers),
+        );
       });
     });
 
@@ -112,6 +121,30 @@ void main() {
         expect(mockPlatform.defaultPreferences, equals(prefs));
       });
 
+      test('setDefaultPdfPreferences calls platform method', () {
+        final prefs = PDFPreferences(
+          fit: PDFFit.width,
+          scrollMode: PDFScrollMode.horizontal,
+          disableDoubleTapZoom: true,
+        );
+
+        flureadium.setDefaultPdfPreferences(prefs);
+
+        expect(mockPlatform.wasCalled('setDefaultPdfPreferences'), isTrue);
+        expect(mockPlatform.defaultPdfPreferences, equals(prefs));
+      });
+
+      test('setDefaultPdfPreferences stores preferences in platform', () {
+        final prefs = PDFPreferences(disableDoubleTapZoom: false);
+
+        flureadium.setDefaultPdfPreferences(prefs);
+
+        expect(
+          mockPlatform.defaultPdfPreferences?.disableDoubleTapZoom,
+          isFalse,
+        );
+      });
+
       test('setEPUBPreferences calls platform method', () async {
         final prefs = EPUBPreferences(
           fontFamily: 'Arial',
@@ -142,7 +175,10 @@ void main() {
         await flureadium.applyDecorations('highlights', decorations);
 
         expect(mockPlatform.wasCalled('applyDecorations'), isTrue);
-        expect(mockPlatform.lastCallArgs('applyDecorations')?['id'], equals('highlights'));
+        expect(
+          mockPlatform.lastCallArgs('applyDecorations')?['id'],
+          equals('highlights'),
+        );
       });
     });
 
@@ -154,15 +190,15 @@ void main() {
       });
 
       test('play with locator calls platform method', () async {
-        final locator = Locator(
-          href: 'chapter1.xhtml',
-          type: 'text/html',
-        );
+        final locator = Locator(href: 'chapter1.xhtml', type: 'text/html');
 
         await flureadium.play(locator);
 
         expect(mockPlatform.wasCalled('play'), isTrue);
-        expect(mockPlatform.lastCallArgs('play')?['fromLocator'], equals(locator));
+        expect(
+          mockPlatform.lastCallArgs('play')?['fromLocator'],
+          equals(locator),
+        );
       });
 
       test('pause calls platform method', () async {
@@ -222,8 +258,14 @@ void main() {
         await flureadium.ttsSetVoice('voice-id', 'en-US');
 
         expect(mockPlatform.wasCalled('ttsSetVoice'), isTrue);
-        expect(mockPlatform.lastCallArgs('ttsSetVoice')?['voiceIdentifier'], equals('voice-id'));
-        expect(mockPlatform.lastCallArgs('ttsSetVoice')?['forLanguage'], equals('en-US'));
+        expect(
+          mockPlatform.lastCallArgs('ttsSetVoice')?['voiceIdentifier'],
+          equals('voice-id'),
+        );
+        expect(
+          mockPlatform.lastCallArgs('ttsSetVoice')?['forLanguage'],
+          equals('en-US'),
+        );
       });
 
       test('ttsSetPreferences calls platform method', () async {
@@ -259,15 +301,15 @@ void main() {
       });
 
       test('audioEnable with locator', () async {
-        final locator = Locator(
-          href: 'track01.mp3',
-          type: 'audio/mpeg',
-        );
+        final locator = Locator(href: 'track01.mp3', type: 'audio/mpeg');
 
         await flureadium.audioEnable(fromLocator: locator);
 
         expect(mockPlatform.wasCalled('audioEnable'), isTrue);
-        expect(mockPlatform.lastCallArgs('audioEnable')?['fromLocator'], equals(locator));
+        expect(
+          mockPlatform.lastCallArgs('audioEnable')?['fromLocator'],
+          equals(locator),
+        );
       });
 
       test('audioSetPreferences calls platform method', () async {
@@ -282,16 +324,20 @@ void main() {
         await flureadium.audioSeekBy(const Duration(seconds: 30));
 
         expect(mockPlatform.wasCalled('audioSeekBy'), isTrue);
-        expect(mockPlatform.lastCallArgs('audioSeekBy')?['offset'],
-               equals(const Duration(seconds: 30)));
+        expect(
+          mockPlatform.lastCallArgs('audioSeekBy')?['offset'],
+          equals(const Duration(seconds: 30)),
+        );
       });
 
       test('audioSeekBy with negative offset', () async {
         await flureadium.audioSeekBy(const Duration(seconds: -15));
 
         expect(mockPlatform.wasCalled('audioSeekBy'), isTrue);
-        expect(mockPlatform.lastCallArgs('audioSeekBy')?['offset'],
-               equals(const Duration(seconds: -15)));
+        expect(
+          mockPlatform.lastCallArgs('audioSeekBy')?['offset'],
+          equals(const Duration(seconds: -15)),
+        );
       });
     });
 

@@ -62,6 +62,10 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
     return readium.defaultPreferences;
   }
 
+  PDFPreferences? get _defaultPdfPreferences {
+    return readium.defaultPdfPreferences;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -309,7 +313,14 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
 
     R2Log.d(publication.identifier);
 
-    final defaultPreferences = _defaultPreferences?.toJson();
+    // Check if this is a PDF publication by looking at reading order media types
+    final isPdf = publication.readingOrder.any(
+      (link) => link.type?.contains('pdf') ?? false,
+    );
+
+    // Use PDF preferences for PDF publications, EPUB preferences for others
+    final defaultPreferences =
+        isPdf ? _defaultPdfPreferences?.toJson() : _defaultPreferences?.toJson();
 
     final creationParams = <String, dynamic>{
       'pubIdentifier': publication.identifier,

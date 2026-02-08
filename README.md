@@ -28,6 +28,7 @@ General TODO:
 - [x] PDF Flutter widget layer integration
 - [x] Epist migration to Flureadium PDF
 - [ ] PDF manual testing (Android & iOS)
+- [ ] PDF page rendering to image (for cover generation)
 
 ## Documentation
 

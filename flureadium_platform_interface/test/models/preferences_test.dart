@@ -333,12 +333,14 @@ void main() {
           scrollMode: PDFScrollMode.vertical,
           pageLayout: PDFPageLayout.single,
           offsetFirstPage: true,
+          disableDoubleTapZoom: true,
         );
 
         expect(prefs.fit, equals(PDFFit.width));
         expect(prefs.scrollMode, equals(PDFScrollMode.vertical));
         expect(prefs.pageLayout, equals(PDFPageLayout.single));
         expect(prefs.offsetFirstPage, isTrue);
+        expect(prefs.disableDoubleTapZoom, isTrue);
       });
 
       test('creates instance with null parameters', () {
@@ -348,6 +350,15 @@ void main() {
         expect(prefs.scrollMode, isNull);
         expect(prefs.pageLayout, isNull);
         expect(prefs.offsetFirstPage, isNull);
+        expect(prefs.disableDoubleTapZoom, isNull);
+      });
+
+      test('creates instance with disableDoubleTapZoom only', () {
+        final prefs = PDFPreferences(disableDoubleTapZoom: true);
+
+        expect(prefs.disableDoubleTapZoom, isTrue);
+        expect(prefs.fit, isNull);
+        expect(prefs.scrollMode, isNull);
       });
     });
 
@@ -358,6 +369,7 @@ void main() {
           scrollMode: PDFScrollMode.horizontal,
           pageLayout: PDFPageLayout.double,
           offsetFirstPage: false,
+          disableDoubleTapZoom: true,
         );
 
         final json = prefs.toJson();
@@ -366,6 +378,7 @@ void main() {
         expect(json['scrollMode'], equals('horizontal'));
         expect(json['pageLayout'], equals('double'));
         expect(json['offsetFirstPage'], isFalse);
+        expect(json['disableDoubleTapZoom'], isTrue);
       });
 
       test('omits null values from JSON', () {
@@ -377,6 +390,16 @@ void main() {
         expect(json.containsKey('scrollMode'), isFalse);
         expect(json.containsKey('pageLayout'), isFalse);
         expect(json.containsKey('offsetFirstPage'), isFalse);
+        expect(json.containsKey('disableDoubleTapZoom'), isFalse);
+      });
+
+      test('serializes disableDoubleTapZoom when set', () {
+        final prefs = PDFPreferences(disableDoubleTapZoom: false);
+
+        final json = prefs.toJson();
+
+        expect(json['disableDoubleTapZoom'], isFalse);
+        expect(json.containsKey('fit'), isFalse);
       });
 
       test('returns empty map when all values are null', () {
@@ -395,6 +418,7 @@ void main() {
           'scrollMode': 'vertical',
           'pageLayout': 'automatic',
           'offsetFirstPage': true,
+          'disableDoubleTapZoom': true,
         };
 
         final prefs = PDFPreferences.fromJsonMap(json);
@@ -403,6 +427,7 @@ void main() {
         expect(prefs.scrollMode, equals(PDFScrollMode.vertical));
         expect(prefs.pageLayout, equals(PDFPageLayout.automatic));
         expect(prefs.offsetFirstPage, isTrue);
+        expect(prefs.disableDoubleTapZoom, isTrue);
       });
 
       test('handles partial JSON with missing values', () {
@@ -414,6 +439,16 @@ void main() {
         expect(prefs.scrollMode, isNull);
         expect(prefs.pageLayout, isNull);
         expect(prefs.offsetFirstPage, isNull);
+        expect(prefs.disableDoubleTapZoom, isNull);
+      });
+
+      test('parses disableDoubleTapZoom when present', () {
+        final json = {'disableDoubleTapZoom': false};
+
+        final prefs = PDFPreferences.fromJsonMap(json);
+
+        expect(prefs.disableDoubleTapZoom, isFalse);
+        expect(prefs.fit, isNull);
       });
 
       test('handles empty JSON', () {
@@ -421,6 +456,7 @@ void main() {
 
         expect(prefs.fit, isNull);
         expect(prefs.scrollMode, isNull);
+        expect(prefs.disableDoubleTapZoom, isNull);
       });
     });
 
@@ -429,13 +465,19 @@ void main() {
         final original = PDFPreferences(
           fit: PDFFit.width,
           scrollMode: PDFScrollMode.vertical,
+          disableDoubleTapZoom: false,
         );
 
-        final copy = original.copyWith(fit: PDFFit.contain);
+        final copy = original.copyWith(
+          fit: PDFFit.contain,
+          disableDoubleTapZoom: true,
+        );
 
         expect(copy.fit, equals(PDFFit.contain));
         expect(copy.scrollMode, equals(PDFScrollMode.vertical));
+        expect(copy.disableDoubleTapZoom, isTrue);
         expect(original.fit, equals(PDFFit.width)); // Original unchanged
+        expect(original.disableDoubleTapZoom, isFalse);
       });
 
       test('creates copy preserving all values when no overrides', () {
@@ -444,6 +486,7 @@ void main() {
           scrollMode: PDFScrollMode.horizontal,
           pageLayout: PDFPageLayout.double,
           offsetFirstPage: true,
+          disableDoubleTapZoom: true,
         );
 
         final copy = original.copyWith();
@@ -452,6 +495,22 @@ void main() {
         expect(copy.scrollMode, equals(original.scrollMode));
         expect(copy.pageLayout, equals(original.pageLayout));
         expect(copy.offsetFirstPage, equals(original.offsetFirstPage));
+        expect(
+          copy.disableDoubleTapZoom,
+          equals(original.disableDoubleTapZoom),
+        );
+      });
+
+      test('can override disableDoubleTapZoom independently', () {
+        final original = PDFPreferences(
+          fit: PDFFit.width,
+          disableDoubleTapZoom: false,
+        );
+
+        final copy = original.copyWith(disableDoubleTapZoom: true);
+
+        expect(copy.fit, equals(PDFFit.width));
+        expect(copy.disableDoubleTapZoom, isTrue);
       });
     });
 
@@ -464,12 +523,21 @@ void main() {
           ..fit = PDFFit.contain
           ..scrollMode = PDFScrollMode.horizontal
           ..pageLayout = PDFPageLayout.automatic
-          ..offsetFirstPage = true;
+          ..offsetFirstPage = true
+          ..disableDoubleTapZoom = true;
 
         expect(prefs.fit, equals(PDFFit.contain));
         expect(prefs.scrollMode, equals(PDFScrollMode.horizontal));
         expect(prefs.pageLayout, equals(PDFPageLayout.automatic));
         expect(prefs.offsetFirstPage, isTrue);
+        expect(prefs.disableDoubleTapZoom, isTrue);
+      });
+
+      test('disableDoubleTapZoom can be modified', () {
+        final prefs = PDFPreferences(disableDoubleTapZoom: false)
+          ..disableDoubleTapZoom = true;
+
+        expect(prefs.disableDoubleTapZoom, isTrue);
       });
     });
   });
