@@ -260,13 +260,23 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
 
     // Remove UITextInteraction objects (iOS 13+)
     if #available(iOS 13.0, *) {
+      // Debug: Log all interactions on this view
+      if !view.interactions.isEmpty {
+        print(TAG, "  Found \(view.interactions.count) interaction(s) on \(type(of: view)):")
+        for (index, interaction) in view.interactions.enumerated() {
+          print(TAG, "    [\(index)] \(type(of: interaction))")
+        }
+      }
+
       let textInteractions = view.interactions.filter { $0 is UITextInteraction }
       if !textInteractions.isEmpty {
-        print(TAG, "  Found \(textInteractions.count) UITextInteraction(s) on \(type(of: view))")
+        print(TAG, "  Found \(textInteractions.count) UITextInteraction(s) to remove")
         for interaction in textInteractions {
           print(TAG, "  → Removing UITextInteraction")
           view.removeInteraction(interaction)
         }
+      } else if !view.interactions.isEmpty {
+        print(TAG, "  No UITextInteraction found (but \(view.interactions.count) other interaction(s) present)")
       }
     }
 
