@@ -1,7 +1,7 @@
 # Plugin: flureadium
 
 A Flutter wrapper for the Readium toolkits for ebooks, audiobooks and comics (kotlin-toolkit & swift-toolkit).
-This project is a fork of [Notalib/flureadium](https://github.com/Notalib/flureadium)
+This project is a fork of [Notalib/flutter_readium](https://github.com/Notalib/flutter_readium)
 
 This branch is under active development and meant to replace the `nota-lyt4` branch,
 which implements both TTS and Text+Audio sync on top of the native toolkits via other Flutter plugins.
