@@ -22,6 +22,29 @@ class MainActivity: FlutterFragmentActivity() {
 }
 ```
 
+### Android: Could not find com.github.marain87 dependencies
+
+**Error:**
+```
+Could not find com.github.marain87:AndroidPdfViewer:3.2.8
+Could not find com.github.marain87:PdfiumAndroid:1.9.8
+```
+
+**Cause:**
+JitPack repository is not configured. The Readium Pdfium adapter depends on libraries hosted on JitPack.
+
+**Solution:**
+Add JitPack to your `android/build.gradle`:
+```groovy
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://jitpack.io' }
+    }
+}
+```
+
 ### Android: Minimum SDK Version
 
 **Error:**

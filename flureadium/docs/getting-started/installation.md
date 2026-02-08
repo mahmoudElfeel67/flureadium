@@ -26,7 +26,21 @@ flutter pub get
 
 ### Android
 
-#### 1. Set Minimum SDK Version
+#### 1. Add JitPack Repository
+
+The Readium Pdfium adapter requires dependencies from JitPack. Add JitPack to your `android/build.gradle`:
+
+```groovy
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://jitpack.io' }  // Required for Readium PDF support
+    }
+}
+```
+
+#### 2. Set Minimum SDK Version
 
 In `android/app/build.gradle`, set:
 
@@ -38,7 +52,7 @@ android {
 }
 ```
 
-#### 2. Use FlutterFragmentActivity
+#### 3. Use FlutterFragmentActivity
 
 If your `MainActivity` extends `FlutterActivity`, change it to extend `FlutterFragmentActivity`:
 
@@ -52,7 +66,7 @@ class MainActivity: FlutterFragmentActivity() {
 
 This fixes the error: `MainActivity cannot be cast to androidx.fragment.app.FragmentActivity`
 
-#### 3. Add Wake Lock Permission (Optional)
+#### 4. Add Wake Lock Permission (Optional)
 
 If using TTS or audiobook features, add to `android/app/src/main/AndroidManifest.xml`:
 

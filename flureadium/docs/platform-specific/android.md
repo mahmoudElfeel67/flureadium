@@ -10,7 +10,21 @@ Android-specific setup and implementation details.
 
 ## Setup
 
-### 1. Minimum SDK Version
+### 1. Add JitPack Repository
+
+The Readium Pdfium adapter requires dependencies from JitPack. Add JitPack to your `android/build.gradle`:
+
+```groovy
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://jitpack.io' }  // Required for Readium PDF support
+    }
+}
+```
+
+### 2. Minimum SDK Version
 
 In `android/app/build.gradle`:
 
@@ -22,7 +36,7 @@ android {
 }
 ```
 
-### 2. FlutterFragmentActivity
+### 3. FlutterFragmentActivity
 
 Change your `MainActivity` to extend `FlutterFragmentActivity`:
 
@@ -38,7 +52,7 @@ class MainActivity: FlutterFragmentActivity() {
 
 **Why?** Flureadium uses platform views that require Fragment support.
 
-### 3. Permissions
+### 4. Permissions
 
 For TTS and audiobook features, add to `AndroidManifest.xml`:
 
@@ -51,7 +65,7 @@ For TTS and audiobook features, add to `AndroidManifest.xml`:
 </manifest>
 ```
 
-### 4. ProGuard Rules (Optional)
+### 5. ProGuard Rules (Optional)
 
 If using ProGuard/R8, add to `android/app/proguard-rules.pro`:
 
