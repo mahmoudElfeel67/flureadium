@@ -260,7 +260,7 @@ class ReadiumReaderWidget(
                     try {
                         if (isPdf) {
                             val pdfPrefs = FlutterPdfPreferences.fromMap(prefsMap)
-                            ReadiumReader.pdfSetPreferences(pdfPrefs)
+                            ReadiumReader.pdfUpdatePreferences(pdfPrefs)
                         } else {
                             setPreferencesFromMap(prefsMap)
                         }

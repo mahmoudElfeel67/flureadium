@@ -13,6 +13,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import org.readium.adapter.pdfium.navigator.PdfiumPreferences
+import org.readium.adapter.pdfium.navigator.PdfiumSettings
 import org.readium.r2.navigator.pdf.PdfNavigatorFragment
 import org.readium.r2.shared.ExperimentalReadiumApi
 import org.readium.r2.shared.publication.Locator
@@ -51,7 +53,7 @@ class PdfReaderFragment : VisualReaderFragment(), PdfNavigatorFragment.Listener,
     private val instance = ++instanceNo
 
     private var pdfNavigator
-        get() = navigator as? PdfNavigatorFragment
+        get() = navigator as? PdfNavigatorFragment<PdfiumSettings, PdfiumPreferences>
         set(value) {
             navigator = value
         }
@@ -60,7 +62,7 @@ class PdfReaderFragment : VisualReaderFragment(), PdfNavigatorFragment.Listener,
         get() = vm as PdfReaderViewModel?
 
     @ExperimentalReadiumApi
-    override fun onExternalLinkActivated(url: AbsoluteUrl) {
+    fun onExternalLinkActivated(url: AbsoluteUrl) {
         listener?.onExternalLinkActivated(url)
     }
 
@@ -90,10 +92,12 @@ class PdfReaderFragment : VisualReaderFragment(), PdfNavigatorFragment.Listener,
             return
         }
 
-        if (navigator.goBackward(animated)) {
-            Log.d(TAG, "::goLeft: Went back.")
-        } else {
-            Log.d(TAG, "::goLeft: Couldn't go back.")
+        launch {
+            if (navigator.goBackward(animated)) {
+                Log.d(TAG, "::goLeft: Went back.")
+            } else {
+                Log.d(TAG, "::goLeft: Couldn't go back.")
+            }
         }
     }
 
@@ -108,10 +112,12 @@ class PdfReaderFragment : VisualReaderFragment(), PdfNavigatorFragment.Listener,
             return
         }
 
-        if (navigator.goForward(animated)) {
-            Log.d(TAG, "::goRight: Went forward.")
-        } else {
-            Log.d(TAG, "::goRight: Couldn't go forward.")
+        launch {
+            if (navigator.goForward(animated)) {
+                Log.d(TAG, "::goRight: Went forward.")
+            } else {
+                Log.d(TAG, "::goRight: Couldn't go forward.")
+            }
         }
     }
 
@@ -236,7 +242,7 @@ class PdfReaderFragment : VisualReaderFragment(), PdfNavigatorFragment.Listener,
         val pdfNavigatorFragment = fragmentFactory.instantiate(
             requireActivity().classLoader,
             PdfNavigatorFragment::class.java.name
-        ) as PdfNavigatorFragment
+        ) as PdfNavigatorFragment<PdfiumSettings, PdfiumPreferences>
 
         Log.d(TAG, "::attachNavigator - $instance - add fragment")
         childFragmentManager.commitNow {

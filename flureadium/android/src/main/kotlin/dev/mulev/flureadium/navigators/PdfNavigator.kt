@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import org.json.JSONObject
 import org.readium.adapter.pdfium.navigator.PdfiumEngineProvider
 import org.readium.r2.navigator.pdf.PdfNavigatorFactory
@@ -218,7 +217,7 @@ class PdfNavigator : BaseNavigator, PdfReaderFragment.Listener {
             (state[pdfPreferencesKey] as? FlutterPdfPreferences)?.let { prefs ->
                 putString(
                     pdfPreferencesKey,
-                    Json.encodeToString(FlutterPdfPreferences.serializer(), prefs)
+                    FlutterPdfPreferences.toJSON(prefs).toString()
                 )
             }
         }
@@ -322,7 +321,7 @@ class PdfNavigator : BaseNavigator, PdfReaderFragment.Listener {
             val locator = state.getString(currentVisualCurrentLocatorKey)
                 ?.let { json -> Locator.fromJSON(JSONObject(json)) }
             val preferences = state.getString(pdfPreferencesKey)
-                ?.let { string -> Json.decodeFromString<FlutterPdfPreferences>(string) }
+                ?.let { string -> FlutterPdfPreferences.fromJSON(string) }
                 ?: FlutterPdfPreferences()
 
             Log.d(TAG, "::restoreState - locator: $locator, preferences: $preferences")
