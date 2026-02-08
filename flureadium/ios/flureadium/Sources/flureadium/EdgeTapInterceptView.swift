@@ -1,0 +1,66 @@
+//
+//  EdgeTapInterceptView.swift
+//  flureadium
+//
+//  Edge tap detection overlay for reader navigation.
+//  Used by both EPUB and PDF readers to enable page navigation
+//  by tapping on the left/right edges of the screen.
+//
+
+import UIKit
+
+/// View that intercepts edge taps for page navigation when Readium's
+/// gesture recognizers fail to receive touches through Flutter's platform view.
+class EdgeTapInterceptView: UIView {
+    /// Callback for left edge tap
+    var onLeftEdgeTap: (() -> Void)?
+    /// Callback for right edge tap
+    var onRightEdgeTap: (() -> Void)?
+    /// Edge threshold as percentage of width (default 30%)
+    var edgeThresholdPercent: CGFloat = 0.3
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupGestureRecognizer()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupGestureRecognizer()
+    }
+
+    private func setupGestureRecognizer() {
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+        tapGesture.cancelsTouchesInView = false
+        tapGesture.delaysTouchesBegan = false
+        tapGesture.delaysTouchesEnded = false
+        addGestureRecognizer(tapGesture)
+    }
+
+    @objc private func handleTap(_ gesture: UITapGestureRecognizer) {
+        let location = gesture.location(in: self)
+        let edgeSize = bounds.width * edgeThresholdPercent
+
+        if location.x < edgeSize {
+            onLeftEdgeTap?()
+        } else if location.x > bounds.width - edgeSize {
+            onRightEdgeTap?()
+        }
+    }
+
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        let result = super.hitTest(point, with: event)
+
+        let edgeSize = bounds.width * edgeThresholdPercent
+        let isLeftEdge = point.x < edgeSize
+        let isRightEdge = point.x > bounds.width - edgeSize
+
+        // If we have edge tap callbacks and the touch is in an edge zone,
+        // return self so our gesture recognizer receives the tap
+        if (isLeftEdge && onLeftEdgeTap != nil) || (isRightEdge && onRightEdgeTap != nil) {
+            return self
+        }
+
+        return result
+    }
+}

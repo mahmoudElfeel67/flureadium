@@ -101,7 +101,7 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
       httpServer: sharedReadium.httpServer!
     )
 
-    _view = UIView()
+    _view = EdgeTapInterceptView()
     super.init()
 
     channel.setMethodCallHandler(onMethodCall)
@@ -124,6 +124,9 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
 
     setCurrentPdfReaderView(self)
     publicationIdentifier = publication.metadata.identifier
+
+    // Configure edge tap handlers for page navigation
+    configureEdgeTapHandlers()
 
     print(TAG, "::init success")
   }
@@ -209,6 +212,28 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
 
   private func setUserPreferences(preferences: PDFPreferences) {
     self.pdfViewController.submitPreferences(preferences)
+  }
+
+  /// Configure edge tap handlers for page navigation.
+  /// Tapping on the left 30% of the screen triggers goLeft (previous page).
+  /// Tapping on the right 30% of the screen triggers goRight (next page).
+  private func configureEdgeTapHandlers() {
+    guard let edgeTapView = _view as? EdgeTapInterceptView else { return }
+
+    edgeTapView.onLeftEdgeTap = { [weak self] in
+      guard let self = self else { return }
+      print(TAG, "[FALLBACK] Triggering goLeft via edge tap")
+      Task { @MainActor in
+        let _ = await self.pdfViewController.goLeft(options: NavigatorGoOptions(animated: true))
+      }
+    }
+    edgeTapView.onRightEdgeTap = { [weak self] in
+      guard let self = self else { return }
+      print(TAG, "[FALLBACK] Triggering goRight via edge tap")
+      Task { @MainActor in
+        let _ = await self.pdfViewController.goRight(options: NavigatorGoOptions(animated: true))
+      }
+    }
   }
 
   private func disableDoubleTapZoomGesture(in view: UIView) {
