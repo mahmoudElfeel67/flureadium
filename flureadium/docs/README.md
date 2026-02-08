@@ -81,4 +81,4 @@ Flureadium is a Flutter plugin that wraps the Readium toolkits for reading EPUB 
 
 ---
 
-*Last updated: 2026-02-07*
+*Last updated: 2026-02-08*

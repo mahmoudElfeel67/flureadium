@@ -26,6 +26,7 @@ General TODO:
 - [x] PDF navigator implementation (Android)
 - [x] PDF navigator implementation (iOS)
 - [x] PDF Flutter widget layer integration
+- [x] Epist migration to Flureadium PDF
 - [ ] PDF manual testing (Android & iOS)
 
 ## Documentation
