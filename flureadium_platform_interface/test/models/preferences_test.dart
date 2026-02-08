@@ -334,6 +334,7 @@ void main() {
           pageLayout: PDFPageLayout.single,
           offsetFirstPage: true,
           disableDoubleTapZoom: true,
+          disableTextSelection: true,
         );
 
         expect(prefs.fit, equals(PDFFit.width));
@@ -341,6 +342,7 @@ void main() {
         expect(prefs.pageLayout, equals(PDFPageLayout.single));
         expect(prefs.offsetFirstPage, isTrue);
         expect(prefs.disableDoubleTapZoom, isTrue);
+        expect(prefs.disableTextSelection, isTrue);
       });
 
       test('creates instance with null parameters', () {
@@ -351,6 +353,7 @@ void main() {
         expect(prefs.pageLayout, isNull);
         expect(prefs.offsetFirstPage, isNull);
         expect(prefs.disableDoubleTapZoom, isNull);
+        expect(prefs.disableTextSelection, isNull);
       });
 
       test('creates instance with disableDoubleTapZoom only', () {
@@ -359,6 +362,16 @@ void main() {
         expect(prefs.disableDoubleTapZoom, isTrue);
         expect(prefs.fit, isNull);
         expect(prefs.scrollMode, isNull);
+      });
+
+      test('creates instance with disableTextSelection', () {
+        final prefs = PDFPreferences(
+          disableDoubleTapZoom: true,
+          disableTextSelection: true,
+        );
+
+        expect(prefs.disableDoubleTapZoom, isTrue);
+        expect(prefs.disableTextSelection, isTrue);
       });
     });
 
@@ -370,6 +383,7 @@ void main() {
           pageLayout: PDFPageLayout.double,
           offsetFirstPage: false,
           disableDoubleTapZoom: true,
+          disableTextSelection: true,
         );
 
         final json = prefs.toJson();
@@ -379,6 +393,7 @@ void main() {
         expect(json['pageLayout'], equals('double'));
         expect(json['offsetFirstPage'], isFalse);
         expect(json['disableDoubleTapZoom'], isTrue);
+        expect(json['disableTextSelection'], isTrue);
       });
 
       test('omits null values from JSON', () {
@@ -391,6 +406,7 @@ void main() {
         expect(json.containsKey('pageLayout'), isFalse);
         expect(json.containsKey('offsetFirstPage'), isFalse);
         expect(json.containsKey('disableDoubleTapZoom'), isFalse);
+        expect(json.containsKey('disableTextSelection'), isFalse);
       });
 
       test('serializes disableDoubleTapZoom when set', () {
@@ -399,6 +415,15 @@ void main() {
         final json = prefs.toJson();
 
         expect(json['disableDoubleTapZoom'], isFalse);
+        expect(json.containsKey('fit'), isFalse);
+      });
+
+      test('serializes disableTextSelection when set', () {
+        final prefs = PDFPreferences(disableTextSelection: true);
+
+        final json = prefs.toJson();
+
+        expect(json['disableTextSelection'], isTrue);
         expect(json.containsKey('fit'), isFalse);
       });
 
@@ -419,6 +444,7 @@ void main() {
           'pageLayout': 'automatic',
           'offsetFirstPage': true,
           'disableDoubleTapZoom': true,
+          'disableTextSelection': true,
         };
 
         final prefs = PDFPreferences.fromJsonMap(json);
@@ -428,6 +454,7 @@ void main() {
         expect(prefs.pageLayout, equals(PDFPageLayout.automatic));
         expect(prefs.offsetFirstPage, isTrue);
         expect(prefs.disableDoubleTapZoom, isTrue);
+        expect(prefs.disableTextSelection, isTrue);
       });
 
       test('handles partial JSON with missing values', () {
@@ -440,6 +467,7 @@ void main() {
         expect(prefs.pageLayout, isNull);
         expect(prefs.offsetFirstPage, isNull);
         expect(prefs.disableDoubleTapZoom, isNull);
+        expect(prefs.disableTextSelection, isNull);
       });
 
       test('parses disableDoubleTapZoom when present', () {
@@ -451,12 +479,22 @@ void main() {
         expect(prefs.fit, isNull);
       });
 
+      test('parses disableTextSelection when present', () {
+        final json = {'disableTextSelection': true};
+
+        final prefs = PDFPreferences.fromJsonMap(json);
+
+        expect(prefs.disableTextSelection, isTrue);
+        expect(prefs.fit, isNull);
+      });
+
       test('handles empty JSON', () {
         final prefs = PDFPreferences.fromJsonMap({});
 
         expect(prefs.fit, isNull);
         expect(prefs.scrollMode, isNull);
         expect(prefs.disableDoubleTapZoom, isNull);
+        expect(prefs.disableTextSelection, isNull);
       });
     });
 
@@ -487,6 +525,7 @@ void main() {
           pageLayout: PDFPageLayout.double,
           offsetFirstPage: true,
           disableDoubleTapZoom: true,
+          disableTextSelection: true,
         );
 
         final copy = original.copyWith();
@@ -498,6 +537,10 @@ void main() {
         expect(
           copy.disableDoubleTapZoom,
           equals(original.disableDoubleTapZoom),
+        );
+        expect(
+          copy.disableTextSelection,
+          equals(original.disableTextSelection),
         );
       });
 
@@ -512,6 +555,18 @@ void main() {
         expect(copy.fit, equals(PDFFit.width));
         expect(copy.disableDoubleTapZoom, isTrue);
       });
+
+      test('can override disableTextSelection independently', () {
+        final original = PDFPreferences(
+          fit: PDFFit.width,
+          disableTextSelection: false,
+        );
+
+        final copy = original.copyWith(disableTextSelection: true);
+
+        expect(copy.fit, equals(PDFFit.width));
+        expect(copy.disableTextSelection, isTrue);
+      });
     });
 
     group('mutable properties', () {
@@ -524,13 +579,15 @@ void main() {
           ..scrollMode = PDFScrollMode.horizontal
           ..pageLayout = PDFPageLayout.automatic
           ..offsetFirstPage = true
-          ..disableDoubleTapZoom = true;
+          ..disableDoubleTapZoom = true
+          ..disableTextSelection = true;
 
         expect(prefs.fit, equals(PDFFit.contain));
         expect(prefs.scrollMode, equals(PDFScrollMode.horizontal));
         expect(prefs.pageLayout, equals(PDFPageLayout.automatic));
         expect(prefs.offsetFirstPage, isTrue);
         expect(prefs.disableDoubleTapZoom, isTrue);
+        expect(prefs.disableTextSelection, isTrue);
       });
 
       test('disableDoubleTapZoom can be modified', () {
@@ -538,6 +595,13 @@ void main() {
           ..disableDoubleTapZoom = true;
 
         expect(prefs.disableDoubleTapZoom, isTrue);
+      });
+
+      test('disableTextSelection can be modified', () {
+        final prefs = PDFPreferences(disableTextSelection: false)
+          ..disableTextSelection = true;
+
+        expect(prefs.disableTextSelection, isTrue);
       });
     });
   });

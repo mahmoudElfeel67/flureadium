@@ -126,6 +126,7 @@ void main() {
           fit: PDFFit.width,
           scrollMode: PDFScrollMode.horizontal,
           disableDoubleTapZoom: true,
+          disableTextSelection: true,
         );
 
         flureadium.setDefaultPdfPreferences(prefs);
@@ -142,6 +143,17 @@ void main() {
         expect(
           mockPlatform.defaultPdfPreferences?.disableDoubleTapZoom,
           isFalse,
+        );
+      });
+
+      test('setDefaultPdfPreferences stores disableTextSelection', () {
+        final prefs = PDFPreferences(disableTextSelection: true);
+
+        flureadium.setDefaultPdfPreferences(prefs);
+
+        expect(
+          mockPlatform.defaultPdfPreferences?.disableTextSelection,
+          isTrue,
         );
       });
 

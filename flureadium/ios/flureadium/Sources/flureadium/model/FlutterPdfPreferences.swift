@@ -101,19 +101,26 @@ public struct FlutterPdfPreferences {
     /// Defaults to false (zoom enabled).
     var disableDoubleTapZoom: Bool?
 
+    /// Whether to disable text selection gestures (iOS only).
+    /// When true, long-press won't select text in the PDF.
+    /// Defaults to false (text selection enabled).
+    var disableTextSelection: Bool?
+
     /// Creates FlutterPdfPreferences with default values.
     init(
         fit: FlutterPdfFit? = nil,
         scrollMode: FlutterPdfScrollMode? = nil,
         pageLayout: FlutterPdfPageLayout? = nil,
         offsetFirstPage: Bool? = nil,
-        disableDoubleTapZoom: Bool? = nil
+        disableDoubleTapZoom: Bool? = nil,
+        disableTextSelection: Bool? = nil
     ) {
         self.fit = fit
         self.scrollMode = scrollMode
         self.pageLayout = pageLayout
         self.offsetFirstPage = offsetFirstPage
         self.disableDoubleTapZoom = disableDoubleTapZoom
+        self.disableTextSelection = disableTextSelection
     }
 
     /// Creates FlutterPdfPreferences from a Flutter dictionary.
@@ -128,7 +135,8 @@ public struct FlutterPdfPreferences {
             scrollMode: FlutterPdfScrollMode.fromString(map["scrollMode"] as? String),
             pageLayout: FlutterPdfPageLayout.fromString(map["pageLayout"] as? String),
             offsetFirstPage: map["offsetFirstPage"] as? Bool,
-            disableDoubleTapZoom: map["disableDoubleTapZoom"] as? Bool
+            disableDoubleTapZoom: map["disableDoubleTapZoom"] as? Bool,
+            disableTextSelection: map["disableTextSelection"] as? Bool
         )
     }
 
@@ -168,6 +176,9 @@ public struct FlutterPdfPreferences {
         if let offsetFirstPage = offsetFirstPage { map["offsetFirstPage"] = offsetFirstPage }
         if let disableDoubleTapZoom = disableDoubleTapZoom {
             map["disableDoubleTapZoom"] = disableDoubleTapZoom
+        }
+        if let disableTextSelection = disableTextSelection {
+            map["disableTextSelection"] = disableTextSelection
         }
         return map
     }

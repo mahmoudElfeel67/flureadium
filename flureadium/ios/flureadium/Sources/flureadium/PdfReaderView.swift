@@ -29,6 +29,7 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
   private let pdfViewController: PDFNavigatorViewController
   private var hasSentReady = false
   private let disableDoubleTapZoom: Bool
+  private let disableTextSelection: Bool
 
   var publicationIdentifier: String?
 
@@ -65,9 +66,11 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
     let preferencesMap = creationParams["preferences"] as? Dictionary<String, Any>
     let pdfPreferences = preferencesMap != nil ? PDFPreferences(fromMap: preferencesMap!) : PDFPreferences()
 
-    // Read Flutter PDF preferences for double-tap zoom setting
+    // Read Flutter PDF preferences for gesture control settings
     let flutterPrefs = FlutterPdfPreferences(fromMap: preferencesMap)
     disableDoubleTapZoom = flutterPrefs.disableDoubleTapZoom ?? false
+    disableTextSelection = flutterPrefs.disableTextSelection ?? false
+    print(TAG, "PDF Preferences - disableDoubleTapZoom: \(disableDoubleTapZoom), disableTextSelection: \(disableTextSelection)")
 
     let locatorStr = creationParams["initialLocator"] as? String
     let locator = locatorStr == nil ? nil : try! Locator.init(jsonString: locatorStr!)
@@ -163,9 +166,19 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
   // MARK: - PDFNavigatorDelegate
 
   func navigator(_ navigator: PDFNavigatorViewController, setupPDFView view: PDFDocumentView) {
+    print(TAG, "setupPDFView called - disableDoubleTapZoom: \(disableDoubleTapZoom), disableTextSelection: \(disableTextSelection)")
+
     if disableDoubleTapZoom {
+      print(TAG, "Calling disableDoubleTapZoomGesture...")
       disableDoubleTapZoomGesture(in: view)
     }
+
+    if disableTextSelection {
+      print(TAG, "Calling disableTextSelectionGesture...")
+      disableTextSelectionGesture(in: view)
+    }
+
+    print(TAG, "setupPDFView completed")
   }
 
   // MARK: - Public Methods
@@ -195,6 +208,52 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
     // Recursively disable on all subviews
     for subview in view.subviews {
       disableDoubleTapZoomGesture(in: subview)
+    }
+  }
+
+  private func disableTextSelectionGesture(in view: UIView) {
+    // Log all gesture recognizers on this view for debugging
+    if let gestures = view.gestureRecognizers, !gestures.isEmpty {
+      print(TAG, "disableTextSelectionGesture: Found \(gestures.count) gesture(s) on \(type(of: view))")
+      for (index, gesture) in gestures.enumerated() {
+        let gestureType = type(of: gesture)
+        if let tapGesture = gesture as? UITapGestureRecognizer {
+          print(TAG, "  [\(index)] \(gestureType) - taps: \(tapGesture.numberOfTapsRequired), touches: \(tapGesture.numberOfTouchesRequired), enabled: \(gesture.isEnabled)")
+        } else if let longPress = gesture as? UILongPressGestureRecognizer {
+          print(TAG, "  [\(index)] \(gestureType) - minDuration: \(longPress.minimumPressDuration), enabled: \(gesture.isEnabled)")
+        } else {
+          print(TAG, "  [\(index)] \(gestureType) - enabled: \(gesture.isEnabled)")
+        }
+      }
+    }
+
+    // Disable gesture recognizers that might trigger text selection
+    var disabledCount = 0
+    for gestureRecognizer in view.gestureRecognizers ?? [] {
+      // Disable long-press (primary text selection trigger)
+      if gestureRecognizer is UILongPressGestureRecognizer {
+        print(TAG, "  → Disabling UILongPressGestureRecognizer")
+        gestureRecognizer.isEnabled = false
+        disabledCount += 1
+      }
+      // Disable single-tap recognizers that might be for text selection menu
+      // Note: Double-tap is already handled by disableDoubleTapZoomGesture
+      else if let tapGesture = gestureRecognizer as? UITapGestureRecognizer {
+        if tapGesture.numberOfTapsRequired == 1 && tapGesture.numberOfTouchesRequired == 1 {
+          print(TAG, "  → Disabling single-tap UITapGestureRecognizer")
+          gestureRecognizer.isEnabled = false
+          disabledCount += 1
+        }
+      }
+    }
+
+    if disabledCount > 0 {
+      print(TAG, "disableTextSelectionGesture: Disabled \(disabledCount) gesture(s) on \(type(of: view))")
+    }
+
+    // Recursively disable on all subviews
+    for subview in view.subviews {
+      disableTextSelectionGesture(in: subview)
     }
   }
 
