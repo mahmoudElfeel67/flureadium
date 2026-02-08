@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flureadium_platform_interface/flureadium_platform_interface.dart';
 
 export 'package:flureadium_platform_interface/flureadium_platform_interface.dart';
@@ -105,7 +104,6 @@ class Flureadium {
   /// ```
   Future<Publication> openPublication(String pubUrl) {
     return _platform.openPublication(pubUrl).onError((err, _) {
-      debugPrint('OpenPublication error: ${err.toString()}');
       throw ReadiumException.fromError(err);
     });
   }
