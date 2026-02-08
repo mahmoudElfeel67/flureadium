@@ -183,6 +183,22 @@ NavigationDecision decideSkipToPrevious({
 
   // Check if already at first chapter
   if (currentTocIndex == 0) {
+    // For PDFs, check if there are pages before first chapter
+    if (isPdfToc(toc)) {
+      final firstTocPage = _extractPageFromTocLink(toc.first);
+      R2Log.d(
+        'decideSkipToPrevious: PDF at first chapter, firstTocPage=$firstTocPage',
+      );
+      if (firstTocPage != null && firstTocPage > 1) {
+        // There are pages before first chapter - create link to page 1
+        return NavigationDecision.navigate(
+          _createPdfPageLink(toc.first, 1),
+          null,
+        );
+      }
+      return const NavigationDecision.abort('Already at first page');
+    }
+
     // At first chapter - check if there are pages before it
     final firstTocLink = toc[0];
     final firstTocLocator = publication.locatorFromLink(firstTocLink);
@@ -218,4 +234,11 @@ int? _extractPageFromTocLink(Link link) {
   if (fragmentIndex == -1) return null;
   final pageStr = href.substring(fragmentIndex + 6);
   return int.tryParse(pageStr);
+}
+
+/// Creates a PDF link with a specific page number.
+/// Uses the base path from the template link.
+Link _createPdfPageLink(Link templateLink, int page) {
+  final basePath = templateLink.href.split('#').first;
+  return Link(href: '$basePath#page=$page');
 }
