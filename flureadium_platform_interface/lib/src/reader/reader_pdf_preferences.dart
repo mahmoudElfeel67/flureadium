@@ -16,6 +16,7 @@ class PDFPreferences {
     this.disableDoubleTapZoom,
     this.disableTextSelection,
     this.disableDragGestures,
+    this.disableTextSelectionMenu,
   });
 
   factory PDFPreferences.fromJsonMap(Map<String, dynamic> map) =>
@@ -33,6 +34,7 @@ class PDFPreferences {
         disableDoubleTapZoom: map['disableDoubleTapZoom'] as bool?,
         disableTextSelection: map['disableTextSelection'] as bool?,
         disableDragGestures: map['disableDragGestures'] as bool?,
+        disableTextSelectionMenu: map['disableTextSelectionMenu'] as bool?,
       );
 
   /// How the page fits in the viewport.
@@ -62,6 +64,11 @@ class PDFPreferences {
   /// Defaults to false (drag gestures enabled).
   bool? disableDragGestures;
 
+  /// Whether to disable the text selection menu (iOS only).
+  /// When true, the Copy/Look Up/Translate menu won't appear when text is selected.
+  /// Defaults to false (selection menu enabled).
+  bool? disableTextSelectionMenu;
+
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{};
     if (fit != null) map['fit'] = fit!.name;
@@ -77,6 +84,9 @@ class PDFPreferences {
     if (disableDragGestures != null) {
       map['disableDragGestures'] = disableDragGestures;
     }
+    if (disableTextSelectionMenu != null) {
+      map['disableTextSelectionMenu'] = disableTextSelectionMenu;
+    }
     return map;
   }
 
@@ -88,6 +98,7 @@ class PDFPreferences {
     bool? disableDoubleTapZoom,
     bool? disableTextSelection,
     bool? disableDragGestures,
+    bool? disableTextSelectionMenu,
   }) => PDFPreferences(
     fit: fit ?? this.fit,
     scrollMode: scrollMode ?? this.scrollMode,
@@ -96,6 +107,7 @@ class PDFPreferences {
     disableDoubleTapZoom: disableDoubleTapZoom ?? this.disableDoubleTapZoom,
     disableTextSelection: disableTextSelection ?? this.disableTextSelection,
     disableDragGestures: disableDragGestures ?? this.disableDragGestures,
+    disableTextSelectionMenu: disableTextSelectionMenu ?? this.disableTextSelectionMenu,
   );
 }
 

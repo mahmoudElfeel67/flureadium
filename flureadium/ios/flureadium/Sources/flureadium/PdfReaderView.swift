@@ -31,6 +31,7 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
   private let disableDoubleTapZoom: Bool
   private let disableTextSelection: Bool
   private let disableDragGestures: Bool
+  private let disableTextSelectionMenu: Bool
 
   var publicationIdentifier: String?
 
@@ -72,7 +73,8 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
     disableDoubleTapZoom = flutterPrefs.disableDoubleTapZoom ?? false
     disableTextSelection = flutterPrefs.disableTextSelection ?? false
     disableDragGestures = flutterPrefs.disableDragGestures ?? false
-    print(TAG, "PDF Preferences - disableDoubleTapZoom: \(disableDoubleTapZoom), disableTextSelection: \(disableTextSelection), disableDragGestures: \(disableDragGestures)")
+    disableTextSelectionMenu = flutterPrefs.disableTextSelectionMenu ?? false
+    print(TAG, "PDF Preferences - disableDoubleTapZoom: \(disableDoubleTapZoom), disableTextSelection: \(disableTextSelection), disableDragGestures: \(disableDragGestures), disableTextSelectionMenu: \(disableTextSelectionMenu)")
 
     let locatorStr = creationParams["initialLocator"] as? String
     let locator = locatorStr == nil ? nil : try! Locator.init(jsonString: locatorStr!)
@@ -168,7 +170,7 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
   // MARK: - PDFNavigatorDelegate
 
   func navigator(_ navigator: PDFNavigatorViewController, setupPDFView view: PDFDocumentView) {
-    print(TAG, "setupPDFView called - disableDoubleTapZoom: \(disableDoubleTapZoom), disableTextSelection: \(disableTextSelection), disableDragGestures: \(disableDragGestures)")
+    print(TAG, "setupPDFView called - disableDoubleTapZoom: \(disableDoubleTapZoom), disableTextSelection: \(disableTextSelection), disableDragGestures: \(disableDragGestures), disableTextSelectionMenu: \(disableTextSelectionMenu)")
 
     if disableDoubleTapZoom {
       print(TAG, "Calling disableDoubleTapZoomGesture...")
@@ -178,6 +180,11 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
     if disableTextSelection {
       print(TAG, "Calling disableTextSelectionGesture...")
       disableTextSelectionGesture(in: view)
+    }
+
+    if disableTextSelectionMenu {
+      print(TAG, "Calling disableTextSelectionMenu...")
+      disableTextSelectionMenu(in: view)
     }
 
     if disableDragGestures {
@@ -219,65 +226,30 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
   }
 
   private func disableTextSelectionGesture(in view: UIView) {
-    // Log all gesture recognizers on this view for debugging
-    if let gestures = view.gestureRecognizers, !gestures.isEmpty {
-      print(TAG, "disableTextSelectionGesture: Found \(gestures.count) gesture(s) on \(type(of: view))")
-      for (index, gesture) in gestures.enumerated() {
-        let gestureType = type(of: gesture)
-        if let tapGesture = gesture as? UITapGestureRecognizer {
-          print(TAG, "  [\(index)] \(gestureType) - taps: \(tapGesture.numberOfTapsRequired), touches: \(tapGesture.numberOfTouchesRequired), enabled: \(gesture.isEnabled)")
-        } else if let longPress = gesture as? UILongPressGestureRecognizer {
-          print(TAG, "  [\(index)] \(gestureType) - minDuration: \(longPress.minimumPressDuration), enabled: \(gesture.isEnabled)")
-        } else {
-          print(TAG, "  [\(index)] \(gestureType) - enabled: \(gesture.isEnabled)")
-        }
-      }
-    }
+    print(TAG, "disableTextSelectionGesture: Found \(view.gestureRecognizers?.count ?? 0) gesture(s) on \(type(of: view))")
 
-    // Disable gesture recognizers that might trigger text selection
     var disabledCount = 0
-    for gestureRecognizer in view.gestureRecognizers ?? [] {
-      // Disable long-press (primary text selection trigger)
-      if gestureRecognizer is UILongPressGestureRecognizer {
-        print(TAG, "  → Disabling UILongPressGestureRecognizer")
-        gestureRecognizer.isEnabled = false
-        disabledCount += 1
-      }
-      // Disable single-tap recognizers that might be for text selection menu
-      // Note: Double-tap is already handled by disableDoubleTapZoomGesture
-      else if let tapGesture = gestureRecognizer as? UITapGestureRecognizer {
-        if tapGesture.numberOfTapsRequired == 1 && tapGesture.numberOfTouchesRequired == 1 {
-          print(TAG, "  → Disabling single-tap UITapGestureRecognizer")
-          gestureRecognizer.isEnabled = false
+
+    if let gestureRecognizers = view.gestureRecognizers {
+      for recognizer in gestureRecognizers {
+        // UILongPressGestureRecognizer - for text selection
+        if recognizer is UILongPressGestureRecognizer {
+          recognizer.isEnabled = false
           disabledCount += 1
+        }
+
+        // UITapGestureRecognizer (single tap) - for showing text selection menu
+        if let tapRecognizer = recognizer as? UITapGestureRecognizer {
+          if tapRecognizer.numberOfTapsRequired == 1 {
+            tapRecognizer.isEnabled = false
+            disabledCount += 1
+          }
         }
       }
     }
 
     if disabledCount > 0 {
       print(TAG, "disableTextSelectionGesture: Disabled \(disabledCount) gesture(s) on \(type(of: view))")
-    }
-
-    // Remove UITextInteraction objects (iOS 13+)
-    if #available(iOS 13.0, *) {
-      // Debug: Log all interactions on this view
-      if !view.interactions.isEmpty {
-        print(TAG, "  Found \(view.interactions.count) interaction(s) on \(type(of: view)):")
-        for (index, interaction) in view.interactions.enumerated() {
-          print(TAG, "    [\(index)] \(type(of: interaction))")
-        }
-      }
-
-      let textInteractions = view.interactions.filter { $0 is UITextInteraction }
-      if !textInteractions.isEmpty {
-        print(TAG, "  Found \(textInteractions.count) UITextInteraction(s) to remove")
-        for interaction in textInteractions {
-          print(TAG, "  → Removing UITextInteraction")
-          view.removeInteraction(interaction)
-        }
-      } else if !view.interactions.isEmpty {
-        print(TAG, "  No UITextInteraction found (but \(view.interactions.count) other interaction(s) present)")
-      }
     }
 
     // Recursively disable on all subviews
@@ -307,6 +279,34 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
     // Recursively disable on all subviews
     for subview in view.subviews {
       disableDragGesturesRecognizer(in: subview)
+    }
+  }
+
+  private func disableTextSelectionMenu(in view: UIView) {
+    print(TAG, "disableTextSelectionMenu: Checking interactions on \(type(of: view))")
+
+    // Remove text selection and editing menu interactions (iOS 13+)
+    if #available(iOS 13.0, *) {
+      var removedCount = 0
+      for interaction in view.interactions {
+        let interactionTypeName = String(describing: type(of: interaction))
+        let isEditMenuInteraction = interactionTypeName.contains("EditMenu") ||
+                                     interactionTypeName.contains("ContextMenu")
+        let isTextInteraction = interactionTypeName.contains("TextInteraction")
+        if isEditMenuInteraction || isTextInteraction {
+          print(TAG, "  → Removing \(interactionTypeName)")
+          view.removeInteraction(interaction)
+          removedCount += 1
+        }
+      }
+      if removedCount > 0 {
+        print(TAG, "  Removed \(removedCount) edit menu interaction(s) from \(type(of: view))")
+      }
+    }
+
+    // Recursively disable on all subviews
+    for subview in view.subviews {
+      disableTextSelectionMenu(in: subview)
     }
   }
 

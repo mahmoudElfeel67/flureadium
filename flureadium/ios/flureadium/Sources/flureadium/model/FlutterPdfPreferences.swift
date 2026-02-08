@@ -111,6 +111,11 @@ public struct FlutterPdfPreferences {
     /// Defaults to false (drag gestures enabled).
     var disableDragGestures: Bool?
 
+    /// Whether to disable the text selection menu (iOS only).
+    /// When true, the Copy/Look Up/Translate menu won't appear when text is selected.
+    /// Defaults to false (selection menu enabled).
+    var disableTextSelectionMenu: Bool?
+
     /// Creates FlutterPdfPreferences with default values.
     init(
         fit: FlutterPdfFit? = nil,
@@ -119,7 +124,8 @@ public struct FlutterPdfPreferences {
         offsetFirstPage: Bool? = nil,
         disableDoubleTapZoom: Bool? = nil,
         disableTextSelection: Bool? = nil,
-        disableDragGestures: Bool? = nil
+        disableDragGestures: Bool? = nil,
+        disableTextSelectionMenu: Bool? = nil
     ) {
         self.fit = fit
         self.scrollMode = scrollMode
@@ -128,6 +134,7 @@ public struct FlutterPdfPreferences {
         self.disableDoubleTapZoom = disableDoubleTapZoom
         self.disableTextSelection = disableTextSelection
         self.disableDragGestures = disableDragGestures
+        self.disableTextSelectionMenu = disableTextSelectionMenu
     }
 
     /// Creates FlutterPdfPreferences from a Flutter dictionary.
@@ -144,7 +151,8 @@ public struct FlutterPdfPreferences {
             offsetFirstPage: map["offsetFirstPage"] as? Bool,
             disableDoubleTapZoom: map["disableDoubleTapZoom"] as? Bool,
             disableTextSelection: map["disableTextSelection"] as? Bool,
-            disableDragGestures: map["disableDragGestures"] as? Bool
+            disableDragGestures: map["disableDragGestures"] as? Bool,
+            disableTextSelectionMenu: map["disableTextSelectionMenu"] as? Bool
         )
     }
 
@@ -190,6 +198,9 @@ public struct FlutterPdfPreferences {
         }
         if let disableDragGestures = disableDragGestures {
             map["disableDragGestures"] = disableDragGestures
+        }
+        if let disableTextSelectionMenu = disableTextSelectionMenu {
+            map["disableTextSelectionMenu"] = disableTextSelectionMenu
         }
         return map
     }

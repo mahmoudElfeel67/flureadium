@@ -200,4 +200,34 @@ final class FlutterPdfPreferencesTests: XCTestCase {
 
         XCTAssertTrue(map.isEmpty)
     }
+
+    // MARK: - disableTextSelectionMenu Tests
+
+    func testDisableTextSelectionMenu() {
+        let preferences = FlutterPdfPreferences(disableTextSelectionMenu: true)
+        XCTAssertEqual(preferences.disableTextSelectionMenu, true)
+    }
+
+    func testDisableTextSelectionMenuFromMap() {
+        let map: [String: Any] = ["disableTextSelectionMenu": true]
+        let preferences = FlutterPdfPreferences(fromMap: map)
+        XCTAssertEqual(preferences.disableTextSelectionMenu, true)
+    }
+
+    func testDisableTextSelectionMenuToMap() {
+        let preferences = FlutterPdfPreferences(disableTextSelectionMenu: true)
+        let map = preferences.toMap()
+        XCTAssertEqual(map["disableTextSelectionMenu"] as? Bool, true)
+    }
+
+    func testDisableTextSelectionMenuDefaultsToNil() {
+        let preferences = FlutterPdfPreferences()
+        XCTAssertNil(preferences.disableTextSelectionMenu)
+    }
+
+    func testDisableTextSelectionMenuNotInMapWhenNil() {
+        let preferences = FlutterPdfPreferences()
+        let map = preferences.toMap()
+        XCTAssertNil(map["disableTextSelectionMenu"])
+    }
 }
