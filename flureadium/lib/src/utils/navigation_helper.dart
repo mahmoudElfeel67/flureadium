@@ -40,6 +40,27 @@ NavigationDecision decideSkipToNext({
 }) {
   // Handle case where current page is not in TOC
   if (currentTocIndex == -1) {
+    // For PDFs, check if current page is before first TOC page
+    if (isPdfToc(toc)) {
+      final currentPage = currentLocator.locations?.position;
+      final firstTocPage = _extractPageFromTocLink(toc.first);
+      R2Log.d(
+        'decideSkipToNext: PDF - currentPage=$currentPage, firstTocPage=$firstTocPage',
+      );
+      if (currentPage != null &&
+          firstTocPage != null &&
+          currentPage < firstTocPage) {
+        // Current page is before first chapter - jump to first chapter
+        return NavigationDecision.navigate(toc.first, 0);
+      }
+      // For PDF, if we're not before first chapter, we should still go to first
+      // chapter if we have valid pages (covers case where findTocIndexByPage returned -1
+      // due to being before first chapter's page)
+      if (firstTocPage != null) {
+        return NavigationDecision.navigate(toc.first, 0);
+      }
+    }
+
     // Check if current page is before first TOC entry in readingOrder
     final currentPos = _findInReadingOrder(currentLocator, readingOrder);
     if (currentPos == -1) {
@@ -107,6 +128,29 @@ NavigationDecision decideSkipToPrevious({
 }) {
   // Handle case where current page is not in TOC
   if (currentTocIndex == -1) {
+    // For PDFs, check if current page is before first TOC page
+    if (isPdfToc(toc)) {
+      final currentPage = currentLocator.locations?.position;
+      final firstTocPage = _extractPageFromTocLink(toc.first);
+      R2Log.d(
+        'decideSkipToPrevious: PDF - currentPage=$currentPage, firstTocPage=$firstTocPage',
+      );
+      if (currentPage != null &&
+          firstTocPage != null &&
+          currentPage < firstTocPage) {
+        // Current page is before first chapter - can't go back
+        return const NavigationDecision.abort('Already at first page');
+      }
+      // Check if after last chapter
+      final lastTocPage = _extractPageFromTocLink(toc.last);
+      if (currentPage != null &&
+          lastTocPage != null &&
+          currentPage > lastTocPage) {
+        // Current page is after last chapter - jump to last chapter
+        return NavigationDecision.navigate(toc.last, toc.length - 1);
+      }
+    }
+
     // Check if current page is after last TOC entry in readingOrder
     final currentPos = _findInReadingOrder(currentLocator, readingOrder);
     if (currentPos == -1) {
@@ -165,4 +209,13 @@ int _findInReadingOrder(Locator locator, List<Link> readingOrder) {
   return readingOrder.indexWhere(
     (link) => normalizePath(link.hrefPart) == locatorPath,
   );
+}
+
+/// Extracts page number from a TOC link's href (e.g., "doc.pdf#page=5" -> 5).
+int? _extractPageFromTocLink(Link link) {
+  final href = link.href;
+  final fragmentIndex = href.indexOf('#page=');
+  if (fragmentIndex == -1) return null;
+  final pageStr = href.substring(fragmentIndex + 6);
+  return int.tryParse(pageStr);
 }
