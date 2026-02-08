@@ -107,7 +107,8 @@ class PDFPreferences {
     disableDoubleTapZoom: disableDoubleTapZoom ?? this.disableDoubleTapZoom,
     disableTextSelection: disableTextSelection ?? this.disableTextSelection,
     disableDragGestures: disableDragGestures ?? this.disableDragGestures,
-    disableTextSelectionMenu: disableTextSelectionMenu ?? this.disableTextSelectionMenu,
+    disableTextSelectionMenu:
+        disableTextSelectionMenu ?? this.disableTextSelectionMenu,
   );
 }
 
