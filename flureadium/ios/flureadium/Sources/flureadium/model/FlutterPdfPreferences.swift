@@ -106,6 +106,11 @@ public struct FlutterPdfPreferences {
     /// Defaults to false (text selection enabled).
     var disableTextSelection: Bool?
 
+    /// Whether to disable drag gestures (iOS only).
+    /// When true, drag gestures won't trigger text selection or drag-and-drop.
+    /// Defaults to false (drag gestures enabled).
+    var disableDragGestures: Bool?
+
     /// Creates FlutterPdfPreferences with default values.
     init(
         fit: FlutterPdfFit? = nil,
@@ -113,7 +118,8 @@ public struct FlutterPdfPreferences {
         pageLayout: FlutterPdfPageLayout? = nil,
         offsetFirstPage: Bool? = nil,
         disableDoubleTapZoom: Bool? = nil,
-        disableTextSelection: Bool? = nil
+        disableTextSelection: Bool? = nil,
+        disableDragGestures: Bool? = nil
     ) {
         self.fit = fit
         self.scrollMode = scrollMode
@@ -121,6 +127,7 @@ public struct FlutterPdfPreferences {
         self.offsetFirstPage = offsetFirstPage
         self.disableDoubleTapZoom = disableDoubleTapZoom
         self.disableTextSelection = disableTextSelection
+        self.disableDragGestures = disableDragGestures
     }
 
     /// Creates FlutterPdfPreferences from a Flutter dictionary.
@@ -136,7 +143,8 @@ public struct FlutterPdfPreferences {
             pageLayout: FlutterPdfPageLayout.fromString(map["pageLayout"] as? String),
             offsetFirstPage: map["offsetFirstPage"] as? Bool,
             disableDoubleTapZoom: map["disableDoubleTapZoom"] as? Bool,
-            disableTextSelection: map["disableTextSelection"] as? Bool
+            disableTextSelection: map["disableTextSelection"] as? Bool,
+            disableDragGestures: map["disableDragGestures"] as? Bool
         )
     }
 
@@ -179,6 +187,9 @@ public struct FlutterPdfPreferences {
         }
         if let disableTextSelection = disableTextSelection {
             map["disableTextSelection"] = disableTextSelection
+        }
+        if let disableDragGestures = disableDragGestures {
+            map["disableDragGestures"] = disableDragGestures
         }
         return map
     }

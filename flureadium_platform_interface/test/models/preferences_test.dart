@@ -373,6 +373,18 @@ void main() {
         expect(prefs.disableDoubleTapZoom, isTrue);
         expect(prefs.disableTextSelection, isTrue);
       });
+
+      test('creates instance with disableDragGestures', () {
+        final prefs = PDFPreferences(
+          disableDoubleTapZoom: true,
+          disableTextSelection: true,
+          disableDragGestures: true,
+        );
+
+        expect(prefs.disableDoubleTapZoom, isTrue);
+        expect(prefs.disableTextSelection, isTrue);
+        expect(prefs.disableDragGestures, isTrue);
+      });
     });
 
     group('toJson', () {
@@ -427,6 +439,15 @@ void main() {
         expect(json.containsKey('fit'), isFalse);
       });
 
+      test('serializes disableDragGestures when set', () {
+        final prefs = PDFPreferences(disableDragGestures: true);
+
+        final json = prefs.toJson();
+
+        expect(json['disableDragGestures'], isTrue);
+        expect(json.containsKey('fit'), isFalse);
+      });
+
       test('returns empty map when all values are null', () {
         final prefs = PDFPreferences();
 
@@ -445,6 +466,7 @@ void main() {
           'offsetFirstPage': true,
           'disableDoubleTapZoom': true,
           'disableTextSelection': true,
+          'disableDragGestures': true,
         };
 
         final prefs = PDFPreferences.fromJsonMap(json);
@@ -455,6 +477,7 @@ void main() {
         expect(prefs.offsetFirstPage, isTrue);
         expect(prefs.disableDoubleTapZoom, isTrue);
         expect(prefs.disableTextSelection, isTrue);
+        expect(prefs.disableDragGestures, isTrue);
       });
 
       test('handles partial JSON with missing values', () {
@@ -485,6 +508,15 @@ void main() {
         final prefs = PDFPreferences.fromJsonMap(json);
 
         expect(prefs.disableTextSelection, isTrue);
+        expect(prefs.fit, isNull);
+      });
+
+      test('parses disableDragGestures when present', () {
+        final json = {'disableDragGestures': true};
+
+        final prefs = PDFPreferences.fromJsonMap(json);
+
+        expect(prefs.disableDragGestures, isTrue);
         expect(prefs.fit, isNull);
       });
 
@@ -526,6 +558,7 @@ void main() {
           offsetFirstPage: true,
           disableDoubleTapZoom: true,
           disableTextSelection: true,
+          disableDragGestures: true,
         );
 
         final copy = original.copyWith();
@@ -542,6 +575,7 @@ void main() {
           copy.disableTextSelection,
           equals(original.disableTextSelection),
         );
+        expect(copy.disableDragGestures, equals(original.disableDragGestures));
       });
 
       test('can override disableDoubleTapZoom independently', () {
@@ -567,6 +601,18 @@ void main() {
         expect(copy.fit, equals(PDFFit.width));
         expect(copy.disableTextSelection, isTrue);
       });
+
+      test('can override disableDragGestures independently', () {
+        final original = PDFPreferences(
+          fit: PDFFit.width,
+          disableDragGestures: false,
+        );
+
+        final copy = original.copyWith(disableDragGestures: true);
+
+        expect(copy.fit, equals(PDFFit.width));
+        expect(copy.disableDragGestures, isTrue);
+      });
     });
 
     group('mutable properties', () {
@@ -580,7 +626,8 @@ void main() {
           ..pageLayout = PDFPageLayout.automatic
           ..offsetFirstPage = true
           ..disableDoubleTapZoom = true
-          ..disableTextSelection = true;
+          ..disableTextSelection = true
+          ..disableDragGestures = true;
 
         expect(prefs.fit, equals(PDFFit.contain));
         expect(prefs.scrollMode, equals(PDFScrollMode.horizontal));
@@ -588,6 +635,7 @@ void main() {
         expect(prefs.offsetFirstPage, isTrue);
         expect(prefs.disableDoubleTapZoom, isTrue);
         expect(prefs.disableTextSelection, isTrue);
+        expect(prefs.disableDragGestures, isTrue);
       });
 
       test('disableDoubleTapZoom can be modified', () {
@@ -602,6 +650,13 @@ void main() {
           ..disableTextSelection = true;
 
         expect(prefs.disableTextSelection, isTrue);
+      });
+
+      test('disableDragGestures can be modified', () {
+        final prefs = PDFPreferences(disableDragGestures: false)
+          ..disableDragGestures = true;
+
+        expect(prefs.disableDragGestures, isTrue);
       });
     });
   });

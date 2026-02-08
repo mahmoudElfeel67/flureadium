@@ -30,6 +30,7 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
   private var hasSentReady = false
   private let disableDoubleTapZoom: Bool
   private let disableTextSelection: Bool
+  private let disableDragGestures: Bool
 
   var publicationIdentifier: String?
 
@@ -70,7 +71,8 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
     let flutterPrefs = FlutterPdfPreferences(fromMap: preferencesMap)
     disableDoubleTapZoom = flutterPrefs.disableDoubleTapZoom ?? false
     disableTextSelection = flutterPrefs.disableTextSelection ?? false
-    print(TAG, "PDF Preferences - disableDoubleTapZoom: \(disableDoubleTapZoom), disableTextSelection: \(disableTextSelection)")
+    disableDragGestures = flutterPrefs.disableDragGestures ?? false
+    print(TAG, "PDF Preferences - disableDoubleTapZoom: \(disableDoubleTapZoom), disableTextSelection: \(disableTextSelection), disableDragGestures: \(disableDragGestures)")
 
     let locatorStr = creationParams["initialLocator"] as? String
     let locator = locatorStr == nil ? nil : try! Locator.init(jsonString: locatorStr!)
@@ -166,7 +168,7 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
   // MARK: - PDFNavigatorDelegate
 
   func navigator(_ navigator: PDFNavigatorViewController, setupPDFView view: PDFDocumentView) {
-    print(TAG, "setupPDFView called - disableDoubleTapZoom: \(disableDoubleTapZoom), disableTextSelection: \(disableTextSelection)")
+    print(TAG, "setupPDFView called - disableDoubleTapZoom: \(disableDoubleTapZoom), disableTextSelection: \(disableTextSelection), disableDragGestures: \(disableDragGestures)")
 
     if disableDoubleTapZoom {
       print(TAG, "Calling disableDoubleTapZoomGesture...")
@@ -176,6 +178,11 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
     if disableTextSelection {
       print(TAG, "Calling disableTextSelectionGesture...")
       disableTextSelectionGesture(in: view)
+    }
+
+    if disableDragGestures {
+      print(TAG, "Calling disableDragGesturesRecognizer...")
+      disableDragGesturesRecognizer(in: view)
     }
 
     print(TAG, "setupPDFView completed")
@@ -251,9 +258,45 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
       print(TAG, "disableTextSelectionGesture: Disabled \(disabledCount) gesture(s) on \(type(of: view))")
     }
 
+    // Remove UITextInteraction objects (iOS 13+)
+    if #available(iOS 13.0, *) {
+      let textInteractions = view.interactions.filter { $0 is UITextInteraction }
+      if !textInteractions.isEmpty {
+        print(TAG, "  Found \(textInteractions.count) UITextInteraction(s) on \(type(of: view))")
+        for interaction in textInteractions {
+          print(TAG, "  → Removing UITextInteraction")
+          view.removeInteraction(interaction)
+        }
+      }
+    }
+
     // Recursively disable on all subviews
     for subview in view.subviews {
       disableTextSelectionGesture(in: subview)
+    }
+  }
+
+  private func disableDragGesturesRecognizer(in view: UIView) {
+    // Disable drag gesture recognizers that can trigger text selection/drag-and-drop
+    var disabledCount = 0
+    for gestureRecognizer in view.gestureRecognizers ?? [] {
+      let gestureTypeName = String(describing: type(of: gestureRecognizer))
+
+      // Disable drag gesture recognizers (for text selection/drag-and-drop)
+      if gestureTypeName.contains("Drag") {
+        print(TAG, "  → Disabling drag gesture: \(gestureTypeName)")
+        gestureRecognizer.isEnabled = false
+        disabledCount += 1
+      }
+    }
+
+    if disabledCount > 0 {
+      print(TAG, "disableDragGesturesRecognizer: Disabled \(disabledCount) gesture(s) on \(type(of: view))")
+    }
+
+    // Recursively disable on all subviews
+    for subview in view.subviews {
+      disableDragGesturesRecognizer(in: subview)
     }
   }
 

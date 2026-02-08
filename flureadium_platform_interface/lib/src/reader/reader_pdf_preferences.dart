@@ -15,6 +15,7 @@ class PDFPreferences {
     this.offsetFirstPage,
     this.disableDoubleTapZoom,
     this.disableTextSelection,
+    this.disableDragGestures,
   });
 
   factory PDFPreferences.fromJsonMap(Map<String, dynamic> map) =>
@@ -31,6 +32,7 @@ class PDFPreferences {
         offsetFirstPage: map['offsetFirstPage'] as bool?,
         disableDoubleTapZoom: map['disableDoubleTapZoom'] as bool?,
         disableTextSelection: map['disableTextSelection'] as bool?,
+        disableDragGestures: map['disableDragGestures'] as bool?,
       );
 
   /// How the page fits in the viewport.
@@ -55,6 +57,11 @@ class PDFPreferences {
   /// Defaults to false (text selection enabled).
   bool? disableTextSelection;
 
+  /// Whether to disable drag gestures (iOS only).
+  /// When true, drag gestures won't trigger text selection or drag-and-drop.
+  /// Defaults to false (drag gestures enabled).
+  bool? disableDragGestures;
+
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{};
     if (fit != null) map['fit'] = fit!.name;
@@ -67,6 +74,9 @@ class PDFPreferences {
     if (disableTextSelection != null) {
       map['disableTextSelection'] = disableTextSelection;
     }
+    if (disableDragGestures != null) {
+      map['disableDragGestures'] = disableDragGestures;
+    }
     return map;
   }
 
@@ -77,6 +87,7 @@ class PDFPreferences {
     bool? offsetFirstPage,
     bool? disableDoubleTapZoom,
     bool? disableTextSelection,
+    bool? disableDragGestures,
   }) => PDFPreferences(
     fit: fit ?? this.fit,
     scrollMode: scrollMode ?? this.scrollMode,
@@ -84,6 +95,7 @@ class PDFPreferences {
     offsetFirstPage: offsetFirstPage ?? this.offsetFirstPage,
     disableDoubleTapZoom: disableDoubleTapZoom ?? this.disableDoubleTapZoom,
     disableTextSelection: disableTextSelection ?? this.disableTextSelection,
+    disableDragGestures: disableDragGestures ?? this.disableDragGestures,
   );
 }
 

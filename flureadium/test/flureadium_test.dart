@@ -127,6 +127,7 @@ void main() {
           scrollMode: PDFScrollMode.horizontal,
           disableDoubleTapZoom: true,
           disableTextSelection: true,
+          disableDragGestures: true,
         );
 
         flureadium.setDefaultPdfPreferences(prefs);
@@ -155,6 +156,14 @@ void main() {
           mockPlatform.defaultPdfPreferences?.disableTextSelection,
           isTrue,
         );
+      });
+
+      test('setDefaultPdfPreferences stores disableDragGestures', () {
+        final prefs = PDFPreferences(disableDragGestures: true);
+
+        flureadium.setDefaultPdfPreferences(prefs);
+
+        expect(mockPlatform.defaultPdfPreferences?.disableDragGestures, isTrue);
       });
 
       test('setEPUBPreferences calls platform method', () async {
