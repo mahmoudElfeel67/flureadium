@@ -53,20 +53,17 @@ void main() {
       final locators = <Locator>[];
       final subscription = flureadium.onTextLocatorChanged.listen(locators.add);
 
-      mockPlatform.emitTextLocator(Locator(
-        href: 'chapter1.xhtml',
-        type: 'text/html',
-      ));
+      mockPlatform.emitTextLocator(
+        Locator(href: 'chapter1.xhtml', type: 'text/html'),
+      );
 
-      mockPlatform.emitTextLocator(Locator(
-        href: 'chapter2.xhtml',
-        type: 'text/html',
-      ));
+      mockPlatform.emitTextLocator(
+        Locator(href: 'chapter2.xhtml', type: 'text/html'),
+      );
 
-      mockPlatform.emitTextLocator(Locator(
-        href: 'chapter3.xhtml',
-        type: 'text/html',
-      ));
+      mockPlatform.emitTextLocator(
+        Locator(href: 'chapter3.xhtml', type: 'text/html'),
+      );
 
       await Future.delayed(const Duration(milliseconds: 100));
 
@@ -85,10 +82,9 @@ void main() {
       final sub1 = flureadium.onTextLocatorChanged.listen(locators1.add);
       final sub2 = flureadium.onTextLocatorChanged.listen(locators2.add);
 
-      mockPlatform.emitTextLocator(Locator(
-        href: 'test.xhtml',
-        type: 'text/html',
-      ));
+      mockPlatform.emitTextLocator(
+        Locator(href: 'test.xhtml', type: 'text/html'),
+      );
 
       await Future.delayed(const Duration(milliseconds: 100));
 
@@ -103,7 +99,9 @@ void main() {
   group('onReaderStatusChanged', () {
     test('emits reader status events', () async {
       final statuses = <ReadiumReaderStatus>[];
-      final subscription = flureadium.onReaderStatusChanged.listen(statuses.add);
+      final subscription = flureadium.onReaderStatusChanged.listen(
+        statuses.add,
+      );
 
       mockPlatform.emitReaderStatus(ReadiumReaderStatus.loading);
       mockPlatform.emitReaderStatus(ReadiumReaderStatus.ready);
@@ -118,13 +116,17 @@ void main() {
 
     test('emits all status types', () async {
       final statuses = <ReadiumReaderStatus>[];
-      final subscription = flureadium.onReaderStatusChanged.listen(statuses.add);
+      final subscription = flureadium.onReaderStatusChanged.listen(
+        statuses.add,
+      );
 
       mockPlatform.emitReaderStatus(ReadiumReaderStatus.loading);
       mockPlatform.emitReaderStatus(ReadiumReaderStatus.ready);
       mockPlatform.emitReaderStatus(ReadiumReaderStatus.closed);
       mockPlatform.emitReaderStatus(ReadiumReaderStatus.error);
-      mockPlatform.emitReaderStatus(ReadiumReaderStatus.reachedEndOfPublication);
+      mockPlatform.emitReaderStatus(
+        ReadiumReaderStatus.reachedEndOfPublication,
+      );
 
       await Future.delayed(const Duration(milliseconds: 100));
 
@@ -137,13 +139,17 @@ void main() {
   group('onTimebasedPlayerStateChanged', () {
     test('emits timebased state events', () async {
       final states = <ReadiumTimebasedState>[];
-      final subscription = flureadium.onTimebasedPlayerStateChanged.listen(states.add);
+      final subscription = flureadium.onTimebasedPlayerStateChanged.listen(
+        states.add,
+      );
 
-      mockPlatform.emitTimebasedState(ReadiumTimebasedState(
-        state: TimebasedState.playing,
-        currentOffset: const Duration(seconds: 30),
-        currentDuration: const Duration(minutes: 5),
-      ));
+      mockPlatform.emitTimebasedState(
+        ReadiumTimebasedState(
+          state: TimebasedState.playing,
+          currentOffset: const Duration(seconds: 30),
+          currentDuration: const Duration(minutes: 5),
+        ),
+      );
 
       await Future.delayed(const Duration(milliseconds: 100));
 
@@ -156,21 +162,27 @@ void main() {
 
     test('emits state transitions', () async {
       final states = <ReadiumTimebasedState>[];
-      final subscription = flureadium.onTimebasedPlayerStateChanged.listen(states.add);
+      final subscription = flureadium.onTimebasedPlayerStateChanged.listen(
+        states.add,
+      );
 
-      mockPlatform.emitTimebasedState(ReadiumTimebasedState(
-        state: TimebasedState.loading,
-      ));
+      mockPlatform.emitTimebasedState(
+        ReadiumTimebasedState(state: TimebasedState.loading),
+      );
 
-      mockPlatform.emitTimebasedState(ReadiumTimebasedState(
-        state: TimebasedState.playing,
-        currentOffset: const Duration(seconds: 0),
-      ));
+      mockPlatform.emitTimebasedState(
+        ReadiumTimebasedState(
+          state: TimebasedState.playing,
+          currentOffset: const Duration(seconds: 0),
+        ),
+      );
 
-      mockPlatform.emitTimebasedState(ReadiumTimebasedState(
-        state: TimebasedState.paused,
-        currentOffset: const Duration(seconds: 45),
-      ));
+      mockPlatform.emitTimebasedState(
+        ReadiumTimebasedState(
+          state: TimebasedState.paused,
+          currentOffset: const Duration(seconds: 45),
+        ),
+      );
 
       await Future.delayed(const Duration(milliseconds: 100));
 
@@ -184,16 +196,20 @@ void main() {
 
     test('includes locator in state', () async {
       final states = <ReadiumTimebasedState>[];
-      final subscription = flureadium.onTimebasedPlayerStateChanged.listen(states.add);
+      final subscription = flureadium.onTimebasedPlayerStateChanged.listen(
+        states.add,
+      );
 
-      mockPlatform.emitTimebasedState(ReadiumTimebasedState(
-        state: TimebasedState.playing,
-        currentLocator: Locator(
-          href: 'audio-track.mp3',
-          type: 'audio/mpeg',
-          locations: Locations(fragments: ['t=120']),
+      mockPlatform.emitTimebasedState(
+        ReadiumTimebasedState(
+          state: TimebasedState.playing,
+          currentLocator: Locator(
+            href: 'audio-track.mp3',
+            type: 'audio/mpeg',
+            locations: Locations(fragments: ['t=120']),
+          ),
         ),
-      ));
+      );
 
       await Future.delayed(const Duration(milliseconds: 100));
 
@@ -209,10 +225,9 @@ void main() {
       final errors = <ReadiumError>[];
       final subscription = flureadium.onErrorEvent.listen(errors.add);
 
-      mockPlatform.emitError(ReadiumError(
-        'Test error message',
-        code: 'ERR_001',
-      ));
+      mockPlatform.emitError(
+        ReadiumError('Test error message', code: 'ERR_001'),
+      );
 
       await Future.delayed(const Duration(milliseconds: 100));
 
@@ -242,11 +257,13 @@ void main() {
       final errors = <ReadiumError>[];
       final subscription = flureadium.onErrorEvent.listen(errors.add);
 
-      mockPlatform.emitError(ReadiumError(
-        'Error with data',
-        code: 'DATA_ERR',
-        data: {'context': 'chapter loading'},
-      ));
+      mockPlatform.emitError(
+        ReadiumError(
+          'Error with data',
+          code: 'DATA_ERR',
+          data: {'context': 'chapter loading'},
+        ),
+      );
 
       await Future.delayed(const Duration(milliseconds: 100));
 
@@ -261,18 +278,16 @@ void main() {
       final locators = <Locator>[];
       final subscription = flureadium.onTextLocatorChanged.listen(locators.add);
 
-      mockPlatform.emitTextLocator(Locator(
-        href: 'before-cancel.xhtml',
-        type: 'text/html',
-      ));
+      mockPlatform.emitTextLocator(
+        Locator(href: 'before-cancel.xhtml', type: 'text/html'),
+      );
 
       await Future.delayed(const Duration(milliseconds: 50));
       await subscription.cancel();
 
-      mockPlatform.emitTextLocator(Locator(
-        href: 'after-cancel.xhtml',
-        type: 'text/html',
-      ));
+      mockPlatform.emitTextLocator(
+        Locator(href: 'after-cancel.xhtml', type: 'text/html'),
+      );
 
       await Future.delayed(const Duration(milliseconds: 50));
 
@@ -284,17 +299,23 @@ void main() {
       final locators = <Locator>[];
       final subscription = flureadium.onTextLocatorChanged.listen(locators.add);
 
-      mockPlatform.emitTextLocator(Locator(href: 'first.xhtml', type: 'text/html'));
+      mockPlatform.emitTextLocator(
+        Locator(href: 'first.xhtml', type: 'text/html'),
+      );
 
       await Future.delayed(const Duration(milliseconds: 50));
       subscription.pause();
 
-      mockPlatform.emitTextLocator(Locator(href: 'paused.xhtml', type: 'text/html'));
+      mockPlatform.emitTextLocator(
+        Locator(href: 'paused.xhtml', type: 'text/html'),
+      );
 
       await Future.delayed(const Duration(milliseconds: 50));
       subscription.resume();
 
-      mockPlatform.emitTextLocator(Locator(href: 'resumed.xhtml', type: 'text/html'));
+      mockPlatform.emitTextLocator(
+        Locator(href: 'resumed.xhtml', type: 'text/html'),
+      );
 
       await Future.delayed(const Duration(milliseconds: 50));
 

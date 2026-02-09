@@ -32,7 +32,10 @@ void main() {
         expect(metadata!.title, equals('Test Book'));
         expect(metadata.identifier, equals('urn:isbn:123456789'));
         expect(metadata.rdfType, equals('https://schema.org/Book'));
-        expect(metadata.conformsTo, contains('https://readium.org/webpub-manifest/profiles/epub'));
+        expect(
+          metadata.conformsTo,
+          contains('https://readium.org/webpub-manifest/profiles/epub'),
+        );
         expect(metadata.languages, equals(['en', 'fr']));
         expect(metadata.language, equals('en'));
         expect(metadata.description, equals('A test book description'));
@@ -46,9 +49,7 @@ void main() {
       });
 
       test('parses metadata with minimal title', () {
-        final json = {
-          'title': 'Minimal Book',
-        };
+        final json = {'title': 'Minimal Book'};
 
         final metadata = Metadata.fromJson(json);
 
@@ -86,12 +87,24 @@ void main() {
       test('parses contributor types', () {
         final json = {
           'title': 'Test',
-          'author': [{'name': 'Author 1'}],
-          'translator': [{'name': 'Translator 1'}],
-          'editor': [{'name': 'Editor 1'}],
-          'illustrator': [{'name': 'Illustrator 1'}],
-          'narrator': [{'name': 'Narrator 1'}],
-          'contributor': [{'name': 'Contributor 1'}],
+          'author': [
+            {'name': 'Author 1'},
+          ],
+          'translator': [
+            {'name': 'Translator 1'},
+          ],
+          'editor': [
+            {'name': 'Editor 1'},
+          ],
+          'illustrator': [
+            {'name': 'Illustrator 1'},
+          ],
+          'narrator': [
+            {'name': 'Narrator 1'},
+          ],
+          'contributor': [
+            {'name': 'Contributor 1'},
+          ],
         };
 
         final metadata = Metadata.fromJson(json);
@@ -106,10 +119,7 @@ void main() {
       });
 
       test('parses single language as array', () {
-        final json = {
-          'title': 'Test',
-          'language': 'en',
-        };
+        final json = {'title': 'Test', 'language': 'en'};
 
         final metadata = Metadata.fromJson(json);
 
@@ -165,7 +175,10 @@ void main() {
           languages: ['en'],
         );
 
-        expect(metadata.effectiveReadingProgression, equals(ReadingProgression.rtl));
+        expect(
+          metadata.effectiveReadingProgression,
+          equals(ReadingProgression.rtl),
+        );
       });
 
       test('returns ltr for auto with multiple languages', () {
@@ -175,7 +188,10 @@ void main() {
           languages: ['en', 'fr'],
         );
 
-        expect(metadata.effectiveReadingProgression, equals(ReadingProgression.ltr));
+        expect(
+          metadata.effectiveReadingProgression,
+          equals(ReadingProgression.ltr),
+        );
       });
 
       test('returns rtl for Arabic language', () {
@@ -185,7 +201,10 @@ void main() {
           languages: ['ar'],
         );
 
-        expect(metadata.effectiveReadingProgression, equals(ReadingProgression.rtl));
+        expect(
+          metadata.effectiveReadingProgression,
+          equals(ReadingProgression.rtl),
+        );
       });
 
       test('returns rtl for Hebrew language', () {
@@ -195,7 +214,10 @@ void main() {
           languages: ['he'],
         );
 
-        expect(metadata.effectiveReadingProgression, equals(ReadingProgression.rtl));
+        expect(
+          metadata.effectiveReadingProgression,
+          equals(ReadingProgression.rtl),
+        );
       });
 
       test('returns rtl for Persian language', () {
@@ -205,7 +227,10 @@ void main() {
           languages: ['fa'],
         );
 
-        expect(metadata.effectiveReadingProgression, equals(ReadingProgression.rtl));
+        expect(
+          metadata.effectiveReadingProgression,
+          equals(ReadingProgression.rtl),
+        );
       });
 
       test('returns rtl for Traditional Chinese', () {
@@ -215,7 +240,10 @@ void main() {
           languages: ['zh-Hant'],
         );
 
-        expect(metadata.effectiveReadingProgression, equals(ReadingProgression.rtl));
+        expect(
+          metadata.effectiveReadingProgression,
+          equals(ReadingProgression.rtl),
+        );
       });
 
       test('returns ltr for Simplified Chinese', () {
@@ -225,7 +253,10 @@ void main() {
           languages: ['zh-Hans'],
         );
 
-        expect(metadata.effectiveReadingProgression, equals(ReadingProgression.ltr));
+        expect(
+          metadata.effectiveReadingProgression,
+          equals(ReadingProgression.ltr),
+        );
       });
     });
 
@@ -265,7 +296,10 @@ void main() {
     group('convenience getters', () {
       test('title returns default translation', () {
         final metadata = Metadata(
-          localizedTitle: LocalizedString.fromStrings({'en': 'English Title', 'fr': 'French Title'}),
+          localizedTitle: LocalizedString.fromStrings({
+            'en': 'English Title',
+            'fr': 'French Title',
+          }),
         );
 
         expect(metadata.title, isNotEmpty);

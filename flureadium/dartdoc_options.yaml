@@ -2,21 +2,5 @@ dartdoc:
   name: Flureadium
   description: Flutter plugin for Readium ebook reading
 
-  categories:
-    "Core":
-      markdown: doc/categories/core.md
-    "Models":
-      markdown: doc/categories/models.md
-    "Preferences":
-      markdown: doc/categories/preferences.md
-    "Navigation":
-      markdown: doc/categories/navigation.md
-
-  categoryOrder:
-    - Core
-    - Models
-    - Preferences
-    - Navigation
-
   exclude:
     - 'package:flureadium/src/**'

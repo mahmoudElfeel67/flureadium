@@ -30,8 +30,14 @@ void main() {
       });
 
       test('handles hidden files', () {
-        expect('.gitignore'.extension(), equals('')); // Hidden file with no extension
-        expect('.hidden.txt'.extension(), equals('txt')); // Hidden file with .txt extension
+        expect(
+          '.gitignore'.extension(),
+          equals(''),
+        ); // Hidden file with no extension
+        expect(
+          '.hidden.txt'.extension(),
+          equals('txt'),
+        ); // Hidden file with .txt extension
       });
 
       test('handles common ebook formats', () {

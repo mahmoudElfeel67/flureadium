@@ -78,10 +78,7 @@ void main() {
 
       test('parses collection with localized name', () {
         final json = {
-          'name': {
-            'en': 'English Name',
-            'fr': 'Nom Français',
-          },
+          'name': {'en': 'English Name', 'fr': 'Nom Français'},
         };
 
         final collection = Collection.fromJson(json);
@@ -91,10 +88,7 @@ void main() {
       });
 
       test('parses collection with single role string', () {
-        final json = {
-          'name': 'Test',
-          'role': 'series',
-        };
+        final json = {'name': 'Test', 'role': 'series'};
 
         final collection = Collection.fromJson(json);
 
@@ -406,17 +400,17 @@ void main() {
       });
 
       test('returns null for object without name', () {
-        final json = {'identifier': 'id-only', 'role': ['author']};
+        final json = {
+          'identifier': 'id-only',
+          'role': ['author'],
+        };
 
         expect(Contributor.fromJson(json), isNull);
       });
 
       test('parses contributor with localized name', () {
         final json = {
-          'name': {
-            'en': 'English Author',
-            'de': 'Deutscher Autor',
-          },
+          'name': {'en': 'English Author', 'de': 'Deutscher Autor'},
         };
 
         final contributor = Contributor.fromJson(json);
@@ -444,9 +438,18 @@ void main() {
     group('fromJsonArray', () {
       test('parses array of contributor objects', () {
         final json = [
-          {'name': 'Author 1', 'role': ['author']},
-          {'name': 'Author 2', 'role': ['author']},
-          {'name': 'Editor 1', 'role': ['editor']},
+          {
+            'name': 'Author 1',
+            'role': ['author'],
+          },
+          {
+            'name': 'Author 2',
+            'role': ['author'],
+          },
+          {
+            'name': 'Editor 1',
+            'role': ['editor'],
+          },
         ];
 
         final contributors = Contributor.fromJsonArray(json);
@@ -475,7 +478,10 @@ void main() {
       });
 
       test('parses single contributor object', () {
-        final json = {'name': 'Solo Contributor', 'role': ['author']};
+        final json = {
+          'name': 'Solo Contributor',
+          'role': ['author'],
+        };
 
         final contributors = Contributor.fromJsonArray(json);
 
@@ -486,7 +492,9 @@ void main() {
       test('filters out invalid contributors', () {
         final json = [
           {'name': 'Valid Author'},
-          {'role': ['author']}, // Missing name
+          {
+            'role': ['author'],
+          }, // Missing name
           {'name': ''}, // Empty name
           {'name': 'Another Valid'},
         ];

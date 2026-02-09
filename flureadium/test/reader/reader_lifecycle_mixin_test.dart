@@ -5,12 +5,21 @@ import 'package:flureadium/src/reader/reader_lifecycle_mixin.dart';
 import '../mocks/mock_platform.dart';
 
 // Test class that uses the mixin and implements required interface
-class TestLifecycleManager with ReaderLifecycleMixin implements ReadiumReaderWidgetInterface {
+class TestLifecycleManager
+    with ReaderLifecycleMixin
+    implements ReadiumReaderWidgetInterface {
   @override
-  Future<void> applyDecorations(String id, List<ReaderDecoration> decorations) async {}
+  Future<void> applyDecorations(
+    String id,
+    List<ReaderDecoration> decorations,
+  ) async {}
 
   @override
-  Future<void> go(Locator locator, {required bool isAudioBookWithText, bool animated = false}) async {}
+  Future<void> go(
+    Locator locator, {
+    required bool isAudioBookWithText,
+    bool animated = false,
+  }) async {}
 
   @override
   Future<Locator?> getCurrentLocator() async => null;

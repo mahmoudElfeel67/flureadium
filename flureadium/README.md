@@ -21,7 +21,7 @@ A comprehensive Flutter plugin for reading EPUB ebooks, audiobooks, and comics u
 
 ```yaml
 dependencies:
-  flureadium: ^0.0.1
+  flureadium: ^0.1.0
 ```
 
 ### Platform Setup
@@ -160,7 +160,9 @@ Contributions are welcome! Please read our [Contributing Guide](https://github.c
 
 ## License
 
-This project is a fork of [Notalib/flureadium](https://github.com/Notalib/flureadium).
+This project is licensed under the LGPL v3 -- see [LICENSE](LICENSE) for details.
+
+This project is a fork of [Notalib/flutter_readium](https://github.com/Notalib/flutter_readium).
 
 ## Acknowledgments
 

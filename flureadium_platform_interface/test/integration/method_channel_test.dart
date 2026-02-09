@@ -17,13 +17,10 @@ void main() {
       methodCalls = [];
 
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(
-        platform.methodChannel,
-        (call) async {
-          methodCalls.add(call);
-          return _mockResponse(call);
-        },
-      );
+          .setMockMethodCallHandler(platform.methodChannel, (call) async {
+            methodCalls.add(call);
+            return _mockResponse(call);
+          });
     });
 
     tearDown(() {
@@ -45,7 +42,10 @@ void main() {
 
         expect(methodCalls.length, equals(1));
         expect(methodCalls.last.method, equals('openPublication'));
-        expect(methodCalls.last.arguments, equals(['https://example.com/book.epub']));
+        expect(
+          methodCalls.last.arguments,
+          equals(['https://example.com/book.epub']),
+        );
       });
 
       test('closePublication sends correct method', () async {
@@ -66,7 +66,10 @@ void main() {
       });
 
       test('getLinkContent sends JSON-encoded link', () async {
-        final link = Link(href: 'chapter1.xhtml', type: 'application/xhtml+xml');
+        final link = Link(
+          href: 'chapter1.xhtml',
+          type: 'application/xhtml+xml',
+        );
 
         await platform.getLinkContent(link);
 
@@ -112,7 +115,10 @@ void main() {
         expect(methodCalls.last.method, equals('ttsEnable'));
         expect(methodCalls.last.arguments['speed'], equals(1.5));
         expect(methodCalls.last.arguments['pitch'], equals(1.0));
-        expect(methodCalls.last.arguments['voiceIdentifier'], equals('voice-123'));
+        expect(
+          methodCalls.last.arguments['voiceIdentifier'],
+          equals('voice-123'),
+        );
       });
 
       test('ttsEnable sends null when no preferences', () async {
@@ -136,7 +142,10 @@ void main() {
 
         expect(methodCalls.length, equals(1));
         expect(methodCalls.last.method, equals('ttsSetVoice'));
-        expect(methodCalls.last.arguments, equals(['com.apple.voice.Samantha', 'en-US']));
+        expect(
+          methodCalls.last.arguments,
+          equals(['com.apple.voice.Samantha', 'en-US']),
+        );
       });
 
       test('ttsSetVoice sends null language when not specified', () async {
@@ -238,10 +247,7 @@ void main() {
           speed: 1.25,
           seekInterval: 30.0,
         );
-        final locator = Locator(
-          href: 'track01.mp3',
-          type: 'audio/mpeg',
-        );
+        final locator = Locator(href: 'track01.mp3', type: 'audio/mpeg');
 
         await platform.audioEnable(prefs: prefs, fromLocator: locator);
 
@@ -260,10 +266,7 @@ void main() {
       });
 
       test('audioSetPreferences sends preferences map', () async {
-        final prefs = AudioPreferences(
-          speed: 1.5,
-          volume: 1.0,
-        );
+        final prefs = AudioPreferences(speed: 1.5, volume: 1.0);
 
         await platform.audioSetPreferences(prefs);
 
@@ -372,9 +375,7 @@ dynamic _mockResponse(MethodCall call) {
     case 'loadPublication':
     case 'openPublication':
       return json.encode({
-        'metadata': {
-          'title': 'Test Book',
-        },
+        'metadata': {'title': 'Test Book'},
         'links': [],
         'readingOrder': [],
       });

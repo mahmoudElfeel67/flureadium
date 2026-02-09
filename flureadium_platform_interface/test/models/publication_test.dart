@@ -15,7 +15,11 @@ void main() {
             ],
           },
           'links': [
-            {'href': 'manifest.json', 'rel': 'self', 'type': 'application/json'},
+            {
+              'href': 'manifest.json',
+              'rel': 'self',
+              'type': 'application/json',
+            },
           ],
           'readingOrder': [
             {'href': 'chapter1.xhtml', 'type': 'application/xhtml+xml'},
@@ -46,19 +50,14 @@ void main() {
       });
 
       test('returns null for json without metadata', () {
-        final json = {
-          'links': [],
-          'readingOrder': [],
-        };
+        final json = {'links': [], 'readingOrder': []};
 
         expect(Publication.fromJson(json), isNull);
       });
 
       test('parses publication with minimal metadata', () {
         final json = {
-          'metadata': {
-            'title': 'Minimal Book',
-          },
+          'metadata': {'title': 'Minimal Book'},
           'links': [],
           'readingOrder': [],
         };
@@ -80,9 +79,7 @@ void main() {
             identifier: 'test-id',
             languages: ['en'],
           ),
-          links: [
-            Link(href: 'manifest.json', type: 'application/json'),
-          ],
+          links: [Link(href: 'manifest.json', type: 'application/json')],
           readingOrder: [
             Link(href: 'chapter1.xhtml', type: 'application/xhtml+xml'),
           ],
@@ -106,7 +103,11 @@ void main() {
             languages: ['en', 'fr'],
           ),
           readingOrder: [
-            Link(href: 'chapter1.xhtml', type: 'application/xhtml+xml', title: 'Chapter 1'),
+            Link(
+              href: 'chapter1.xhtml',
+              type: 'application/xhtml+xml',
+              title: 'Chapter 1',
+            ),
           ],
         );
 
@@ -115,7 +116,10 @@ void main() {
 
         expect(restored, isNotNull);
         expect(restored!.metadata.title, equals(original.metadata.title));
-        expect(restored.metadata.identifier, equals(original.metadata.identifier));
+        expect(
+          restored.metadata.identifier,
+          equals(original.metadata.identifier),
+        );
       });
     });
 
@@ -177,7 +181,11 @@ void main() {
             localizedTitle: LocalizedString.fromString('Test'),
           ),
           links: [
-            Link(href: 'manifest.json', rels: ['self'], type: 'application/json'),
+            Link(
+              href: 'manifest.json',
+              rels: ['self'],
+              type: 'application/json',
+            ),
           ],
           resources: [
             Link(href: 'cover.jpg', rels: ['cover'], type: 'image/jpeg'),
@@ -206,14 +214,25 @@ void main() {
             localizedTitle: LocalizedString.fromString('Test'),
           ),
           readingOrder: [
-            Link(href: 'chapter1.xhtml', type: 'application/xhtml+xml', title: 'Chapter 1'),
-            Link(href: 'chapter2.xhtml', type: 'application/xhtml+xml', title: 'Chapter 2'),
+            Link(
+              href: 'chapter1.xhtml',
+              type: 'application/xhtml+xml',
+              title: 'Chapter 1',
+            ),
+            Link(
+              href: 'chapter2.xhtml',
+              type: 'application/xhtml+xml',
+              title: 'Chapter 2',
+            ),
           ],
         );
       });
 
       test('creates locator from link', () {
-        final link = Link(href: 'chapter1.xhtml', type: 'application/xhtml+xml');
+        final link = Link(
+          href: 'chapter1.xhtml',
+          type: 'application/xhtml+xml',
+        );
         final locator = publication.locatorFromLink(link);
 
         expect(locator, isNotNull);
@@ -222,7 +241,10 @@ void main() {
       });
 
       test('creates locator with fragment', () {
-        final link = Link(href: 'chapter1.xhtml#section1', type: 'application/xhtml+xml');
+        final link = Link(
+          href: 'chapter1.xhtml#section1',
+          type: 'application/xhtml+xml',
+        );
         final locator = publication.locatorFromLink(link);
 
         expect(locator, isNotNull);
@@ -231,7 +253,10 @@ void main() {
       });
 
       test('sets position based on reading order index', () {
-        final link = Link(href: 'chapter2.xhtml', type: 'application/xhtml+xml');
+        final link = Link(
+          href: 'chapter2.xhtml',
+          type: 'application/xhtml+xml',
+        );
         final locator = publication.locatorFromLink(link);
 
         expect(locator, isNotNull);
@@ -260,9 +285,7 @@ void main() {
           metadata: Metadata(
             localizedTitle: LocalizedString.fromString('Test'),
           ),
-          resources: [
-            Link(href: 'image.jpg', type: 'image/jpeg'),
-          ],
+          resources: [Link(href: 'image.jpg', type: 'image/jpeg')],
         );
 
         expect(publication.coverLink, isNull);
@@ -322,9 +345,7 @@ void main() {
           metadata: Metadata(
             localizedTitle: LocalizedString.fromString('Test'),
           ),
-          tableOfContents: [
-            Link(href: 'ch1.xhtml', title: 'Chapter 1'),
-          ],
+          tableOfContents: [Link(href: 'ch1.xhtml', title: 'Chapter 1')],
         );
 
         expect(publication.toc, equals(publication.tableOfContents));
@@ -337,7 +358,9 @@ void main() {
         final publication = Publication(
           metadata: Metadata(
             localizedTitle: LocalizedString.fromString('Audiobook'),
-            conformsTo: ['https://readium.org/webpub-manifest/profiles/audiobook'],
+            conformsTo: [
+              'https://readium.org/webpub-manifest/profiles/audiobook',
+            ],
           ),
         );
 

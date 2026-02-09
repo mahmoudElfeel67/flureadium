@@ -1,0 +1,28 @@
+# TypeScript source and build tooling (NOT needed at runtime)
+assets/_helper_scripts/
+
+# Web TypeScript source
+web/
+
+# CI and development files
+.github/
+.vscode/
+.dart_tool/
+
+# Build artifacts
+build/
+
+# Documentation source (available in the repo, not the package)
+docs/
+doc/
+
+# Project-level files
+project/
+CONTRIBUTING.md
+
+# npm files
+package.json
+package-lock.json
+
+# Example test publications (very large audiobook/epub files)
+example/assets/pubs/

@@ -77,7 +77,10 @@ void main() {
                 'title': 'Chapter 1',
                 'children': <String, dynamic>{
                   'items': <dynamic>[
-                    <String, dynamic>{'href': 'section1.html', 'title': 'Section 1'},
+                    <String, dynamic>{
+                      'href': 'section1.html',
+                      'title': 'Section 1',
+                    },
                   ],
                 },
               },
@@ -159,8 +162,14 @@ void main() {
         final result = PublicationJsonTransformer.transform(json);
 
         expect(result['metadata']['author'][0]['name'], isMap);
-        expect(result['metadata']['author'][0]['name']['en'], equals('English Name'));
-        expect(result['metadata']['author'][0]['name']['fr'], equals('French Name'));
+        expect(
+          result['metadata']['author'][0]['name']['en'],
+          equals('English Name'),
+        );
+        expect(
+          result['metadata']['author'][0]['name']['fr'],
+          equals('French Name'),
+        );
       });
 
       test('transforms title translations', () {
@@ -196,16 +205,17 @@ void main() {
         final result = PublicationJsonTransformer.transform(json);
 
         expect(result['metadata']['title'].containsKey('undefined'), isFalse);
-        expect(result['metadata']['title']['und'], equals('Unknown Language Title'));
+        expect(
+          result['metadata']['title']['und'],
+          equals('Unknown Language Title'),
+        );
       });
 
       test('transforms sortAs with translations to first value', () {
         final json = <String, dynamic>{
           'metadata': <String, dynamic>{
             'sortAs': <String, dynamic>{
-              'translations': <String, dynamic>{
-                'en': 'Sort Value',
-              },
+              'translations': <String, dynamic>{'en': 'Sort Value'},
             },
           },
         };
@@ -218,9 +228,7 @@ void main() {
       test('sets sortAs to null for empty translations', () {
         final json = <String, dynamic>{
           'metadata': <String, dynamic>{
-            'sortAs': <String, dynamic>{
-              'translations': <String, dynamic>{},
-            },
+            'sortAs': <String, dynamic>{'translations': <String, dynamic>{}},
           },
         };
 
@@ -231,9 +239,7 @@ void main() {
 
       test('preserves string sortAs', () {
         final json = <String, dynamic>{
-          'metadata': <String, dynamic>{
-            'sortAs': 'Direct Sort Value',
-          },
+          'metadata': <String, dynamic>{'sortAs': 'Direct Sort Value'},
         };
 
         final result = PublicationJsonTransformer.transform(json);
@@ -268,7 +274,9 @@ void main() {
       test('transforms complete publication json', () {
         final json = <String, dynamic>{
           'links': <String, dynamic>{
-            'items': <dynamic>[<String, dynamic>{'href': 'self.json'}],
+            'items': <dynamic>[
+              <String, dynamic>{'href': 'self.json'},
+            ],
           },
           'readingOrder': <String, dynamic>{
             'items': <dynamic>[
@@ -277,7 +285,9 @@ void main() {
             ],
           },
           'resources': <String, dynamic>{
-            'items': <dynamic>[<String, dynamic>{'href': 'style.css'}],
+            'items': <dynamic>[
+              <String, dynamic>{'href': 'style.css'},
+            ],
           },
           'tableOfContents': <String, dynamic>{
             'items': <dynamic>[
@@ -286,7 +296,10 @@ void main() {
                 'title': 'Chapter 1',
                 'children': <String, dynamic>{
                   'items': <dynamic>[
-                    <String, dynamic>{'href': 'section1.html', 'title': 'Section 1'},
+                    <String, dynamic>{
+                      'href': 'section1.html',
+                      'title': 'Section 1',
+                    },
                   ],
                 },
               },
@@ -316,7 +329,10 @@ void main() {
         expect(result['toc'], isList);
         expect(result['toc'][0]['children'], isList);
         expect(result['metadata']['title']['en'], equals('Test Book'));
-        expect(result['metadata']['author'][0]['name']['en'], equals('Test Author'));
+        expect(
+          result['metadata']['author'][0]['name']['en'],
+          equals('Test Author'),
+        );
       });
     });
   });

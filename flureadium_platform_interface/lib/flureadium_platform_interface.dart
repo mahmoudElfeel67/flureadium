@@ -1,6 +1,7 @@
-// Copyright 2020 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
+// Copyright 2021 Mantano (BSD 3-Clause, see LICENSE.Iridium)
+// Copyright 2024-2025 Notalib (LGPL v3)
+// Copyright 2025-2026 mulev (LGPL v3)
+// See LICENSE for details.
 
 import 'dart:async';
 
