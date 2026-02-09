@@ -57,12 +57,12 @@ class MockFlureadiumPlatform
 
   /// Creates a default test publication.
   Publication get defaultPublication => Publication(
-        links: [],
-        metadata: Metadata(
-          localizedTitle: LocalizedString.fromStrings({'en': 'Test Book'}),
-        ),
-        readingOrder: [],
-      );
+    links: [],
+    metadata: Metadata(
+      localizedTitle: LocalizedString.fromStrings({'en': 'Test Book'}),
+    ),
+    readingOrder: [],
+  );
 
   // Platform interface properties
   @override
@@ -82,13 +82,17 @@ class MockFlureadiumPlatform
 
   @override
   void setDefaultPreferences(EPUBPreferences preferences) {
-    calls.add(MockMethodCall('setDefaultPreferences', {'preferences': preferences}));
+    calls.add(
+      MockMethodCall('setDefaultPreferences', {'preferences': preferences}),
+    );
     defaultPreferences = preferences;
   }
 
   @override
   void setDefaultPdfPreferences(PDFPreferences preferences) {
-    calls.add(MockMethodCall('setDefaultPdfPreferences', {'preferences': preferences}));
+    calls.add(
+      MockMethodCall('setDefaultPdfPreferences', {'preferences': preferences}),
+    );
     defaultPdfPreferences = preferences;
   }
 
@@ -145,16 +149,22 @@ class MockFlureadiumPlatform
   // Preferences
   @override
   Future<void> setEPUBPreferences(EPUBPreferences preferences) async {
-    calls.add(MockMethodCall('setEPUBPreferences', {'preferences': preferences}));
+    calls.add(
+      MockMethodCall('setEPUBPreferences', {'preferences': preferences}),
+    );
   }
 
   @override
   Future<void> applyDecorations(
-      String id, List<ReaderDecoration> decorations) async {
-    calls.add(MockMethodCall('applyDecorations', {
-      'id': id,
-      'decorations': decorations,
-    }));
+    String id,
+    List<ReaderDecoration> decorations,
+  ) async {
+    calls.add(
+      MockMethodCall('applyDecorations', {
+        'id': id,
+        'decorations': decorations,
+      }),
+    );
   }
 
   @override
@@ -162,10 +172,12 @@ class MockFlureadiumPlatform
     ReaderDecorationStyle? utteranceDecoration,
     ReaderDecorationStyle? rangeDecoration,
   ) async {
-    calls.add(MockMethodCall('setDecorationStyle', {
-      'utteranceDecoration': utteranceDecoration,
-      'rangeDecoration': rangeDecoration,
-    }));
+    calls.add(
+      MockMethodCall('setDecorationStyle', {
+        'utteranceDecoration': utteranceDecoration,
+        'rangeDecoration': rangeDecoration,
+      }),
+    );
   }
 
   // Common Playback API
@@ -213,15 +225,19 @@ class MockFlureadiumPlatform
 
   @override
   Future<void> ttsSetVoice(String voiceIdentifier, String? forLanguage) async {
-    calls.add(MockMethodCall('ttsSetVoice', {
-      'voiceIdentifier': voiceIdentifier,
-      'forLanguage': forLanguage,
-    }));
+    calls.add(
+      MockMethodCall('ttsSetVoice', {
+        'voiceIdentifier': voiceIdentifier,
+        'forLanguage': forLanguage,
+      }),
+    );
   }
 
   @override
   Future<void> ttsSetPreferences(TTSPreferences preferences) async {
-    calls.add(MockMethodCall('ttsSetPreferences', {'preferences': preferences}));
+    calls.add(
+      MockMethodCall('ttsSetPreferences', {'preferences': preferences}),
+    );
   }
 
   // Audiobook API
@@ -230,10 +246,12 @@ class MockFlureadiumPlatform
     AudioPreferences? prefs,
     Locator? fromLocator,
   }) async {
-    calls.add(MockMethodCall('audioEnable', {
-      'prefs': prefs,
-      'fromLocator': fromLocator,
-    }));
+    calls.add(
+      MockMethodCall('audioEnable', {
+        'prefs': prefs,
+        'fromLocator': fromLocator,
+      }),
+    );
   }
 
   @override
@@ -273,8 +291,9 @@ class MockFlureadiumPlatform
 
   /// Returns the arguments of the last call to the given method.
   Map<String, dynamic>? lastCallArgs(String methodName) {
-    final matchingCalls =
-        calls.where((call) => call.method == methodName).toList();
+    final matchingCalls = calls
+        .where((call) => call.method == methodName)
+        .toList();
     return matchingCalls.isEmpty ? null : matchingCalls.last.arguments;
   }
 

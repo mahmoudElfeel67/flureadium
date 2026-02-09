@@ -6,10 +6,7 @@ void main() {
   group('WebStreamHandlers', () {
     group('text locator stream', () {
       test('broadcasts text locator updates', () async {
-        final testLocator = Locator(
-          href: 'chapter1.html',
-          type: 'text/html',
-        );
+        final testLocator = Locator(href: 'chapter1.html', type: 'text/html');
 
         // Listen to stream
         final streamFuture = WebStreamHandlers.onTextLocatorChanged.first;
@@ -24,14 +21,22 @@ void main() {
 
       test('broadcasts multiple text locator updates', () async {
         final locators = <Locator>[];
-        final subscription = WebStreamHandlers.onTextLocatorChanged.listen((locator) {
+        final subscription = WebStreamHandlers.onTextLocatorChanged.listen((
+          locator,
+        ) {
           locators.add(locator);
         });
 
         // Add multiple updates
-        WebStreamHandlers.addTextLocatorUpdate(Locator(href: 'chapter1.html', type: 'text/html'));
-        WebStreamHandlers.addTextLocatorUpdate(Locator(href: 'chapter2.html', type: 'text/html'));
-        WebStreamHandlers.addTextLocatorUpdate(Locator(href: 'chapter3.html', type: 'text/html'));
+        WebStreamHandlers.addTextLocatorUpdate(
+          Locator(href: 'chapter1.html', type: 'text/html'),
+        );
+        WebStreamHandlers.addTextLocatorUpdate(
+          Locator(href: 'chapter2.html', type: 'text/html'),
+        );
+        WebStreamHandlers.addTextLocatorUpdate(
+          Locator(href: 'chapter3.html', type: 'text/html'),
+        );
 
         // Wait for processing
         await Future.delayed(const Duration(milliseconds: 50));
@@ -65,7 +70,8 @@ void main() {
           currentOffset: const Duration(seconds: 10),
         );
 
-        final streamFuture = WebStreamHandlers.onTimebasedPlayerStateChanged.first;
+        final streamFuture =
+            WebStreamHandlers.onTimebasedPlayerStateChanged.first;
 
         WebStreamHandlers.addTimeBasedStateUpdate(testState);
 
@@ -76,9 +82,10 @@ void main() {
 
       test('broadcasts multiple state updates', () async {
         final states = <ReadiumTimebasedState>[];
-        final subscription = WebStreamHandlers.onTimebasedPlayerStateChanged.listen((state) {
-          states.add(state);
-        });
+        final subscription = WebStreamHandlers.onTimebasedPlayerStateChanged
+            .listen((state) {
+              states.add(state);
+            });
 
         WebStreamHandlers.addTimeBasedStateUpdate(
           ReadiumTimebasedState(state: TimebasedState.playing),
@@ -112,7 +119,9 @@ void main() {
 
       test('broadcasts multiple status updates', () async {
         final statuses = <ReadiumReaderStatus>[];
-        final subscription = WebStreamHandlers.onReaderStatusChanged.listen((status) {
+        final subscription = WebStreamHandlers.onReaderStatusChanged.listen((
+          status,
+        ) {
           statuses.add(status);
         });
 
@@ -132,7 +141,8 @@ void main() {
     group('concurrent streams', () {
       test('handles updates to multiple streams independently', () async {
         final locatorFuture = WebStreamHandlers.onTextLocatorChanged.first;
-        final stateFuture = WebStreamHandlers.onTimebasedPlayerStateChanged.first;
+        final stateFuture =
+            WebStreamHandlers.onTimebasedPlayerStateChanged.first;
         final statusFuture = WebStreamHandlers.onReaderStatusChanged.first;
 
         WebStreamHandlers.addTextLocatorUpdate(
@@ -141,14 +151,19 @@ void main() {
         WebStreamHandlers.addTimeBasedStateUpdate(
           ReadiumTimebasedState(state: TimebasedState.playing),
         );
-        WebStreamHandlers.addReaderStatusUpdate(
-          ReadiumReaderStatus.ready,
-        );
+        WebStreamHandlers.addReaderStatusUpdate(ReadiumReaderStatus.ready);
 
-        final results = await Future.wait([locatorFuture, stateFuture, statusFuture]);
+        final results = await Future.wait([
+          locatorFuture,
+          stateFuture,
+          statusFuture,
+        ]);
 
         expect((results[0] as Locator).href, equals('chapter1.html'));
-        expect((results[1] as ReadiumTimebasedState).state, equals(TimebasedState.playing));
+        expect(
+          (results[1] as ReadiumTimebasedState).state,
+          equals(TimebasedState.playing),
+        );
         expect(results[2], equals(ReadiumReaderStatus.ready));
       });
     });

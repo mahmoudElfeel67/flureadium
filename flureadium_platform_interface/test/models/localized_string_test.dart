@@ -69,9 +69,18 @@ void main() {
 
         expect(localizedString, isNotNull);
         expect(localizedString!.translations, hasLength(3));
-        expect(localizedString.translations['en']!.string, equals('English Text'));
-        expect(localizedString.translations['fr']!.string, equals('Texte Français'));
-        expect(localizedString.translations['es']!.string, equals('Texto Español'));
+        expect(
+          localizedString.translations['en']!.string,
+          equals('English Text'),
+        );
+        expect(
+          localizedString.translations['fr']!.string,
+          equals('Texte Français'),
+        );
+        expect(
+          localizedString.translations['es']!.string,
+          equals('Texto Español'),
+        );
       });
 
       test('returns null for null json', () {
@@ -111,8 +120,14 @@ void main() {
 
         expect(localizedString, isNotNull);
         expect(localizedString!.translations, hasLength(4));
-        expect(localizedString.translations['en-US']!.string, equals('American English'));
-        expect(localizedString.translations['zh-Hans']!.string, equals('Simplified Chinese'));
+        expect(
+          localizedString.translations['en-US']!.string,
+          equals('American English'),
+        );
+        expect(
+          localizedString.translations['zh-Hans']!.string,
+          equals('Simplified Chinese'),
+        );
       });
     });
 
@@ -123,7 +138,10 @@ void main() {
           'en': 'English Text',
         });
 
-        expect(localizedString.defaultTranslation.string, equals('Default Text'));
+        expect(
+          localizedString.defaultTranslation.string,
+          equals('Default Text'),
+        );
         expect(localizedString.string, equals('Default Text'));
       });
 
@@ -220,9 +238,7 @@ void main() {
 
     group('copyWithString', () {
       test('adds new translation', () {
-        final original = LocalizedString.fromStrings({
-          'en': 'English',
-        });
+        final original = LocalizedString.fromStrings({'en': 'English'});
 
         final updated = original.copyWithString('fr', 'French');
 
@@ -233,9 +249,7 @@ void main() {
       });
 
       test('does not modify original', () {
-        final original = LocalizedString.fromStrings({
-          'en': 'Original',
-        });
+        final original = LocalizedString.fromStrings({'en': 'Original'});
 
         // ignore: cascade_invocations
         original.copyWithString('de', 'German');
@@ -263,9 +277,9 @@ void main() {
           'fr': 'French',
         });
 
-        final transformed = original
-            .mapLanguages((language, translation) =>
-                language?.toUpperCase() ?? 'NULL');
+        final transformed = original.mapLanguages(
+          (language, translation) => language?.toUpperCase() ?? 'NULL',
+        );
 
         expect(transformed.translations.containsKey('EN'), isTrue);
         expect(transformed.translations.containsKey('FR'), isTrue);
@@ -279,8 +293,9 @@ void main() {
           'en': 'English',
         });
 
-        final transformed =
-            original.mapLanguages((language, translation) => language ?? 'default');
+        final transformed = original.mapLanguages(
+          (language, translation) => language ?? 'default',
+        );
 
         expect(transformed.translations.containsKey('default'), isTrue);
         expect(transformed.translations['default']!.string, equals('Default'));
@@ -295,7 +310,9 @@ void main() {
         });
 
         final transformed = original.mapTranslations(
-            (language, translation) => Translation(translation.string.toUpperCase()));
+          (language, translation) =>
+              Translation(translation.string.toUpperCase()),
+        );
 
         expect(transformed.translations['en']!.string, equals('HELLO'));
         expect(transformed.translations['fr']!.string, equals('BONJOUR'));
@@ -319,9 +336,7 @@ void main() {
 
     group('copyWith', () {
       test('creates copy with new translations map', () {
-        final original = LocalizedString.fromStrings({
-          'en': 'English',
-        });
+        final original = LocalizedString.fromStrings({'en': 'English'});
 
         final newTranslations = {
           'fr': Translation('French'),
@@ -337,9 +352,7 @@ void main() {
       });
 
       test('creates copy with empty map when provided', () {
-        final original = LocalizedString.fromStrings({
-          'en': 'English',
-        });
+        final original = LocalizedString.fromStrings({'en': 'English'});
 
         final copy = original.copyWith(translations: {});
 
@@ -348,9 +361,7 @@ void main() {
       });
 
       test('preserves original when null provided', () {
-        final original = LocalizedString.fromStrings({
-          'en': 'English',
-        });
+        final original = LocalizedString.fromStrings({'en': 'English'});
 
         final copy = original.copyWith(translations: null);
 
@@ -427,15 +438,9 @@ void main() {
 
     group('equality', () {
       test('equal localized strings have same hashCode', () {
-        final ls1 = LocalizedString.fromStrings({
-          'en': 'Test',
-          'fr': 'Test',
-        });
+        final ls1 = LocalizedString.fromStrings({'en': 'Test', 'fr': 'Test'});
 
-        final ls2 = LocalizedString.fromStrings({
-          'en': 'Test',
-          'fr': 'Test',
-        });
+        final ls2 = LocalizedString.fromStrings({'en': 'Test', 'fr': 'Test'});
 
         expect(ls1, equals(ls2));
         expect(ls1.hashCode, equals(ls2.hashCode));
@@ -518,21 +523,24 @@ void main() {
         });
 
         expect(localizedString.translations['en']!.string, contains('quotes'));
-        expect(localizedString.translations['fr']!.string, contains('àéèêëïôù'));
+        expect(
+          localizedString.translations['fr']!.string,
+          contains('àéèêëïôù'),
+        );
         expect(localizedString.translations['de']!.string, contains('äöüßÄÖÜ'));
       });
 
       test('handles newlines and whitespace', () {
-        final localizedString = LocalizedString.fromString('Line 1\nLine 2\t\tTabbed');
+        final localizedString = LocalizedString.fromString(
+          'Line 1\nLine 2\t\tTabbed',
+        );
 
         expect(localizedString.string, contains('\n'));
         expect(localizedString.string, contains('\t'));
       });
 
       test('toString includes translations map', () {
-        final localizedString = LocalizedString.fromStrings({
-          'en': 'English',
-        });
+        final localizedString = LocalizedString.fromStrings({'en': 'English'});
 
         final str = localizedString.toString();
 

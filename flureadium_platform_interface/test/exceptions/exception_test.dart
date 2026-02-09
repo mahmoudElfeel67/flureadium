@@ -27,7 +27,10 @@ void main() {
       test('returns formatted string', () {
         const exception = ReadiumException('Error occurred');
 
-        expect(exception.toString(), equals('ReadiumException{Error occurred}'));
+        expect(
+          exception.toString(),
+          equals('ReadiumException{Error occurred}'),
+        );
       });
     });
 
@@ -39,9 +42,14 @@ void main() {
           details: 'The requested resource was not found',
         );
 
-        final exception = ReadiumException.fromPlatformException(platformException);
+        final exception = ReadiumException.fromPlatformException(
+          platformException,
+        );
 
-        expect(exception.message, equals('The requested resource was not found'));
+        expect(
+          exception.message,
+          equals('The requested resource was not found'),
+        );
         expect(exception.type, equals(OpeningReadiumExceptionType.notFound));
       });
 
@@ -52,7 +60,9 @@ void main() {
           details: 'You do not have permission',
         );
 
-        final exception = ReadiumException.fromPlatformException(platformException);
+        final exception = ReadiumException.fromPlatformException(
+          platformException,
+        );
 
         expect(exception.type, equals(OpeningReadiumExceptionType.forbidden));
       });
@@ -64,7 +74,9 @@ void main() {
           details: 'Something went wrong',
         );
 
-        final exception = ReadiumException.fromPlatformException(platformException);
+        final exception = ReadiumException.fromPlatformException(
+          platformException,
+        );
 
         expect(exception.message, equals('Something went wrong'));
         expect(exception.type, isNull);
@@ -76,7 +88,9 @@ void main() {
           message: 'Error message',
         );
 
-        final exception = ReadiumException.fromPlatformException(platformException);
+        final exception = ReadiumException.fromPlatformException(
+          platformException,
+        );
 
         expect(exception.message, equals('unknown'));
       });
@@ -121,13 +135,17 @@ void main() {
 
   group('PublicationNotSetReadiumException', () {
     test('creates exception with message', () {
-      const exception = PublicationNotSetReadiumException('No publication loaded');
+      const exception = PublicationNotSetReadiumException(
+        'No publication loaded',
+      );
 
       expect(exception.message, equals('No publication loaded'));
     });
 
     test('toString returns formatted string', () {
-      const exception = PublicationNotSetReadiumException('Publication required');
+      const exception = PublicationNotSetReadiumException(
+        'Publication required',
+      );
 
       expect(
         exception.toString(),
@@ -175,31 +193,48 @@ void main() {
 
       expect(
         exception.toString(),
-        equals('OpeningReadiumException{OpeningReadiumExceptionType.forbidden,Access denied}'),
+        equals(
+          'OpeningReadiumException{OpeningReadiumExceptionType.forbidden,Access denied}',
+        ),
       );
     });
   });
 
   group('OpeningReadiumExceptionType', () {
     test('has all expected values', () {
-      expect(OpeningReadiumExceptionType.values, containsAll([
-        OpeningReadiumExceptionType.formatNotSupported,
-        OpeningReadiumExceptionType.readingError,
-        OpeningReadiumExceptionType.notFound,
-        OpeningReadiumExceptionType.forbidden,
-        OpeningReadiumExceptionType.unavailable,
-        OpeningReadiumExceptionType.incorrectCredentials,
-        OpeningReadiumExceptionType.unknown,
-      ]));
+      expect(
+        OpeningReadiumExceptionType.values,
+        containsAll([
+          OpeningReadiumExceptionType.formatNotSupported,
+          OpeningReadiumExceptionType.readingError,
+          OpeningReadiumExceptionType.notFound,
+          OpeningReadiumExceptionType.forbidden,
+          OpeningReadiumExceptionType.unavailable,
+          OpeningReadiumExceptionType.incorrectCredentials,
+          OpeningReadiumExceptionType.unknown,
+        ]),
+      );
     });
 
     test('values have correct names', () {
-      expect(OpeningReadiumExceptionType.formatNotSupported.name, equals('formatNotSupported'));
-      expect(OpeningReadiumExceptionType.readingError.name, equals('readingError'));
+      expect(
+        OpeningReadiumExceptionType.formatNotSupported.name,
+        equals('formatNotSupported'),
+      );
+      expect(
+        OpeningReadiumExceptionType.readingError.name,
+        equals('readingError'),
+      );
       expect(OpeningReadiumExceptionType.notFound.name, equals('notFound'));
       expect(OpeningReadiumExceptionType.forbidden.name, equals('forbidden'));
-      expect(OpeningReadiumExceptionType.unavailable.name, equals('unavailable'));
-      expect(OpeningReadiumExceptionType.incorrectCredentials.name, equals('incorrectCredentials'));
+      expect(
+        OpeningReadiumExceptionType.unavailable.name,
+        equals('unavailable'),
+      );
+      expect(
+        OpeningReadiumExceptionType.incorrectCredentials.name,
+        equals('incorrectCredentials'),
+      );
       expect(OpeningReadiumExceptionType.unknown.name, equals('unknown'));
     });
   });
@@ -249,9 +284,7 @@ void main() {
       });
 
       test('parses JSON with minimal data', () {
-        final json = {
-          'message': 'Minimal error',
-        };
+        final json = {'message': 'Minimal error'};
 
         final error = ReadiumError.fromJson(json);
 

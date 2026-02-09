@@ -1,9 +1,15 @@
 name: flureadium_platform_interface
-description: A common platform interface for the flureadium plugin.
-version: 0.0.1
-homepage: https://github.com/notalib/flureadium
-repository: https://github.com/notalib/flureadium
-publish_to: none
+description: "Platform interface for Flureadium, providing shared models, exceptions, and the abstract FlureadiumPlatform class for EPUB, PDF, and audiobook reading."
+version: 0.1.0
+homepage: https://github.com/mulev/flureadium
+repository: https://github.com/mulev/flureadium
+issue_tracker: https://github.com/mulev/flureadium/issues
+topics:
+  - epub
+  - ebook
+  - readium
+  - reader
+  - pdf
 
 environment:
   sdk: ">=3.8.0 <4.0.0"
@@ -13,13 +19,17 @@ dependencies:
   flutter:
     sdk: flutter
   meta: ^1.16.0
-  json_diff:
+  json_diff: ^0.2.1
   plugin_platform_interface: ^2.1.4
   dartx: ^1.2.0
   dfunc: ^0.10.0
   fimber: ^0.7.0
   equatable: ^2.0.5
   json_serializable: ^6.11.4
+  json_annotation: ^4.9.0
+  collection: ^1.19.1
+  path: ^1.9.1
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_test:

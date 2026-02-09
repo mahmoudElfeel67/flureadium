@@ -5,10 +5,7 @@ void main() {
   group('Point', () {
     group('constructor', () {
       test('creates point with required fields', () {
-        final point = Point(
-          cssSelector: '#paragraph1',
-          textNodeIndex: 0,
-        );
+        final point = Point(cssSelector: '#paragraph1', textNodeIndex: 0);
 
         expect(point.cssSelector, equals('#paragraph1'));
         expect(point.textNodeIndex, equals(0));
@@ -49,28 +46,19 @@ void main() {
       });
 
       test('returns null when cssSelector is missing', () {
-        final json = {
-          'textNodeIndex': 0,
-          'charOffset': 5,
-        };
+        final json = {'textNodeIndex': 0, 'charOffset': 5};
 
         expect(Point.fromJson(json), isNull);
       });
 
       test('returns null when textNodeIndex is missing', () {
-        final json = {
-          'cssSelector': '#test',
-          'charOffset': 5,
-        };
+        final json = {'cssSelector': '#test', 'charOffset': 5};
 
         expect(Point.fromJson(json), isNull);
       });
 
       test('parses point without charOffset', () {
-        final json = {
-          'cssSelector': '#paragraph',
-          'textNodeIndex': 0,
-        };
+        final json = {'cssSelector': '#paragraph', 'textNodeIndex': 0};
 
         final point = Point.fromJson(json);
 
@@ -81,11 +69,7 @@ void main() {
       });
 
       test('handles legacy offset field for backward compatibility', () {
-        final json = {
-          'cssSelector': '#old',
-          'textNodeIndex': 1,
-          'offset': 20,
-        };
+        final json = {'cssSelector': '#old', 'textNodeIndex': 1, 'offset': 20};
 
         final point = Point.fromJson(json);
 
@@ -108,15 +92,9 @@ void main() {
       });
 
       test('validates textNodeIndex is positive', () {
-        final validJson = {
-          'cssSelector': '#test',
-          'textNodeIndex': 1,
-        };
+        final validJson = {'cssSelector': '#test', 'textNodeIndex': 1};
 
-        final invalidJson = {
-          'cssSelector': '#test',
-          'textNodeIndex': -1,
-        };
+        final invalidJson = {'cssSelector': '#test', 'textNodeIndex': -1};
 
         expect(Point.fromJson(validJson), isNotNull);
         expect(Point.fromJson(invalidJson), isNull);
@@ -156,10 +134,7 @@ void main() {
       });
 
       test('omits null charOffset from JSON', () {
-        final point = Point(
-          cssSelector: '#para',
-          textNodeIndex: 0,
-        );
+        final point = Point(cssSelector: '#para', textNodeIndex: 0);
 
         final json = point.toJson();
 
@@ -205,29 +180,17 @@ void main() {
       });
 
       test('different points are not equal', () {
-        final point1 = Point(
-          cssSelector: '#test1',
-          textNodeIndex: 0,
-        );
+        final point1 = Point(cssSelector: '#test1', textNodeIndex: 0);
 
-        final point2 = Point(
-          cssSelector: '#test2',
-          textNodeIndex: 0,
-        );
+        final point2 = Point(cssSelector: '#test2', textNodeIndex: 0);
 
         expect(point1, isNot(equals(point2)));
       });
 
       test('points with different textNodeIndex are not equal', () {
-        final point1 = Point(
-          cssSelector: '#test',
-          textNodeIndex: 0,
-        );
+        final point1 = Point(cssSelector: '#test', textNodeIndex: 0);
 
-        final point2 = Point(
-          cssSelector: '#test',
-          textNodeIndex: 1,
-        );
+        final point2 = Point(cssSelector: '#test', textNodeIndex: 1);
 
         expect(point1, isNot(equals(point2)));
       });
@@ -251,19 +214,13 @@ void main() {
 
     group('CSS selectors', () {
       test('handles simple ID selector', () {
-        final point = Point(
-          cssSelector: '#main',
-          textNodeIndex: 0,
-        );
+        final point = Point(cssSelector: '#main', textNodeIndex: 0);
 
         expect(point.cssSelector, equals('#main'));
       });
 
       test('handles class selector', () {
-        final point = Point(
-          cssSelector: '.paragraph',
-          textNodeIndex: 0,
-        );
+        final point = Point(cssSelector: '.paragraph', textNodeIndex: 0);
 
         expect(point.cssSelector, equals('.paragraph'));
       });
@@ -274,7 +231,10 @@ void main() {
           textNodeIndex: 0,
         );
 
-        expect(point.cssSelector, equals('body > div.content > p:nth-child(2)'));
+        expect(
+          point.cssSelector,
+          equals('body > div.content > p:nth-child(2)'),
+        );
       });
 
       test('handles attribute selector', () {
@@ -301,7 +261,11 @@ void main() {
       });
 
       test('creates collapsed DomRange with only start', () {
-        final start = Point(cssSelector: '#point', textNodeIndex: 0, charOffset: 5);
+        final start = Point(
+          cssSelector: '#point',
+          textNodeIndex: 0,
+          charOffset: 5,
+        );
 
         final range = DomRange(start: start);
 
@@ -337,10 +301,7 @@ void main() {
 
       test('parses collapsed DomRange with only start', () {
         final json = {
-          'start': {
-            'cssSelector': '#point',
-            'textNodeIndex': 0,
-          },
+          'start': {'cssSelector': '#point', 'textNodeIndex': 0},
         };
 
         final range = DomRange.fromJson(json);
@@ -356,10 +317,7 @@ void main() {
 
       test('returns null when start is missing', () {
         final json = {
-          'end': {
-            'cssSelector': '#end',
-            'textNodeIndex': 0,
-          },
+          'end': {'cssSelector': '#end', 'textNodeIndex': 0},
         };
 
         expect(DomRange.fromJson(json), isNull);
@@ -378,10 +336,7 @@ void main() {
 
       test('parses range when end is invalid', () {
         final json = {
-          'start': {
-            'cssSelector': '#start',
-            'textNodeIndex': 0,
-          },
+          'start': {'cssSelector': '#start', 'textNodeIndex': 0},
           'end': {
             'textNodeIndex': 0,
             // Missing cssSelector - end will be null
@@ -399,16 +354,8 @@ void main() {
     group('toJson', () {
       test('serializes DomRange with start and end', () {
         final range = DomRange(
-          start: Point(
-            cssSelector: '#s',
-            textNodeIndex: 0,
-            charOffset: 5,
-          ),
-          end: Point(
-            cssSelector: '#e',
-            textNodeIndex: 1,
-            charOffset: 15,
-          ),
+          start: Point(cssSelector: '#s', textNodeIndex: 0, charOffset: 5),
+          end: Point(cssSelector: '#e', textNodeIndex: 1, charOffset: 15),
         );
 
         final json = range.toJson();
@@ -434,16 +381,8 @@ void main() {
 
       test('roundtrip serialization preserves data', () {
         final original = DomRange(
-          start: Point(
-            cssSelector: '#start',
-            textNodeIndex: 0,
-            charOffset: 10,
-          ),
-          end: Point(
-            cssSelector: '#end',
-            textNodeIndex: 2,
-            charOffset: 50,
-          ),
+          start: Point(cssSelector: '#start', textNodeIndex: 0, charOffset: 10),
+          end: Point(cssSelector: '#end', textNodeIndex: 2, charOffset: 50),
         );
 
         final json = original.toJson();
@@ -451,11 +390,17 @@ void main() {
 
         expect(restored, isNotNull);
         expect(restored!.start.cssSelector, equals(original.start.cssSelector));
-        expect(restored.start.textNodeIndex, equals(original.start.textNodeIndex));
+        expect(
+          restored.start.textNodeIndex,
+          equals(original.start.textNodeIndex),
+        );
         expect(restored.start.charOffset, equals(original.start.charOffset));
         expect(restored.end, isNotNull);
         expect(restored.end!.cssSelector, equals(original.end!.cssSelector));
-        expect(restored.end!.textNodeIndex, equals(original.end!.textNodeIndex));
+        expect(
+          restored.end!.textNodeIndex,
+          equals(original.end!.textNodeIndex),
+        );
         expect(restored.end!.charOffset, equals(original.end!.charOffset));
       });
     });
@@ -540,11 +485,7 @@ void main() {
             textNodeIndex: 0,
             charOffset: 100,
           ),
-          end: Point(
-            cssSelector: '#para3',
-            textNodeIndex: 0,
-            charOffset: 20,
-          ),
+          end: Point(cssSelector: '#para3', textNodeIndex: 0, charOffset: 20),
         );
 
         expect(range.start.cssSelector, isNot(equals(range.end!.cssSelector)));
@@ -552,11 +493,7 @@ void main() {
 
       test('represents caret position with collapsed range', () {
         final range = DomRange(
-          start: Point(
-            cssSelector: '#input',
-            textNodeIndex: 0,
-            charOffset: 15,
-          ),
+          start: Point(cssSelector: '#input', textNodeIndex: 0, charOffset: 15),
         );
 
         expect(range.end, isNull);
@@ -565,14 +502,8 @@ void main() {
 
       test('represents element boundary without character offset', () {
         final range = DomRange(
-          start: Point(
-            cssSelector: '#section1',
-            textNodeIndex: 0,
-          ),
-          end: Point(
-            cssSelector: '#section1',
-            textNodeIndex: 3,
-          ),
+          start: Point(cssSelector: '#section1', textNodeIndex: 0),
+          end: Point(cssSelector: '#section1', textNodeIndex: 3),
         );
 
         expect(range.start.charOffset, isNull);

@@ -6,7 +6,7 @@ Thank you for your interest in contributing!
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/nickvnota/flureadium.git
+git clone https://github.com/mulev/flureadium.git
 cd flureadium
 ```
 

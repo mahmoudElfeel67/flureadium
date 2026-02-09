@@ -46,17 +46,13 @@ void main() {
       });
 
       test('returns null for json without href', () {
-        final json = {
-          'type': 'application/xhtml+xml',
-        };
+        final json = {'type': 'application/xhtml+xml'};
 
         expect(Locator.fromJson(json), isNull);
       });
 
       test('returns null for json without type', () {
-        final json = {
-          'href': 'chapter1.xhtml',
-        };
+        final json = {'href': 'chapter1.xhtml'};
 
         expect(Locator.fromJson(json), isNull);
       });
@@ -134,9 +130,7 @@ void main() {
             progression: 0.75,
             fragments: ['section1', 'paragraph2'],
           ),
-          text: LocatorText(
-            highlight: 'Important text',
-          ),
+          text: LocatorText(highlight: 'Important text'),
         );
 
         final json = original.toJson();
@@ -146,16 +140,19 @@ void main() {
         expect(restored!.href, equals(original.href));
         expect(restored.type, equals(original.type));
         expect(restored.title, equals(original.title));
-        expect(restored.locations?.position, equals(original.locations?.position));
-        expect(restored.locations?.progression, equals(original.locations?.progression));
+        expect(
+          restored.locations?.position,
+          equals(original.locations?.position),
+        );
+        expect(
+          restored.locations?.progression,
+          equals(original.locations?.progression),
+        );
         expect(restored.text?.highlight, equals(original.text?.highlight));
       });
 
       test('json property returns JSON string', () {
-        final locator = Locator(
-          href: 'test.xhtml',
-          type: 'text/html',
-        );
+        final locator = Locator(href: 'test.xhtml', type: 'text/html');
 
         final jsonString = locator.json;
         final decoded = json.decode(jsonString) as Map<String, dynamic>;
@@ -196,10 +193,7 @@ void main() {
       });
 
       test('creates copy with updated text', () {
-        final original = Locator(
-          href: 'chapter1.xhtml',
-          type: 'text/html',
-        );
+        final original = Locator(href: 'chapter1.xhtml', type: 'text/html');
 
         final copy = original.copyWith(
           text: LocatorText(highlight: 'New highlight'),
@@ -250,12 +244,11 @@ void main() {
       });
 
       test('creates copy with updated fragments', () {
-        final original = Locator(
-          href: 'chapter1.xhtml',
-          type: 'text/html',
-        );
+        final original = Locator(href: 'chapter1.xhtml', type: 'text/html');
 
-        final copy = original.copyWithLocations(fragments: ['section1', 'para1']);
+        final copy = original.copyWithLocations(
+          fragments: ['section1', 'para1'],
+        );
 
         expect(copy.locations?.fragments, contains('section1'));
         expect(copy.locations?.fragments, contains('para1'));
@@ -285,10 +278,7 @@ void main() {
       });
 
       test('returns path for simple href', () {
-        final locator = Locator(
-          href: 'chapter1.xhtml',
-          type: 'text/html',
-        );
+        final locator = Locator(href: 'chapter1.xhtml', type: 'text/html');
 
         expect(locator.hrefPath, contains('chapter1.xhtml'));
       });
@@ -313,15 +303,9 @@ void main() {
       });
 
       test('different locators are not equal', () {
-        final locator1 = Locator(
-          href: 'chapter1.xhtml',
-          type: 'text/html',
-        );
+        final locator1 = Locator(href: 'chapter1.xhtml', type: 'text/html');
 
-        final locator2 = Locator(
-          href: 'chapter2.xhtml',
-          type: 'text/html',
-        );
+        final locator2 = Locator(href: 'chapter2.xhtml', type: 'text/html');
 
         expect(locator1, isNot(equals(locator2)));
       });
@@ -415,10 +399,7 @@ void main() {
 
     group('copyWith', () {
       test('creates copy with updated values', () {
-        final original = Locations(
-          position: 1,
-          progression: 0.5,
-        );
+        final original = Locations(position: 1, progression: 0.5);
 
         final copy = original.copyWith(position: 10);
 
@@ -429,17 +410,13 @@ void main() {
 
     group('timestamp', () {
       test('extracts timestamp from fragments', () {
-        final locations = Locations(
-          fragments: ['t=300'],
-        );
+        final locations = Locations(fragments: ['t=300']);
 
         expect(locations.timestamp, equals(300));
       });
 
       test('returns 0 when no time fragment', () {
-        final locations = Locations(
-          fragments: ['section1'],
-        );
+        final locations = Locations(fragments: ['section1']);
 
         expect(locations.timestamp, equals(0));
       });
@@ -477,9 +454,7 @@ void main() {
       });
 
       test('parses partial text', () {
-        final json = {
-          'highlight': 'Only highlight',
-        };
+        final json = {'highlight': 'Only highlight'};
 
         final text = LocatorText.fromJson(json);
 

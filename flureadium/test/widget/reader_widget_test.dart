@@ -25,8 +25,16 @@ void main() {
         identifier: 'test-book-id',
       ),
       readingOrder: [
-        Link(href: 'chapter1.xhtml', type: 'application/xhtml+xml', title: 'Chapter 1'),
-        Link(href: 'chapter2.xhtml', type: 'application/xhtml+xml', title: 'Chapter 2'),
+        Link(
+          href: 'chapter1.xhtml',
+          type: 'application/xhtml+xml',
+          title: 'Chapter 1',
+        ),
+        Link(
+          href: 'chapter2.xhtml',
+          type: 'application/xhtml+xml',
+          title: 'Chapter 2',
+        ),
       ],
       tableOfContents: [
         Link(href: 'chapter1.xhtml', title: 'Chapter 1'),
@@ -40,9 +48,7 @@ void main() {
       test('creates widget with required parameters', () {
         final publication = createTestPublication();
 
-        final widget = ReadiumReaderWidget(
-          publication: publication,
-        );
+        final widget = ReadiumReaderWidget(publication: publication);
 
         expect(widget.publication, equals(publication));
         expect(widget.loadingWidget, isA<Center>());
@@ -81,9 +87,7 @@ void main() {
       test('default loadingWidget is CircularProgressIndicator', () {
         final publication = createTestPublication();
 
-        final widget = ReadiumReaderWidget(
-          publication: publication,
-        );
+        final widget = ReadiumReaderWidget(publication: publication);
 
         expect(widget.loadingWidget, isA<Center>());
         final center = widget.loadingWidget as Center;
@@ -97,10 +101,7 @@ void main() {
         final locator = Locator(
           href: 'chapter2.xhtml',
           type: 'application/xhtml+xml',
-          locations: Locations(
-            position: 2,
-            progression: 0.5,
-          ),
+          locations: Locations(position: 2, progression: 0.5),
         );
 
         final widget = ReadiumReaderWidget(
@@ -130,7 +131,10 @@ void main() {
         );
 
         expect(widget.initialLocator!.locations?.fragments, isNotEmpty);
-        expect(widget.initialLocator!.locations?.cssSelector, equals('#my-section'));
+        expect(
+          widget.initialLocator!.locations?.cssSelector,
+          equals('#my-section'),
+        );
       });
     });
 
@@ -173,16 +177,13 @@ void main() {
         widget.onGoRight!();
         expect(wentRight, isTrue);
       });
-
     });
 
     group('publication data', () {
       test('publication is accessible from widget', () {
         final publication = createTestPublication();
 
-        final widget = ReadiumReaderWidget(
-          publication: publication,
-        );
+        final widget = ReadiumReaderWidget(publication: publication);
 
         expect(widget.publication.metadata.title, equals('Test Book'));
         expect(widget.publication.readingOrder.length, equals(2));
@@ -202,9 +203,7 @@ void main() {
           ],
         );
 
-        final widget = ReadiumReaderWidget(
-          publication: publication,
-        );
+        final widget = ReadiumReaderWidget(publication: publication);
 
         expect(widget.publication.coverLink, isNotNull);
         expect(widget.publication.coverLink!.href, equals('cover.jpg'));
@@ -216,10 +215,7 @@ void main() {
     test('accepts custom loading widget', () {
       final publication = createTestPublication();
       const customWidget = Column(
-        children: [
-          CircularProgressIndicator(),
-          Text('Please wait...'),
-        ],
+        children: [CircularProgressIndicator(), Text('Please wait...')],
       );
 
       final widget = ReadiumReaderWidget(

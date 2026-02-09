@@ -19,42 +19,47 @@ void main() {
     setUp(() async {
       methodChannelReadium = MethodChannelFlureadium();
 
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
-        methodChannelReadium.methodChannel,
-        (methodCall) async {
-          log.add(methodCall);
-          switch (methodCall.method) {
-            case 'openPublication':
-              return 'TODO';
-            case 'ttsEnable':
-              return true;
-            case 'goRight':
-              return true;
-            default:
-              return null;
-          }
-        },
-      );
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(methodChannelReadium.methodChannel, (
+            methodCall,
+          ) async {
+            log.add(methodCall);
+            switch (methodCall.method) {
+              case 'openPublication':
+                return 'TODO';
+              case 'ttsEnable':
+                return true;
+              case 'goRight':
+                return true;
+              default:
+                return null;
+            }
+          });
       log.clear();
 
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
-        MethodChannel(methodChannelReadium.textLocatorChannel.name),
-        (methodCall) async {
-          switch (methodCall.method) {
-            case 'listen':
-              await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.handlePlatformMessage(
-                methodChannelReadium.textLocatorChannel.name,
-                methodChannelReadium.textLocatorChannel.codec.encodeSuccessEnvelope(testTextLocator),
-                (_) {},
-              );
-              break;
-            case 'cancel':
-            default:
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+            MethodChannel(methodChannelReadium.textLocatorChannel.name),
+            (methodCall) async {
+              switch (methodCall.method) {
+                case 'listen':
+                  await TestDefaultBinaryMessengerBinding
+                      .instance
+                      .defaultBinaryMessenger
+                      .handlePlatformMessage(
+                        methodChannelReadium.textLocatorChannel.name,
+                        methodChannelReadium.textLocatorChannel.codec
+                            .encodeSuccessEnvelope(testTextLocator),
+                        (_) {},
+                      );
+                  break;
+                case 'cancel':
+                default:
+                  return null;
+              }
               return null;
-          }
-          return null;
-        },
-      );
+            },
+          );
     });
 
     test('onBatteryChanged', () async {

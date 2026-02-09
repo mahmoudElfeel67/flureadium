@@ -72,10 +72,7 @@ void main() {
       });
 
       test('returns null for object without name', () {
-        final json = {
-          'scheme': 'BISAC',
-          'code': 'FIC000000',
-        };
+        final json = {'scheme': 'BISAC', 'code': 'FIC000000'};
 
         expect(Subject.fromJson(json), isNull);
       });
@@ -88,11 +85,7 @@ void main() {
 
       test('parses subject with localized name', () {
         final json = {
-          'name': {
-            'en': 'Science',
-            'fr': 'Science',
-            'de': 'Wissenschaft',
-          },
+          'name': {'en': 'Science', 'fr': 'Science', 'de': 'Wissenschaft'},
         };
 
         final subject = Subject.fromJson(json);
@@ -102,10 +95,7 @@ void main() {
       });
 
       test('parses subject with sortAs', () {
-        final json = {
-          'name': 'The History',
-          'sortAs': 'History, The',
-        };
+        final json = {'name': 'The History', 'sortAs': 'History, The'};
 
         final subject = Subject.fromJson(json);
 

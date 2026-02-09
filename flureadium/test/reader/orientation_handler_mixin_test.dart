@@ -14,7 +14,11 @@ class MockReaderChannel extends ReadiumReaderChannel {
   final List<Map<String, dynamic>> goCallLog = [];
 
   @override
-  Future<void> go(Locator locator, {bool animated = false, required bool isAudioBookWithText}) async {
+  Future<void> go(
+    Locator locator, {
+    bool animated = false,
+    required bool isAudioBookWithText,
+  }) async {
     goCallLog.add({
       'locator': locator,
       'animated': animated,

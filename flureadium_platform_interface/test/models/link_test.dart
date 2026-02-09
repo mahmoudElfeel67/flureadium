@@ -36,10 +36,7 @@ void main() {
       });
 
       test('returns null for json without href', () {
-        final json = {
-          'type': 'text/html',
-          'title': 'No Href',
-        };
+        final json = {'type': 'text/html', 'title': 'No Href'};
 
         expect(Link.fromJson(json), isNull);
       });
@@ -85,10 +82,7 @@ void main() {
       });
 
       test('parses link with single rel string', () {
-        final json = {
-          'href': 'cover.jpg',
-          'rel': 'cover',
-        };
+        final json = {'href': 'cover.jpg', 'rel': 'cover'};
 
         final link = Link.fromJson(json);
 
@@ -97,10 +91,7 @@ void main() {
       });
 
       test('parses link with single language string', () {
-        final json = {
-          'href': 'chapter.html',
-          'language': 'en',
-        };
+        final json = {'href': 'chapter.html', 'language': 'en'};
 
         final link = Link.fromJson(json);
 
@@ -145,9 +136,7 @@ void main() {
       test('parses link with properties', () {
         final json = {
           'href': 'page.html',
-          'properties': {
-            'page': 'left',
-          },
+          'properties': {'page': 'left'},
         };
 
         final link = Link.fromJson(json);
@@ -238,10 +227,7 @@ void main() {
       });
 
       test('serializes templated link', () {
-        final link = Link(
-          href: 'https://example.com/{id}',
-          templated: true,
-        );
+        final link = Link(href: 'https://example.com/{id}', templated: true);
 
         final json = link.toJson();
 
@@ -334,10 +320,7 @@ void main() {
 
     group('mediaType', () {
       test('returns parsed media type from type field', () {
-        final link = Link(
-          href: 'chapter.xhtml',
-          type: 'application/xhtml+xml',
-        );
+        final link = Link(href: 'chapter.xhtml', type: 'application/xhtml+xml');
 
         expect(link.mediaType.toString(), contains('xhtml'));
       });
@@ -485,14 +468,9 @@ void main() {
 
     group('copyWithProperties', () {
       test('merges additional properties', () {
-        final original = Link(
-          href: 'page.html',
-          properties: Properties(),
-        );
+        final original = Link(href: 'page.html', properties: Properties());
 
-        final newProps = Properties(
-          page: PresentationPage.left,
-        );
+        final newProps = Properties(page: PresentationPage.left);
 
         final copy = original.copyWithProperties(newProps);
 
@@ -523,9 +501,7 @@ void main() {
           children: [
             Link(
               href: 'child.html',
-              children: [
-                Link(href: 'grandchild.html'),
-              ],
+              children: [Link(href: 'grandchild.html')],
             ),
           ],
         );
@@ -536,11 +512,7 @@ void main() {
       });
 
       test('toString includes key properties', () {
-        final link = Link(
-          href: 'test.html',
-          type: 'text/html',
-          title: 'Test',
-        );
+        final link = Link(href: 'test.html', type: 'text/html', title: 'Test');
 
         final str = link.toString();
 
