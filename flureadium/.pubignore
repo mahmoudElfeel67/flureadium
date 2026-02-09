@@ -1,8 +1,8 @@
 # TypeScript source and build tooling (NOT needed at runtime)
 assets/_helper_scripts/
 
-# Web TypeScript source
-web/
+# Web TypeScript source (root-level only, not lib/src/web/)
+/web/
 
 # CI and development files
 .github/
