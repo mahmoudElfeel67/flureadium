@@ -1,3 +1,7 @@
+## 0.1.1
+
+- Fix `.pubignore` excluding `lib/src/web/` which prevented dartdoc generation on pub.dev.
+
 ## 0.1.0
 
 - Initial public release of Flureadium.
