@@ -32,6 +32,8 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
   private let disableTextSelection: Bool
   private let disableDragGestures: Bool
   private let disableTextSelectionMenu: Bool
+  private let enableEdgeTapNavigation: Bool
+  private let enableSwipeNavigation: Bool
 
   var publicationIdentifier: String?
 
@@ -74,7 +76,9 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
     disableTextSelection = flutterPrefs.disableTextSelection ?? false
     disableDragGestures = flutterPrefs.disableDragGestures ?? false
     disableTextSelectionMenu = flutterPrefs.disableTextSelectionMenu ?? false
-    print(TAG, "PDF Preferences - disableDoubleTapZoom: \(disableDoubleTapZoom), disableTextSelection: \(disableTextSelection), disableDragGestures: \(disableDragGestures), disableTextSelectionMenu: \(disableTextSelectionMenu)")
+    enableEdgeTapNavigation = flutterPrefs.enableEdgeTapNavigation ?? true
+    enableSwipeNavigation = flutterPrefs.enableSwipeNavigation ?? true
+    print(TAG, "PDF Preferences - disableDoubleTapZoom: \(disableDoubleTapZoom), disableTextSelection: \(disableTextSelection), disableDragGestures: \(disableDragGestures), disableTextSelectionMenu: \(disableTextSelectionMenu), enableEdgeTapNavigation: \(enableEdgeTapNavigation), enableSwipeNavigation: \(enableSwipeNavigation)")
 
     let locatorStr = creationParams["initialLocator"] as? String
     let locator = locatorStr == nil ? nil : try! Locator.init(jsonString: locatorStr!)
@@ -220,19 +224,44 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
   private func configureEdgeTapHandlers() {
     guard let edgeTapView = _view as? EdgeTapInterceptView else { return }
 
-    edgeTapView.onLeftEdgeTap = { [weak self] in
-      guard let self = self else { return }
-      print(TAG, "[FALLBACK] Triggering goLeft via edge tap")
-      Task { @MainActor in
-        let _ = await self.pdfViewController.goLeft(options: NavigatorGoOptions(animated: true))
+    if enableEdgeTapNavigation {
+      edgeTapView.onLeftEdgeTap = { [weak self] in
+        guard let self = self else { return }
+        print(TAG, "[FALLBACK] Triggering goLeft via edge tap")
+        Task { @MainActor in
+          let _ = await self.pdfViewController.goLeft(options: NavigatorGoOptions(animated: true))
+        }
       }
+      edgeTapView.onRightEdgeTap = { [weak self] in
+        guard let self = self else { return }
+        print(TAG, "[FALLBACK] Triggering goRight via edge tap")
+        Task { @MainActor in
+          let _ = await self.pdfViewController.goRight(options: NavigatorGoOptions(animated: true))
+        }
+      }
+    } else {
+      edgeTapView.onLeftEdgeTap = nil
+      edgeTapView.onRightEdgeTap = nil
     }
-    edgeTapView.onRightEdgeTap = { [weak self] in
-      guard let self = self else { return }
-      print(TAG, "[FALLBACK] Triggering goRight via edge tap")
-      Task { @MainActor in
-        let _ = await self.pdfViewController.goRight(options: NavigatorGoOptions(animated: true))
+
+    if enableSwipeNavigation {
+      edgeTapView.onSwipeLeft = { [weak self] in
+        guard let self = self else { return }
+        print(TAG, "[FALLBACK] Triggering goRight via swipe left handler")
+        Task { @MainActor in
+          let _ = await self.pdfViewController.goRight(options: NavigatorGoOptions(animated: true))
+        }
       }
+      edgeTapView.onSwipeRight = { [weak self] in
+        guard let self = self else { return }
+        print(TAG, "[FALLBACK] Triggering goLeft via swipe right handler")
+        Task { @MainActor in
+          let _ = await self.pdfViewController.goLeft(options: NavigatorGoOptions(animated: true))
+        }
+      }
+    } else {
+      edgeTapView.onSwipeLeft = nil
+      edgeTapView.onSwipeRight = nil
     }
   }
 

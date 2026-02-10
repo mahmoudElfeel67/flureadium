@@ -118,37 +118,55 @@ Uses GCDWebServer to serve EPUB resources:
 - Requires NSAppTransportSecurity exception
 - Automatically starts/stops with publication
 
-### Edge Tap Navigation
+### Edge Tap and Swipe Navigation
 
-The flureadium iOS plugin supports edge tap navigation for both EPUB and PDF readers. Tapping on the left or right edge of the screen triggers page navigation.
+The flureadium iOS plugin supports both edge tap and swipe gesture navigation for EPUB and PDF readers.
 
 **How It Works:**
 
 The `EdgeTapInterceptView` is a transparent UIView overlay that:
 - Intercepts single taps on the left 30% of the screen width → triggers `goLeft()` (previous page)
 - Intercepts single taps on the right 30% of the screen width → triggers `goRight()` (next page)
+- Intercepts swipe left gestures → triggers `goRight()` (next page)
+- Intercepts swipe right gestures → triggers `goLeft()` (previous page)
 - Passes through all other touches to the underlying reader view
 
-**Configuration:**
+**Configuring from Dart:**
 
-Edge tap navigation is automatically enabled for both EPUB and PDF readers. The edge threshold (30% by default) can be customized:
+Both edge tap and swipe navigation can be independently controlled via preferences. Both default to enabled (`true`).
+
+```dart
+// PDF: control navigation gestures
+PDFPreferences(
+  enableEdgeTapNavigation: true,   // Edge taps navigate (default)
+  enableSwipeNavigation: false,    // Disable swipe navigation
+)
+
+// EPUB: control navigation gestures
+EPUBPreferences(
+  fontFamily: 'Georgia',
+  fontSize: 100,
+  fontWeight: 400,
+  verticalScroll: false,
+  backgroundColor: null,
+  textColor: null,
+  enableEdgeTapNavigation: false,  // Disable edge taps
+  enableSwipeNavigation: true,     // Keep swipe navigation
+)
+```
+
+**Note:** In EPUB scroll mode, both gestures are automatically disabled regardless of preference values.
+
+**Edge Threshold:**
+
+The edge threshold (30% by default) can be customized in Swift:
 
 ```swift
-// In reader view setup
 edgeTapView.edgeThresholdPercent = 0.25 // 25% of screen width
 ```
 
-**Disabling Edge Tap Navigation:**
-
-To disable edge tap navigation (e.g., in scroll mode for EPUB), clear the callbacks:
-
-```swift
-edgeTapView.onLeftEdgeTap = nil
-edgeTapView.onRightEdgeTap = nil
-```
-
 **Files:**
-- `EdgeTapInterceptView.swift` - Shared edge tap detection view
+- `EdgeTapInterceptView.swift` - Shared edge tap and swipe detection view
 - `ReadiumReaderView.swift` - EPUB reader using EdgeTapInterceptView
 - `PdfReaderView.swift` - PDF reader using EdgeTapInterceptView
 

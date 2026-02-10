@@ -40,5 +40,87 @@ void main() {
         expect(prefs2.disableTextSelectionMenu, false);
       });
     });
+
+    group('enableEdgeTapNavigation', () {
+      test('defaults to null', () {
+        final prefs = PDFPreferences();
+        expect(prefs.enableEdgeTapNavigation, isNull);
+      });
+
+      test('can be set to true', () {
+        final prefs = PDFPreferences(enableEdgeTapNavigation: true);
+        expect(prefs.enableEdgeTapNavigation, true);
+      });
+
+      test('can be set to false', () {
+        final prefs = PDFPreferences(enableEdgeTapNavigation: false);
+        expect(prefs.enableEdgeTapNavigation, false);
+      });
+
+      test('serializes correctly', () {
+        final prefs = PDFPreferences(enableEdgeTapNavigation: true);
+        final json = prefs.toJson();
+        expect(json['enableEdgeTapNavigation'], true);
+      });
+
+      test('not included when null', () {
+        final prefs = PDFPreferences();
+        final json = prefs.toJson();
+        expect(json.containsKey('enableEdgeTapNavigation'), false);
+      });
+
+      test('copyWith preserves enableEdgeTapNavigation', () {
+        final prefs1 = PDFPreferences(enableEdgeTapNavigation: true);
+        final prefs2 = prefs1.copyWith();
+        expect(prefs2.enableEdgeTapNavigation, true);
+      });
+
+      test('copyWith can override enableEdgeTapNavigation', () {
+        final prefs1 = PDFPreferences(enableEdgeTapNavigation: true);
+        final prefs2 = prefs1.copyWith(enableEdgeTapNavigation: false);
+        expect(prefs2.enableEdgeTapNavigation, false);
+      });
+    });
+
+    group('enableSwipeNavigation', () {
+      test('defaults to null', () {
+        final prefs = PDFPreferences();
+        expect(prefs.enableSwipeNavigation, isNull);
+      });
+
+      test('can be set to true', () {
+        final prefs = PDFPreferences(enableSwipeNavigation: true);
+        expect(prefs.enableSwipeNavigation, true);
+      });
+
+      test('can be set to false', () {
+        final prefs = PDFPreferences(enableSwipeNavigation: false);
+        expect(prefs.enableSwipeNavigation, false);
+      });
+
+      test('serializes correctly', () {
+        final prefs = PDFPreferences(enableSwipeNavigation: true);
+        final json = prefs.toJson();
+        expect(json['enableSwipeNavigation'], true);
+      });
+
+      test('not included when null', () {
+        final prefs = PDFPreferences();
+        final json = prefs.toJson();
+        expect(json.containsKey('enableSwipeNavigation'), false);
+      });
+
+      test('copyWith preserves enableSwipeNavigation', () {
+        final prefs1 = PDFPreferences(enableSwipeNavigation: true);
+        final prefs2 = prefs1.copyWith();
+        expect(prefs2.enableSwipeNavigation, true);
+      });
+
+      test('copyWith can override enableSwipeNavigation', () {
+        final prefs1 = PDFPreferences(enableSwipeNavigation: true);
+        final prefs2 = prefs1.copyWith(enableSwipeNavigation: false);
+        expect(prefs2.enableSwipeNavigation, false);
+      });
+    });
   });
 }
