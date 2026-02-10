@@ -1,3 +1,9 @@
+## 0.2.0
+
+- Add swipe gesture navigation for EPUB and PDF readers on iOS — swipe left/right to turn pages in edge zones.
+- Add `enableEdgeTapNavigation` and `enableSwipeNavigation` preference flags for independently controlling edge tap and swipe page navigation on iOS.
+- Requires `flureadium_platform_interface` ^0.2.0.
+
 ## 0.1.1
 
 - Fix `.pubignore` excluding `lib/src/web/` which prevented dartdoc generation on pub.dev.
