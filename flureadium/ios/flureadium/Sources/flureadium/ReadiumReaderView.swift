@@ -274,9 +274,11 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
     guard let edgeTapView = _view as? EdgeTapInterceptView else { return }
 
     if isScrollMode {
-      // Disable edge tap navigation in scroll mode
+      // Disable edge tap and swipe navigation in scroll mode
       edgeTapView.onLeftEdgeTap = nil
       edgeTapView.onRightEdgeTap = nil
+      edgeTapView.onSwipeLeft = nil
+      edgeTapView.onSwipeRight = nil
     } else {
       // Enable edge tap navigation in paginated mode
       edgeTapView.onLeftEdgeTap = { [weak self] in
@@ -291,6 +293,20 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
         print(TAG, "[FALLBACK] Triggering goRight via fallback tap handler")
         Task { @MainActor in
           let _ = await self.readiumViewController.goRight(options: NavigatorGoOptions(animated: true))
+        }
+      }
+      edgeTapView.onSwipeLeft = { [weak self] in
+        guard let self = self else { return }
+        print(TAG, "[FALLBACK] Triggering goRight via swipe left handler")
+        Task { @MainActor in
+          let _ = await self.readiumViewController.goRight(options: NavigatorGoOptions(animated: true))
+        }
+      }
+      edgeTapView.onSwipeRight = { [weak self] in
+        guard let self = self else { return }
+        print(TAG, "[FALLBACK] Triggering goLeft via swipe right handler")
+        Task { @MainActor in
+          let _ = await self.readiumViewController.goLeft(options: NavigatorGoOptions(animated: true))
         }
       }
     }

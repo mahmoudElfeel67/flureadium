@@ -16,6 +16,10 @@ class EdgeTapInterceptView: UIView {
     var onLeftEdgeTap: (() -> Void)?
     /// Callback for right edge tap
     var onRightEdgeTap: (() -> Void)?
+    /// Callback for swipe left gesture (in edge zones)
+    var onSwipeLeft: (() -> Void)?
+    /// Callback for swipe right gesture (in edge zones)
+    var onSwipeRight: (() -> Void)?
     /// Edge threshold as percentage of width (default 30%)
     var edgeThresholdPercent: CGFloat = 0.3
 
@@ -35,6 +39,31 @@ class EdgeTapInterceptView: UIView {
         tapGesture.delaysTouchesBegan = false
         tapGesture.delaysTouchesEnded = false
         addGestureRecognizer(tapGesture)
+
+        let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipe(_:)))
+        swipeLeft.direction = .left
+        swipeLeft.cancelsTouchesInView = false
+        swipeLeft.delaysTouchesBegan = false
+        swipeLeft.delaysTouchesEnded = false
+        addGestureRecognizer(swipeLeft)
+
+        let swipeRight = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipe(_:)))
+        swipeRight.direction = .right
+        swipeRight.cancelsTouchesInView = false
+        swipeRight.delaysTouchesBegan = false
+        swipeRight.delaysTouchesEnded = false
+        addGestureRecognizer(swipeRight)
+    }
+
+    @objc private func handleSwipe(_ gesture: UISwipeGestureRecognizer) {
+        switch gesture.direction {
+        case .left:
+            onSwipeLeft?()
+        case .right:
+            onSwipeRight?()
+        default:
+            break
+        }
     }
 
     @objc private func handleTap(_ gesture: UITapGestureRecognizer) {
