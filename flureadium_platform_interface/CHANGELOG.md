@@ -1,3 +1,8 @@
+## 0.2.0
+
+- Add `enableEdgeTapNavigation` and `enableSwipeNavigation` to `PDFPreferences` — allows independently controlling edge tap and swipe page navigation on iOS.
+- Add `enableEdgeTapNavigation` and `enableSwipeNavigation` to `EPUBPreferences` — same controls for EPUB reader on iOS.
+
 ## 0.1.0
 
 - Initial public release of the Flureadium platform interface.

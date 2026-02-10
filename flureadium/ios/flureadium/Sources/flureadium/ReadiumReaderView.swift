@@ -32,6 +32,8 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
   private let readiumViewController: EPUBNavigatorViewController
   private var isVerticalScroll = false
   private var hasSentReady = false
+  private let enableEdgeTapNavigation: Bool
+  private let enableSwipeNavigation: Bool
 
   // Retain the navigation adapter to prevent ARC deallocation
   private var directionalNavigationAdapter: DirectionalNavigationAdapter?
@@ -70,6 +72,12 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
 
     let preferencesMap = creationParams["preferences"] as? Dictionary<String, String>?
     let defaultPreferences = preferencesMap == nil ? nil : EPUBPreferences.init(fromMap: preferencesMap!!)
+
+    // Read navigation gesture preferences (serialized as strings from Dart)
+    let edgeTapStr = preferencesMap??["enableEdgeTapNavigation"]
+    enableEdgeTapNavigation = edgeTapStr != "false"  // default true
+    let swipeStr = preferencesMap??["enableSwipeNavigation"]
+    enableSwipeNavigation = swipeStr != "false"  // default true
 
     let locatorStr = creationParams["initialLocator"] as? String
     let locator = locatorStr == nil ? nil : try! Locator.init(jsonString: locatorStr!)
@@ -274,24 +282,51 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
     guard let edgeTapView = _view as? EdgeTapInterceptView else { return }
 
     if isScrollMode {
-      // Disable edge tap navigation in scroll mode
+      // Disable edge tap and swipe navigation in scroll mode
       edgeTapView.onLeftEdgeTap = nil
       edgeTapView.onRightEdgeTap = nil
+      edgeTapView.onSwipeLeft = nil
+      edgeTapView.onSwipeRight = nil
     } else {
-      // Enable edge tap navigation in paginated mode
-      edgeTapView.onLeftEdgeTap = { [weak self] in
-        guard let self = self else { return }
-        print(TAG, "[FALLBACK] Triggering goLeft via fallback tap handler")
-        Task { @MainActor in
-          let _ = await self.readiumViewController.goLeft(options: NavigatorGoOptions(animated: true))
+      // Enable edge tap navigation in paginated mode (if preference allows)
+      if enableEdgeTapNavigation {
+        edgeTapView.onLeftEdgeTap = { [weak self] in
+          guard let self = self else { return }
+          print(TAG, "[FALLBACK] Triggering goLeft via fallback tap handler")
+          Task { @MainActor in
+            let _ = await self.readiumViewController.goLeft(options: NavigatorGoOptions(animated: true))
+          }
         }
+        edgeTapView.onRightEdgeTap = { [weak self] in
+          guard let self = self else { return }
+          print(TAG, "[FALLBACK] Triggering goRight via fallback tap handler")
+          Task { @MainActor in
+            let _ = await self.readiumViewController.goRight(options: NavigatorGoOptions(animated: true))
+          }
+        }
+      } else {
+        edgeTapView.onLeftEdgeTap = nil
+        edgeTapView.onRightEdgeTap = nil
       }
-      edgeTapView.onRightEdgeTap = { [weak self] in
-        guard let self = self else { return }
-        print(TAG, "[FALLBACK] Triggering goRight via fallback tap handler")
-        Task { @MainActor in
-          let _ = await self.readiumViewController.goRight(options: NavigatorGoOptions(animated: true))
+
+      if enableSwipeNavigation {
+        edgeTapView.onSwipeLeft = { [weak self] in
+          guard let self = self else { return }
+          print(TAG, "[FALLBACK] Triggering goRight via swipe left handler")
+          Task { @MainActor in
+            let _ = await self.readiumViewController.goRight(options: NavigatorGoOptions(animated: true))
+          }
         }
+        edgeTapView.onSwipeRight = { [weak self] in
+          guard let self = self else { return }
+          print(TAG, "[FALLBACK] Triggering goLeft via swipe right handler")
+          Task { @MainActor in
+            let _ = await self.readiumViewController.goLeft(options: NavigatorGoOptions(animated: true))
+          }
+        }
+      } else {
+        edgeTapView.onSwipeLeft = nil
+        edgeTapView.onSwipeRight = nil
       }
     }
   }

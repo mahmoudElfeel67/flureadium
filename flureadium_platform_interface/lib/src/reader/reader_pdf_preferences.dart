@@ -17,6 +17,8 @@ class PDFPreferences {
     this.disableTextSelection,
     this.disableDragGestures,
     this.disableTextSelectionMenu,
+    this.enableEdgeTapNavigation,
+    this.enableSwipeNavigation,
   });
 
   factory PDFPreferences.fromJsonMap(Map<String, dynamic> map) =>
@@ -35,6 +37,8 @@ class PDFPreferences {
         disableTextSelection: map['disableTextSelection'] as bool?,
         disableDragGestures: map['disableDragGestures'] as bool?,
         disableTextSelectionMenu: map['disableTextSelectionMenu'] as bool?,
+        enableEdgeTapNavigation: map['enableEdgeTapNavigation'] as bool?,
+        enableSwipeNavigation: map['enableSwipeNavigation'] as bool?,
       );
 
   /// How the page fits in the viewport.
@@ -69,6 +73,16 @@ class PDFPreferences {
   /// Defaults to false (selection menu enabled).
   bool? disableTextSelectionMenu;
 
+  /// Whether edge tap navigation is enabled (iOS only).
+  /// When true, tapping on the left/right edges of the screen navigates pages.
+  /// Defaults to true (enabled) when null.
+  bool? enableEdgeTapNavigation;
+
+  /// Whether swipe gesture navigation is enabled (iOS only).
+  /// When true, swiping left/right navigates pages.
+  /// Defaults to true (enabled) when null.
+  bool? enableSwipeNavigation;
+
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{};
     if (fit != null) map['fit'] = fit!.name;
@@ -87,6 +101,12 @@ class PDFPreferences {
     if (disableTextSelectionMenu != null) {
       map['disableTextSelectionMenu'] = disableTextSelectionMenu;
     }
+    if (enableEdgeTapNavigation != null) {
+      map['enableEdgeTapNavigation'] = enableEdgeTapNavigation;
+    }
+    if (enableSwipeNavigation != null) {
+      map['enableSwipeNavigation'] = enableSwipeNavigation;
+    }
     return map;
   }
 
@@ -99,6 +119,8 @@ class PDFPreferences {
     bool? disableTextSelection,
     bool? disableDragGestures,
     bool? disableTextSelectionMenu,
+    bool? enableEdgeTapNavigation,
+    bool? enableSwipeNavigation,
   }) => PDFPreferences(
     fit: fit ?? this.fit,
     scrollMode: scrollMode ?? this.scrollMode,
@@ -109,6 +131,9 @@ class PDFPreferences {
     disableDragGestures: disableDragGestures ?? this.disableDragGestures,
     disableTextSelectionMenu:
         disableTextSelectionMenu ?? this.disableTextSelectionMenu,
+    enableEdgeTapNavigation:
+        enableEdgeTapNavigation ?? this.enableEdgeTapNavigation,
+    enableSwipeNavigation: enableSwipeNavigation ?? this.enableSwipeNavigation,
   );
 }
 

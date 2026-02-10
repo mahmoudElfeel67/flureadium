@@ -116,6 +116,16 @@ public struct FlutterPdfPreferences {
     /// Defaults to false (selection menu enabled).
     var disableTextSelectionMenu: Bool?
 
+    /// Whether edge tap navigation is enabled (iOS only).
+    /// When true, tapping on the left/right edges of the screen navigates pages.
+    /// Defaults to true (enabled) when nil.
+    var enableEdgeTapNavigation: Bool?
+
+    /// Whether swipe gesture navigation is enabled (iOS only).
+    /// When true, swiping left/right navigates pages.
+    /// Defaults to true (enabled) when nil.
+    var enableSwipeNavigation: Bool?
+
     /// Creates FlutterPdfPreferences with default values.
     init(
         fit: FlutterPdfFit? = nil,
@@ -125,7 +135,9 @@ public struct FlutterPdfPreferences {
         disableDoubleTapZoom: Bool? = nil,
         disableTextSelection: Bool? = nil,
         disableDragGestures: Bool? = nil,
-        disableTextSelectionMenu: Bool? = nil
+        disableTextSelectionMenu: Bool? = nil,
+        enableEdgeTapNavigation: Bool? = nil,
+        enableSwipeNavigation: Bool? = nil
     ) {
         self.fit = fit
         self.scrollMode = scrollMode
@@ -135,6 +147,8 @@ public struct FlutterPdfPreferences {
         self.disableTextSelection = disableTextSelection
         self.disableDragGestures = disableDragGestures
         self.disableTextSelectionMenu = disableTextSelectionMenu
+        self.enableEdgeTapNavigation = enableEdgeTapNavigation
+        self.enableSwipeNavigation = enableSwipeNavigation
     }
 
     /// Creates FlutterPdfPreferences from a Flutter dictionary.
@@ -152,7 +166,9 @@ public struct FlutterPdfPreferences {
             disableDoubleTapZoom: map["disableDoubleTapZoom"] as? Bool,
             disableTextSelection: map["disableTextSelection"] as? Bool,
             disableDragGestures: map["disableDragGestures"] as? Bool,
-            disableTextSelectionMenu: map["disableTextSelectionMenu"] as? Bool
+            disableTextSelectionMenu: map["disableTextSelectionMenu"] as? Bool,
+            enableEdgeTapNavigation: map["enableEdgeTapNavigation"] as? Bool,
+            enableSwipeNavigation: map["enableSwipeNavigation"] as? Bool
         )
     }
 
@@ -201,6 +217,12 @@ public struct FlutterPdfPreferences {
         }
         if let disableTextSelectionMenu = disableTextSelectionMenu {
             map["disableTextSelectionMenu"] = disableTextSelectionMenu
+        }
+        if let enableEdgeTapNavigation = enableEdgeTapNavigation {
+            map["enableEdgeTapNavigation"] = enableEdgeTapNavigation
+        }
+        if let enableSwipeNavigation = enableSwipeNavigation {
+            map["enableSwipeNavigation"] = enableSwipeNavigation
         }
         return map
     }

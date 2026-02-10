@@ -109,6 +109,28 @@ pageMargins: 0.1   // 10% margins
 pageMargins: 0.15  // 15% margins
 ```
 
+#### enableEdgeTapNavigation (iOS only)
+
+**Type:** `bool?`
+
+Whether edge tap navigation is enabled. When true, tapping on the left/right edges of the screen navigates pages. Defaults to true when null.
+
+```dart
+enableEdgeTapNavigation: true   // Edge taps navigate pages (default)
+enableEdgeTapNavigation: false  // Edge taps disabled
+```
+
+#### enableSwipeNavigation (iOS only)
+
+**Type:** `bool?`
+
+Whether swipe gesture navigation is enabled. When true, swiping left/right navigates pages. Defaults to true when null.
+
+```dart
+enableSwipeNavigation: true   // Swipe navigates pages (default)
+enableSwipeNavigation: false  // Swipe navigation disabled
+```
+
 ### Methods
 
 #### toJson
@@ -392,6 +414,8 @@ PDFPreferences({
   bool? disableTextSelection,      // iOS only
   bool? disableDragGestures,       // iOS only
   bool? disableTextSelectionMenu,  // iOS only
+  bool? enableEdgeTapNavigation,   // iOS only
+  bool? enableSwipeNavigation,     // iOS only
 })
 ```
 
@@ -486,6 +510,28 @@ disableTextSelectionMenu: false  // Selection menu enabled (default)
 disableTextSelectionMenu: true   // Selection menu disabled
 ```
 
+#### enableEdgeTapNavigation (iOS only)
+
+**Type:** `bool?`
+
+Whether edge tap navigation is enabled. When true, tapping on the left/right edges of the screen navigates pages. Defaults to true when null.
+
+```dart
+enableEdgeTapNavigation: true   // Edge taps navigate pages (default)
+enableEdgeTapNavigation: false  // Edge taps disabled
+```
+
+#### enableSwipeNavigation (iOS only)
+
+**Type:** `bool?`
+
+Whether swipe gesture navigation is enabled. When true, swiping left/right navigates pages. Defaults to true when null.
+
+```dart
+enableSwipeNavigation: true   // Swipe navigates pages (default)
+enableSwipeNavigation: false  // Swipe navigation disabled
+```
+
 ### Methods
 
 #### toJson
@@ -518,6 +564,8 @@ PDFPreferences copyWith({
   bool? disableTextSelection,
   bool? disableDragGestures,
   bool? disableTextSelectionMenu,
+  bool? enableEdgeTapNavigation,
+  bool? enableSwipeNavigation,
 })
 ```
 

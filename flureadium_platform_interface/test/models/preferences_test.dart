@@ -118,6 +118,140 @@ void main() {
         expect(prefs.pageMargins, equals(25.0));
       });
     });
+
+    group('enableEdgeTapNavigation', () {
+      test('defaults to null', () {
+        final prefs = EPUBPreferences(
+          fontFamily: 'Arial',
+          fontSize: 100,
+          fontWeight: 400.0,
+          verticalScroll: false,
+          backgroundColor: null,
+          textColor: null,
+        );
+        expect(prefs.enableEdgeTapNavigation, isNull);
+      });
+
+      test('can be set via constructor', () {
+        final prefs = EPUBPreferences(
+          fontFamily: 'Arial',
+          fontSize: 100,
+          fontWeight: 400.0,
+          verticalScroll: false,
+          backgroundColor: null,
+          textColor: null,
+          enableEdgeTapNavigation: false,
+        );
+        expect(prefs.enableEdgeTapNavigation, isFalse);
+      });
+
+      test('serializes to JSON when set', () {
+        final prefs = EPUBPreferences(
+          fontFamily: 'Arial',
+          fontSize: 100,
+          fontWeight: 400.0,
+          verticalScroll: false,
+          backgroundColor: null,
+          textColor: null,
+          enableEdgeTapNavigation: true,
+        );
+        final json = prefs.toJson();
+        expect(json['enableEdgeTapNavigation'], equals('true'));
+      });
+
+      test('not included in JSON when null', () {
+        final prefs = EPUBPreferences(
+          fontFamily: 'Arial',
+          fontSize: 100,
+          fontWeight: 400.0,
+          verticalScroll: false,
+          backgroundColor: null,
+          textColor: null,
+        );
+        final json = prefs.toJson();
+        expect(json.containsKey('enableEdgeTapNavigation'), isFalse);
+      });
+
+      test('can be modified', () {
+        final prefs = EPUBPreferences(
+          fontFamily: 'Arial',
+          fontSize: 100,
+          fontWeight: 400.0,
+          verticalScroll: false,
+          backgroundColor: null,
+          textColor: null,
+        )..enableEdgeTapNavigation = true;
+
+        expect(prefs.enableEdgeTapNavigation, isTrue);
+      });
+    });
+
+    group('enableSwipeNavigation', () {
+      test('defaults to null', () {
+        final prefs = EPUBPreferences(
+          fontFamily: 'Arial',
+          fontSize: 100,
+          fontWeight: 400.0,
+          verticalScroll: false,
+          backgroundColor: null,
+          textColor: null,
+        );
+        expect(prefs.enableSwipeNavigation, isNull);
+      });
+
+      test('can be set via constructor', () {
+        final prefs = EPUBPreferences(
+          fontFamily: 'Arial',
+          fontSize: 100,
+          fontWeight: 400.0,
+          verticalScroll: false,
+          backgroundColor: null,
+          textColor: null,
+          enableSwipeNavigation: false,
+        );
+        expect(prefs.enableSwipeNavigation, isFalse);
+      });
+
+      test('serializes to JSON when set', () {
+        final prefs = EPUBPreferences(
+          fontFamily: 'Arial',
+          fontSize: 100,
+          fontWeight: 400.0,
+          verticalScroll: false,
+          backgroundColor: null,
+          textColor: null,
+          enableSwipeNavigation: true,
+        );
+        final json = prefs.toJson();
+        expect(json['enableSwipeNavigation'], equals('true'));
+      });
+
+      test('not included in JSON when null', () {
+        final prefs = EPUBPreferences(
+          fontFamily: 'Arial',
+          fontSize: 100,
+          fontWeight: 400.0,
+          verticalScroll: false,
+          backgroundColor: null,
+          textColor: null,
+        );
+        final json = prefs.toJson();
+        expect(json.containsKey('enableSwipeNavigation'), isFalse);
+      });
+
+      test('can be modified', () {
+        final prefs = EPUBPreferences(
+          fontFamily: 'Arial',
+          fontSize: 100,
+          fontWeight: 400.0,
+          verticalScroll: false,
+          backgroundColor: null,
+          textColor: null,
+        )..enableSwipeNavigation = true;
+
+        expect(prefs.enableSwipeNavigation, isTrue);
+      });
+    });
   });
 
   group('TTSPreferences', () {
@@ -335,6 +469,8 @@ void main() {
           offsetFirstPage: true,
           disableDoubleTapZoom: true,
           disableTextSelection: true,
+          enableEdgeTapNavigation: true,
+          enableSwipeNavigation: false,
         );
 
         expect(prefs.fit, equals(PDFFit.width));
@@ -343,6 +479,8 @@ void main() {
         expect(prefs.offsetFirstPage, isTrue);
         expect(prefs.disableDoubleTapZoom, isTrue);
         expect(prefs.disableTextSelection, isTrue);
+        expect(prefs.enableEdgeTapNavigation, isTrue);
+        expect(prefs.enableSwipeNavigation, isFalse);
       });
 
       test('creates instance with null parameters', () {
@@ -354,6 +492,8 @@ void main() {
         expect(prefs.offsetFirstPage, isNull);
         expect(prefs.disableDoubleTapZoom, isNull);
         expect(prefs.disableTextSelection, isNull);
+        expect(prefs.enableEdgeTapNavigation, isNull);
+        expect(prefs.enableSwipeNavigation, isNull);
       });
 
       test('creates instance with disableDoubleTapZoom only', () {
@@ -419,6 +559,8 @@ void main() {
         expect(json.containsKey('offsetFirstPage'), isFalse);
         expect(json.containsKey('disableDoubleTapZoom'), isFalse);
         expect(json.containsKey('disableTextSelection'), isFalse);
+        expect(json.containsKey('enableEdgeTapNavigation'), isFalse);
+        expect(json.containsKey('enableSwipeNavigation'), isFalse);
       });
 
       test('serializes disableDoubleTapZoom when set', () {
@@ -467,6 +609,8 @@ void main() {
           'disableDoubleTapZoom': true,
           'disableTextSelection': true,
           'disableDragGestures': true,
+          'enableEdgeTapNavigation': true,
+          'enableSwipeNavigation': false,
         };
 
         final prefs = PDFPreferences.fromJsonMap(json);
@@ -478,6 +622,8 @@ void main() {
         expect(prefs.disableDoubleTapZoom, isTrue);
         expect(prefs.disableTextSelection, isTrue);
         expect(prefs.disableDragGestures, isTrue);
+        expect(prefs.enableEdgeTapNavigation, isTrue);
+        expect(prefs.enableSwipeNavigation, isFalse);
       });
 
       test('handles partial JSON with missing values', () {
@@ -520,6 +666,24 @@ void main() {
         expect(prefs.fit, isNull);
       });
 
+      test('parses enableEdgeTapNavigation when present', () {
+        final json = {'enableEdgeTapNavigation': false};
+
+        final prefs = PDFPreferences.fromJsonMap(json);
+
+        expect(prefs.enableEdgeTapNavigation, isFalse);
+        expect(prefs.fit, isNull);
+      });
+
+      test('parses enableSwipeNavigation when present', () {
+        final json = {'enableSwipeNavigation': true};
+
+        final prefs = PDFPreferences.fromJsonMap(json);
+
+        expect(prefs.enableSwipeNavigation, isTrue);
+        expect(prefs.fit, isNull);
+      });
+
       test('handles empty JSON', () {
         final prefs = PDFPreferences.fromJsonMap({});
 
@@ -527,6 +691,8 @@ void main() {
         expect(prefs.scrollMode, isNull);
         expect(prefs.disableDoubleTapZoom, isNull);
         expect(prefs.disableTextSelection, isNull);
+        expect(prefs.enableEdgeTapNavigation, isNull);
+        expect(prefs.enableSwipeNavigation, isNull);
       });
     });
 
@@ -559,6 +725,8 @@ void main() {
           disableDoubleTapZoom: true,
           disableTextSelection: true,
           disableDragGestures: true,
+          enableEdgeTapNavigation: true,
+          enableSwipeNavigation: false,
         );
 
         final copy = original.copyWith();
@@ -576,6 +744,14 @@ void main() {
           equals(original.disableTextSelection),
         );
         expect(copy.disableDragGestures, equals(original.disableDragGestures));
+        expect(
+          copy.enableEdgeTapNavigation,
+          equals(original.enableEdgeTapNavigation),
+        );
+        expect(
+          copy.enableSwipeNavigation,
+          equals(original.enableSwipeNavigation),
+        );
       });
 
       test('can override disableDoubleTapZoom independently', () {
@@ -613,6 +789,30 @@ void main() {
         expect(copy.fit, equals(PDFFit.width));
         expect(copy.disableDragGestures, isTrue);
       });
+
+      test('can override enableEdgeTapNavigation independently', () {
+        final original = PDFPreferences(
+          fit: PDFFit.width,
+          enableEdgeTapNavigation: true,
+        );
+
+        final copy = original.copyWith(enableEdgeTapNavigation: false);
+
+        expect(copy.fit, equals(PDFFit.width));
+        expect(copy.enableEdgeTapNavigation, isFalse);
+      });
+
+      test('can override enableSwipeNavigation independently', () {
+        final original = PDFPreferences(
+          fit: PDFFit.width,
+          enableSwipeNavigation: true,
+        );
+
+        final copy = original.copyWith(enableSwipeNavigation: false);
+
+        expect(copy.fit, equals(PDFFit.width));
+        expect(copy.enableSwipeNavigation, isFalse);
+      });
     });
 
     group('mutable properties', () {
@@ -627,7 +827,9 @@ void main() {
           ..offsetFirstPage = true
           ..disableDoubleTapZoom = true
           ..disableTextSelection = true
-          ..disableDragGestures = true;
+          ..disableDragGestures = true
+          ..enableEdgeTapNavigation = true
+          ..enableSwipeNavigation = false;
 
         expect(prefs.fit, equals(PDFFit.contain));
         expect(prefs.scrollMode, equals(PDFScrollMode.horizontal));
@@ -636,6 +838,8 @@ void main() {
         expect(prefs.disableDoubleTapZoom, isTrue);
         expect(prefs.disableTextSelection, isTrue);
         expect(prefs.disableDragGestures, isTrue);
+        expect(prefs.enableEdgeTapNavigation, isTrue);
+        expect(prefs.enableSwipeNavigation, isFalse);
       });
 
       test('disableDoubleTapZoom can be modified', () {
@@ -657,6 +861,20 @@ void main() {
           ..disableDragGestures = true;
 
         expect(prefs.disableDragGestures, isTrue);
+      });
+
+      test('enableEdgeTapNavigation can be modified', () {
+        final prefs = PDFPreferences(enableEdgeTapNavigation: true)
+          ..enableEdgeTapNavigation = false;
+
+        expect(prefs.enableEdgeTapNavigation, isFalse);
+      });
+
+      test('enableSwipeNavigation can be modified', () {
+        final prefs = PDFPreferences(enableSwipeNavigation: true)
+          ..enableSwipeNavigation = false;
+
+        expect(prefs.enableSwipeNavigation, isFalse);
       });
     });
   });

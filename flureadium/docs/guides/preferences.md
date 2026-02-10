@@ -581,6 +581,40 @@ PDFPreferences(
 
 These are useful for creating a simplified reading experience or when your app handles gestures differently.
 
+### Navigation Gesture Configuration (iOS)
+
+On iOS, you can independently control edge tap and swipe navigation for both EPUB and PDF readers. Both are enabled by default.
+
+```dart
+// EPUB: disable edge taps but keep swipes
+EPUBPreferences(
+  fontFamily: 'Georgia',
+  fontSize: 100,
+  fontWeight: 400,
+  verticalScroll: false,
+  backgroundColor: null,
+  textColor: null,
+  enableEdgeTapNavigation: false,  // No edge tap page turns
+  enableSwipeNavigation: true,     // Swipe still works
+)
+
+// PDF: disable swipes but keep edge taps
+PDFPreferences(
+  fit: PDFFit.width,
+  scrollMode: PDFScrollMode.horizontal,
+  enableEdgeTapNavigation: true,   // Edge taps work
+  enableSwipeNavigation: false,    // No swipe page turns
+)
+
+// Disable all gesture-based navigation
+PDFPreferences(
+  enableEdgeTapNavigation: false,
+  enableSwipeNavigation: false,
+)
+```
+
+**Note:** When `null` (default), both gestures are enabled. In EPUB scroll mode, both are automatically disabled regardless of these settings.
+
 ## See Also
 
 - [EPUBPreferences Reference](../api-reference/preferences.md#epubpreferences)
