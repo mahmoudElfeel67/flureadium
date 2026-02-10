@@ -391,6 +391,7 @@ internal class PublicationMethodCallHandler() :
     /**
      * Render the first page of a PDF file as a JPEG image.
      * Uses Android's PdfRenderer (available since API 21).
+     * Returns null if the file doesn't exist or rendering fails.
      */
     private fun renderFirstPage(
         pubUrlStr: String,
@@ -400,7 +401,8 @@ internal class PublicationMethodCallHandler() :
         val filePath = pubUrlStr.removePrefix("file://")
         val file = java.io.File(filePath)
         if (!file.exists()) {
-            return Try.failure(PublicationError.NotFound("File not found: $filePath"))
+            Log.w(TAG, "File not found for renderFirstPage: $filePath")
+            return Try.success(null)
         }
 
         return try {
