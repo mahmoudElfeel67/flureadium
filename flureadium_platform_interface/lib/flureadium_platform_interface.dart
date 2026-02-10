@@ -4,6 +4,7 @@
 // See LICENSE for details.
 
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
@@ -174,6 +175,16 @@ abstract class FlureadiumPlatform extends PlatformInterface {
   Future<void> audioSeekBy(Duration offset) =>
       throw UnimplementedError('seekInAudio() has not been implemented');
   // AUDIOBOOK API - END
+
+  /// Renders the first page of a PDF publication as a JPEG image.
+  /// Returns the image bytes, or null if rendering fails.
+  /// [pubUrl] is the file path or URL to the PDF.
+  /// [maxWidth] and [maxHeight] constrain the output dimensions.
+  Future<Uint8List?> renderFirstPage(
+    String pubUrl, {
+    int maxWidth = 600,
+    int maxHeight = 800,
+  }) => throw UnimplementedError('renderFirstPage() has not been implemented.');
 
   // State stream for reader status changes
   Stream<ReadiumReaderStatus> get onReaderStatusChanged {

@@ -1,3 +1,7 @@
+## 0.3.0
+
+- Add `renderFirstPage` method to `FlureadiumPlatform` and `MethodChannelFlureadium` — renders the first page of a PDF as a JPEG image for cover generation.
+
 ## 0.2.0
 
 - Add `enableEdgeTapNavigation` and `enableSwipeNavigation` to `PDFPreferences` — allows independently controlling edge tap and swipe page navigation on iOS.

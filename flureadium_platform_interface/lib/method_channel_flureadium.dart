@@ -239,4 +239,17 @@ class MethodChannelFlureadium extends FlureadiumPlatform {
   @override
   Future<void> audioSeekBy(Duration offset) =>
       methodChannel.invokeMethod('audioSeekBy', offset.inSeconds);
+
+  @override
+  Future<Uint8List?> renderFirstPage(
+    String pubUrl, {
+    int maxWidth = 600,
+    int maxHeight = 800,
+  }) async {
+    final result = await methodChannel.invokeMethod<Uint8List>(
+      'renderFirstPage',
+      [pubUrl, maxWidth, maxHeight],
+    );
+    return result;
+  }
 }
