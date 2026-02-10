@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flureadium/flureadium.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
@@ -22,6 +23,7 @@ class MockFlureadiumPlatform
   String? mockLinkContent;
   List<ReaderTTSVoice> mockVoices = [];
   bool mockGoToLocatorResult = true;
+  Uint8List? mockRenderFirstPageResult;
 
   // Stream controllers for testing
   final StreamController<ReadiumReaderStatus> _readerStatusController =
@@ -262,6 +264,22 @@ class MockFlureadiumPlatform
   @override
   Future<void> audioSeekBy(Duration offset) async {
     calls.add(MockMethodCall('audioSeekBy', {'offset': offset}));
+  }
+
+  @override
+  Future<Uint8List?> renderFirstPage(
+    String pubUrl, {
+    int maxWidth = 600,
+    int maxHeight = 800,
+  }) async {
+    calls.add(
+      MockMethodCall('renderFirstPage', {
+        'pubUrl': pubUrl,
+        'maxWidth': maxWidth,
+        'maxHeight': maxHeight,
+      }),
+    );
+    return mockRenderFirstPageResult;
   }
 
   // State Streams

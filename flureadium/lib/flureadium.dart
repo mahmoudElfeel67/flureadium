@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
 import 'package:flureadium_platform_interface/flureadium_platform_interface.dart';
@@ -271,6 +272,32 @@ class Flureadium {
   ///
   /// Positive offset seeks forward, negative seeks backward.
   Future<void> audioSeekBy(Duration offset) => _platform.audioSeekBy(offset);
+
+  /// Renders the first page of a PDF as a JPEG image for use as a cover.
+  ///
+  /// Returns image bytes (JPEG), or null if the publication is not a PDF
+  /// or rendering fails. Does not require opening a publication first.
+  ///
+  /// [maxWidth] and [maxHeight] constrain the output image dimensions
+  /// while preserving aspect ratio.
+  ///
+  /// ```dart
+  /// final coverBytes = await flureadium.renderFirstPage('file:///path/to/book.pdf');
+  /// if (coverBytes != null) {
+  ///   // Save or display the cover image
+  /// }
+  /// ```
+  Future<Uint8List?> renderFirstPage(
+    String pubUrl, {
+    int maxWidth = 600,
+    int maxHeight = 800,
+  }) {
+    return _platform.renderFirstPage(
+      pubUrl,
+      maxWidth: maxWidth,
+      maxHeight: maxHeight,
+    );
+  }
 
   /// Navigates to a link within the publication.
   ///

@@ -234,6 +234,14 @@ internal class PublicationMethodCallHandler() :
                 return Try.success(null)
             }
 
+            "renderFirstPage" -> {
+                val args = arguments as List<Any?>
+                val pubUrlStr = args[0] as String
+                val maxWidth = args[1] as Int
+                val maxHeight = args[2] as Int
+                return renderFirstPage(pubUrlStr, maxWidth, maxHeight)
+            }
+
             else -> {
                 throw NotImplementedError()
             }
@@ -378,6 +386,65 @@ internal class PublicationMethodCallHandler() :
 
         ReadiumReader.audioEnable(locator, preferences)
         return Try.success(null)
+    }
+
+    /**
+     * Render the first page of a PDF file as a JPEG image.
+     * Uses Android's PdfRenderer (available since API 21).
+     */
+    private fun renderFirstPage(
+        pubUrlStr: String,
+        maxWidth: Int,
+        maxHeight: Int
+    ): Try<ByteArray?, PublicationError> {
+        val filePath = pubUrlStr.removePrefix("file://")
+        val file = java.io.File(filePath)
+        if (!file.exists()) {
+            return Try.failure(PublicationError.NotFound("File not found: $filePath"))
+        }
+
+        return try {
+            val fd = android.os.ParcelFileDescriptor.open(
+                file,
+                android.os.ParcelFileDescriptor.MODE_READ_ONLY
+            )
+            val renderer = android.graphics.pdf.PdfRenderer(fd)
+            val page = renderer.openPage(0)
+
+            val scale = minOf(
+                maxWidth.toFloat() / page.width,
+                maxHeight.toFloat() / page.height,
+                1f
+            )
+            val width = (page.width * scale).toInt()
+            val height = (page.height * scale).toInt()
+
+            val bitmap = android.graphics.Bitmap.createBitmap(
+                width,
+                height,
+                android.graphics.Bitmap.Config.ARGB_8888
+            )
+            bitmap.eraseColor(android.graphics.Color.WHITE)
+            page.render(
+                bitmap,
+                null,
+                null,
+                android.graphics.pdf.PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY
+            )
+
+            page.close()
+            renderer.close()
+            fd.close()
+
+            val stream = java.io.ByteArrayOutputStream()
+            bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, stream)
+            bitmap.recycle()
+
+            Try.success(stream.toByteArray())
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to render first page: $e")
+            Try.success(null)
+        }
     }
 }
 

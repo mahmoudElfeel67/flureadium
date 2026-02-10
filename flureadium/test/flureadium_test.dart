@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'dart:ui' show Color;
 
 import 'package:flutter_test/flutter_test.dart';
@@ -359,6 +360,62 @@ void main() {
           mockPlatform.lastCallArgs('audioSeekBy')?['offset'],
           equals(const Duration(seconds: -15)),
         );
+      });
+    });
+
+    group('Render First Page', () {
+      test(
+        'renderFirstPage calls platform method with correct arguments',
+        () async {
+          mockPlatform.mockRenderFirstPageResult = Uint8List.fromList([
+            1,
+            2,
+            3,
+          ]);
+
+          final result = await flureadium.renderFirstPage(
+            'file:///test.pdf',
+            maxWidth: 300,
+            maxHeight: 400,
+          );
+
+          expect(mockPlatform.wasCalled('renderFirstPage'), isTrue);
+          expect(
+            mockPlatform.lastCallArgs('renderFirstPage')?['pubUrl'],
+            equals('file:///test.pdf'),
+          );
+          expect(
+            mockPlatform.lastCallArgs('renderFirstPage')?['maxWidth'],
+            equals(300),
+          );
+          expect(
+            mockPlatform.lastCallArgs('renderFirstPage')?['maxHeight'],
+            equals(400),
+          );
+          expect(result, isNotNull);
+          expect(result!.length, equals(3));
+        },
+      );
+
+      test('renderFirstPage uses default dimensions', () async {
+        await flureadium.renderFirstPage('file:///test.pdf');
+
+        expect(
+          mockPlatform.lastCallArgs('renderFirstPage')?['maxWidth'],
+          equals(600),
+        );
+        expect(
+          mockPlatform.lastCallArgs('renderFirstPage')?['maxHeight'],
+          equals(800),
+        );
+      });
+
+      test('renderFirstPage returns null when platform returns null', () async {
+        mockPlatform.mockRenderFirstPageResult = null;
+
+        final result = await flureadium.renderFirstPage('file:///test.pdf');
+
+        expect(result, isNull);
       });
     });
 
