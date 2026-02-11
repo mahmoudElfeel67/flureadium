@@ -1,3 +1,8 @@
+## 0.3.0
+
+- Add `renderFirstPage` API — renders the first page of a PDF as a JPEG image for use as a cover. Uses `PdfRenderer` on Android and `CGPDFDocument` on iOS. No Readium dependency needed.
+- Requires `flureadium_platform_interface` ^0.3.0.
+
 ## 0.2.0
 
 - Add swipe gesture navigation for EPUB and PDF readers on iOS — swipe left/right to turn pages in edge zones.

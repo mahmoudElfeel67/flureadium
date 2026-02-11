@@ -409,6 +409,27 @@ public class FlureadiumPlugin: NSObject, FlutterPlugin, ReadiumShared.WarningLog
         result(nil)
       }
 
+    case "renderFirstPage":
+      let args = call.arguments as! [Any?]
+      let pubUrlStr = args[0] as! String
+      let maxWidth = args[1] as! Int
+      let maxHeight = args[2] as! Int
+
+      Task.detached(priority: .background) {
+        let imageData = Self.renderFirstPage(
+          pubUrlStr: pubUrlStr,
+          maxWidth: maxWidth,
+          maxHeight: maxHeight
+        )
+        await MainActor.run {
+          if let data = imageData {
+            result(FlutterStandardTypedData(bytes: data))
+          } else {
+            result(nil)
+          }
+        }
+      }
+
     default:
       result(FlutterMethodNotImplemented)
     }
@@ -525,5 +546,50 @@ extension FlureadiumPlugin {
       currentPublication = nil
       currentPublicationUrlStr = nil
     }
+  }
+
+  /// Renders the first page of a PDF file as a JPEG image using Core Graphics.
+  static func renderFirstPage(pubUrlStr: String, maxWidth: Int, maxHeight: Int) -> Data? {
+    var urlStr = pubUrlStr
+    if !urlStr.hasPrefix("file://") && !urlStr.hasPrefix("http") {
+      urlStr = "file://\(urlStr)"
+    }
+
+    guard let url = URL(string: urlStr),
+          let document = CGPDFDocument(url as CFURL),
+          let page = document.page(at: 1) else {
+      return nil
+    }
+
+    let pageRect = page.getBoxRect(.mediaBox)
+    let scale = min(
+      CGFloat(maxWidth) / pageRect.width,
+      CGFloat(maxHeight) / pageRect.height,
+      1.0
+    )
+    let width = Int(pageRect.width * scale)
+    let height = Int(pageRect.height * scale)
+
+    UIGraphicsBeginImageContextWithOptions(
+      CGSize(width: width, height: height),
+      true,
+      1.0
+    )
+    guard let context = UIGraphicsGetCurrentContext() else {
+      UIGraphicsEndImageContext()
+      return nil
+    }
+
+    context.setFillColor(UIColor.white.cgColor)
+    context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+
+    context.translateBy(x: 0, y: CGFloat(height))
+    context.scaleBy(x: scale, y: -scale)
+    context.drawPDFPage(page)
+
+    let image = UIGraphicsGetImageFromCurrentImageContext()
+    UIGraphicsEndImageContext()
+
+    return image?.jpegData(compressionQuality: 0.85)
   }
 }

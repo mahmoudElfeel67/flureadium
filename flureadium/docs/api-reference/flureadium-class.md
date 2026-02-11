@@ -372,6 +372,40 @@ await flureadium.setDecorationStyle(
 );
 ```
 
+## PDF Utilities
+
+### renderFirstPage
+
+Renders the first page of a PDF as a JPEG image for use as a cover.
+
+```dart
+Future<Uint8List?> renderFirstPage(
+  String pubUrl, {
+  int maxWidth = 600,
+  int maxHeight = 800,
+})
+```
+
+**Parameters:**
+- `pubUrl` - Local file path to the PDF
+- `maxWidth` - Maximum output width in pixels (default: 600)
+- `maxHeight` - Maximum output height in pixels (default: 800)
+
+**Returns:** JPEG image bytes, or `null` if rendering fails
+
+Does not require opening a publication first. Uses `PdfRenderer` on Android and `CGPDFDocument` on iOS — no Readium dependency needed.
+
+**Example:**
+```dart
+final coverBytes = await flureadium.renderFirstPage('file:///path/to/book.pdf');
+if (coverBytes != null) {
+  final file = File('/path/to/cover.jpg');
+  await file.writeAsBytes(coverBytes);
+}
+```
+
+---
+
 ## Audiobook
 
 ### audioEnable

@@ -19,6 +19,7 @@ doc/
 # Project-level files
 project/
 CONTRIBUTING.md
+pubspec_overrides.yaml
 
 # npm files
 package.json
