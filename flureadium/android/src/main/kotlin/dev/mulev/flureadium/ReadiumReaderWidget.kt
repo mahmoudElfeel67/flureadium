@@ -172,25 +172,61 @@ class ReadiumReaderWidget(
         Log.d(TAG, "::onPageLoaded")
     }
 
-    // To avoid duplicate onPageChanged events.
-    private var lastPageLoadedKey: String? = null
+    // To avoid duplicate onPageChanged events forwarded to Flutter.
+    private var lastForwardedLocatorKey: String? = null
+    private var isRestoringInitialEpubLocator = false
+    private var restoreStartedAtMs: Long = 0L
+    private var restoreTargetHref: String? = null
+
+    private fun locatorForwardKey(locator: Locator): String {
+        val progression = locator.locations.progression?.toString() ?: "null"
+        val position = locator.locations.position?.toString() ?: "null"
+        val cssSelector = locator.locations.cssSelector ?: ""
+        return "${locator.href}|$progression|$position|$cssSelector"
+    }
+
+    private fun forwardLocatorIfChanged(locator: Locator) {
+        val currentKey = locatorForwardKey(locator)
+        if (lastForwardedLocatorKey == currentKey) {
+            return
+        }
+        lastForwardedLocatorKey = currentKey
+        mainScope.launch { emitOnPageChanged(locator) }
+    }
+
+    private fun markInitialEpubRestoreStarted(locator: Locator) {
+        isRestoringInitialEpubLocator = true
+        restoreStartedAtMs = System.currentTimeMillis()
+        restoreTargetHref = locator.href.toString()
+        Log.d(TAG, "restore: started for ${locator.href}")
+    }
+
+    private fun markInitialEpubRestoreSettled(locator: Locator) {
+        val elapsedMs = System.currentTimeMillis() - restoreStartedAtMs
+        Log.d(
+            TAG,
+            "restore: settled after ${elapsedMs}ms (target=$restoreTargetHref, current=${locator.href})"
+        )
+        isRestoringInitialEpubLocator = false
+        restoreTargetHref = null
+    }
 
     override fun onPageChanged(pageIndex: Int, totalPages: Int, locator: Locator) {
-        val currentKey = "${locator.href}@${locator.locations.progression}"
         Log.d(
             TAG,
             "::onPageChanged $pageIndex/$totalPages ${locator.href} ${locator.locations.progression} ${locator.locations}"
         )
 
-        if (lastPageLoadedKey == currentKey) {
-            // Sometimes we get duplicate calls to onPageChanged with same locator.
-            // Not sure why, but ignore them.
+        if (!isPdf) {
+            if (isRestoringInitialEpubLocator) {
+                Log.d(TAG, "::onPageChanged - ignore EPUB pagination event during restore window")
+            } else {
+                Log.d(TAG, "::onPageChanged - ignore EPUB pagination event; using visual locator flow")
+            }
             return
         }
 
-        lastPageLoadedKey = currentKey
-
-        mainScope.launch { emitOnPageChanged(locator) }
+        forwardLocatorIfChanged(locator)
     }
 
     override fun onExternalLinkActivated(url: AbsoluteUrl) {
@@ -200,6 +236,16 @@ class ReadiumReaderWidget(
 
     override fun onVisualCurrentLocationChanged(locator: Locator) {
         Log.d(TAG, "::onVisualCurrentLocationChanged $locator")
+
+        if (isPdf) {
+            return
+        }
+
+        if (isRestoringInitialEpubLocator) {
+            markInitialEpubRestoreSettled(locator)
+        }
+
+        forwardLocatorIfChanged(locator)
     }
 
     override fun onVisualReaderIsReady() {
@@ -303,6 +349,7 @@ class ReadiumReaderWidget(
                     val locatorJson = JSONObject(args[0] as String)
                     val animated = args[1] as Boolean
                     val isAudioBookWithText = args[2] as Boolean
+                    val isLikelyInitialRestore = !isAudioBookWithText && !animated
                     if (locatorJson.optString("type") == "") {
                         locatorJson.put("type", " ")
                         Log.e(
@@ -314,6 +361,13 @@ class ReadiumReaderWidget(
                     if (isPdf) {
                         ReadiumReader.pdfGoToLocator(locator, animated)
                     } else {
+                        if (!isAudioBookWithText) {
+                            // Avoid stale startup pending-scroll overriding an explicit go() call.
+                            ReadiumReader.epubClearPendingScrollTarget()
+                        }
+                        if (isLikelyInitialRestore) {
+                            markInitialEpubRestoreStarted(locator)
+                        }
                         ReadiumReader.epubGoToLocator(locator, animated)
                         if (isAudioBookWithText && canApplyJsSetLocation(locator)) {
                             try {

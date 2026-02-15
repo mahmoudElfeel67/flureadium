@@ -67,6 +67,14 @@ ReadiumReaderWidget(
 )
 ```
 
+### Platform Notes
+
+- iOS progress updates are emitted from the navigator location-change callback.
+- Android EPUB progress updates are normalized to the visual-current-location callback,
+  and pagination callback noise during the initial restore window is ignored.
+- On Android, explicit `go()` calls clear stale deferred startup scroll targets before
+  applying the requested locator, so restore follows a single authoritative path.
+
 ## Complete Progress Manager
 
 ```dart

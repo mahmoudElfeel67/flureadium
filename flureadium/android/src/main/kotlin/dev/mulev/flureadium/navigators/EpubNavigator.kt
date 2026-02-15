@@ -258,7 +258,8 @@ class EpubNavigator : BaseNavigator, EpubReaderFragment.Listener {
             Log.d(TAG, "::onPageLoaded - pendingScrollToLocations: $locations")
 
             mainScope.async {
-                scrollToLocations(locations, toStart = true)
+                // Keep follow-up scrolling consistent with explicit goToLocator behavior.
+                scrollToLocations(locations, toStart = false)
             }
 
             pendingScrollToLocations = null
@@ -440,6 +441,16 @@ class EpubNavigator : BaseNavigator, EpubReaderFragment.Listener {
                 scrollToLocations(locations, false)
             }
         }.await()
+    }
+
+    /**
+     * Clears any deferred scroll that was queued before an explicit external restore/navigation call.
+     */
+    fun clearPendingScrollTarget() {
+        if (pendingScrollToLocations != null) {
+            Log.d(TAG, "::clearPendingScrollTarget")
+        }
+        pendingScrollToLocations = null
     }
 
     companion object {
