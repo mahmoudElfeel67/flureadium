@@ -496,7 +496,24 @@ class EpubNavigator : BaseNavigator, EpubReaderFragment.Listener {
             } else if (!shouldScroll) {
                 Log.d(TAG, "::goToLocator: Already at $locatorHref, no scroll data, staying put")
             } else {
-                Log.d(TAG, "::goToLocator: Already at $locatorHref, scroll to position")
+                // Check if we're already at the correct progression to avoid unnecessary scroll
+                // that would recalculate position from bounding rect and introduce drift.
+                // This matches iOS behavior which doesn't re-scroll during restore.
+                val currentProgression = currentLocator?.value?.locations?.progression
+                val targetProgression = locations.progression
+
+                if (currentProgression != null && targetProgression != null) {
+                    val progressionDelta = kotlin.math.abs(currentProgression - targetProgression)
+                    if (progressionDelta < 0.01) {  // Within 1% - already positioned correctly
+                        Log.d(TAG, "::goToLocator: Already at $locatorHref with correct progression " +
+                            "(current=$currentProgression, target=$targetProgression, delta=$progressionDelta), " +
+                            "skipping scroll to avoid drift")
+                        return@async
+                    }
+                }
+
+                Log.d(TAG, "::goToLocator: Already at $locatorHref, scroll to position " +
+                    "(current=${currentProgression}, target=${targetProgression})")
 
                 scrollToLocations(locations, false)
             }
