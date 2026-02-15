@@ -1013,6 +1013,13 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
     }
 
     /**
+     * Clears deferred EPUB scroll targets queued before explicit restore/navigation calls.
+     */
+    fun epubClearPendingScrollTarget() {
+        epubNavigator?.clearPendingScrollTarget()
+    }
+
+    /**
      * Get locator fragments from EPUB navigator.
      */
     suspend fun epubGetLocatorFragments(locator: Locator): Locator? {

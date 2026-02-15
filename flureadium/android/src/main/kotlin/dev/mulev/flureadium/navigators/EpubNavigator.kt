@@ -98,6 +98,11 @@ class EpubNavigator : BaseNavigator, EpubReaderFragment.Listener {
     private var epubNavigator: EpubReaderFragment? = null
 
     /**
+     * Tracks which fragment instance we've subscribed to, to detect fragment recreation.
+     */
+    private var subscribedFragmentInstance: EpubReaderFragment? = null
+
+    /**
      * Editor to modify EPUB preferences.
      */
     private var editor: EpubPreferencesEditor? = null
@@ -191,7 +196,10 @@ class EpubNavigator : BaseNavigator, EpubReaderFragment.Listener {
      * Update EPUB navigator preferences.
      */
     fun updatePreferences(preferences: EpubPreferences) {
-        Log.d(TAG, "::setPreferences")
+        val currentLocatorValue = epubNavigator?.currentLocator?.value
+        Log.d(TAG, "::updatePreferences - currentLocator BEFORE=${currentLocatorValue?.let {
+            "href=${it.href}, prog=${it.locations.progression}"
+        } ?: "null"}, preferences=$preferences")
 
         try {
             editor?.apply {
@@ -204,6 +212,11 @@ class EpubNavigator : BaseNavigator, EpubReaderFragment.Listener {
 
                 mainScope.launch {
                     epubNavigator?.updatePreferences(preferences)
+
+                    val afterLocatorValue = epubNavigator?.currentLocator?.value
+                    Log.d(TAG, "::updatePreferences - currentLocator AFTER=${afterLocatorValue?.let {
+                        "href=${it.href}, prog=${it.locations.progression}"
+                    } ?: "null"}")
                 }
                 state[epubPreferencesKey] = preferences
             }
@@ -221,14 +234,28 @@ class EpubNavigator : BaseNavigator, EpubReaderFragment.Listener {
 
         val currentLocator = navigator.currentLocator
         if (currentLocator != null) {
+            // Log the current value before subscribing
+            val currentValue = currentLocator.value
+            val subscribeTime = System.currentTimeMillis()
+            Log.d(TAG, "::setupNavigatorListeners - BEFORE subscribe at t=${subscribeTime}, currentLocator.value = " +
+                "href=${currentValue.href}, progression=${currentValue.locations.progression}")
+
+            var emissionCount = 0
             currentLocator.throttleLatest(100.milliseconds)
                 .distinctUntilChanged()
                 .onEach { locator ->
+                    emissionCount++
+                    val emitTime = System.currentTimeMillis()
+                    val elapsedMs = emitTime - subscribeTime
+                    Log.d(TAG, "::setupNavigatorListeners - StateFlow emit #$emissionCount at t=$emitTime (elapsed=${elapsedMs}ms): " +
+                        "href=${locator.href}, progression=${locator.locations.progression}")
                     onCurrentLocatorChanges(locator)
                     state[currentVisualCurrentLocatorKey] = locator
                 }
                 .launchIn(mainScope)
                 .let { jobs.add(it) }
+
+            subscribedFragmentInstance = navigator  // Track subscribed fragment
         } else {
             Log.d(TAG, "::setupNavigatorListeners - currentLocator is null - navigator not ready?")
         }
@@ -250,19 +277,44 @@ class EpubNavigator : BaseNavigator, EpubReaderFragment.Listener {
         }
     }
 
+    private var pageLoadCount = 0
+
     override fun onPageLoaded() {
-        Log.d(TAG, "::onPageLoaded")
+        pageLoadCount++
+        val currentFragment = epubNavigator
+        val currentLocatorValue = currentFragment?.currentLocator?.value
+        Log.d(TAG, "::onPageLoaded #$pageLoadCount - " +
+            "currentLocator=${currentLocatorValue?.let {
+                "href=${it.href}, prog=${it.locations.progression}"
+            } ?: "null"}, " +
+            "pendingScroll=${pendingScrollToLocations != null}, " +
+            "subscribedInstance=$subscribedFragmentInstance, " +
+            "currentInstance=$currentFragment")
+
         visualListener.onPageLoaded()
 
         pendingScrollToLocations?.let { locations ->
-            Log.d(TAG, "::onPageLoaded - pendingScrollToLocations: $locations")
+            Log.d(TAG, "::onPageLoaded #$pageLoadCount - executing pendingScrollToLocations: $locations")
 
             mainScope.async {
-                scrollToLocations(locations, toStart = true)
+                // Keep follow-up scrolling consistent with explicit goToLocator behavior.
+                scrollToLocations(locations, toStart = false)
             }
 
             pendingScrollToLocations = null
 
+        }
+
+        // If fragment recreated (pause/resume), re-subscribe
+        if (currentFragment != null && currentFragment !== subscribedFragmentInstance) {
+            Log.d(TAG, "::onPageLoaded #$pageLoadCount - fragment changed detected! " +
+                "current=$currentFragment, subscribed=$subscribedFragmentInstance, " +
+                "currentLocator=${currentFragment.currentLocator?.value?.let {
+                    "href=${it.href}, prog=${it.locations.progression}"
+                }}")
+            hasNotifiedIsReady = false
+            jobs.forEach { it.cancel() }
+            jobs.clear()
         }
 
         notifyIsReady()
@@ -410,8 +462,18 @@ class EpubNavigator : BaseNavigator, EpubReaderFragment.Listener {
         toStart: Boolean
     ) {
         val json = locations.toJSON().toString()
+        val beforeScroll = epubNavigator?.currentLocator?.value
+        Log.d(TAG, "::scrollToLocations: BEFORE scroll - currentLocator=${beforeScroll?.let {
+            "href=${it.href}, prog=${it.locations.progression}"
+        } ?: "null"}")
         Log.d(TAG, "::scrollToLocations: Go to locations $json, toStart: $toStart")
+
         evaluateJavascript("window.epubPage.scrollToLocations($json,$isVerticalScroll,$toStart);")
+
+        val afterScroll = epubNavigator?.currentLocator?.value
+        Log.d(TAG, "::scrollToLocations: AFTER scroll - currentLocator=${afterScroll?.let {
+            "href=${it.href}, prog=${it.locations.progression}"
+        } ?: "null"}")
     }
 
     /**
@@ -432,14 +494,40 @@ class EpubNavigator : BaseNavigator, EpubReaderFragment.Listener {
                 pendingScrollToLocations = locations
                 go(locator, animated)
             } else if (!shouldScroll) {
-                Log.w(TAG, "::goToLocator: Already at $locatorHref, no scroll target, go to start")
-                scrollToLocations(Locator.Locations(progression = 0.0), true)
+                Log.d(TAG, "::goToLocator: Already at $locatorHref, no scroll data, staying put")
             } else {
-                Log.d(TAG, "::goToLocator: Already at $locatorHref, scroll to position")
+                // Check if we're already at the correct progression to avoid unnecessary scroll
+                // that would recalculate position from bounding rect and introduce drift.
+                // This matches iOS behavior which doesn't re-scroll during restore.
+                val currentProgression = currentLocator?.value?.locations?.progression
+                val targetProgression = locations.progression
+
+                if (currentProgression != null && targetProgression != null) {
+                    val progressionDelta = kotlin.math.abs(currentProgression - targetProgression)
+                    if (progressionDelta < 0.01) {  // Within 1% - already positioned correctly
+                        Log.d(TAG, "::goToLocator: Already at $locatorHref with correct progression " +
+                            "(current=$currentProgression, target=$targetProgression, delta=$progressionDelta), " +
+                            "skipping scroll to avoid drift")
+                        return@async
+                    }
+                }
+
+                Log.d(TAG, "::goToLocator: Already at $locatorHref, scroll to position " +
+                    "(current=${currentProgression}, target=${targetProgression})")
 
                 scrollToLocations(locations, false)
             }
         }.await()
+    }
+
+    /**
+     * Clears any deferred scroll that was queued before an explicit external restore/navigation call.
+     */
+    fun clearPendingScrollTarget() {
+        if (pendingScrollToLocations != null) {
+            Log.d(TAG, "::clearPendingScrollTarget")
+        }
+        pendingScrollToLocations = null
     }
 
     companion object {
