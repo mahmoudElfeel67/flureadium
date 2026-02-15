@@ -494,8 +494,105 @@ class _BookReaderState extends State<BookReader> {
 7. **Background sync** - Don't block UI for cloud sync
 8. **Handle conflicts** - Prefer higher progress
 
+## Testing Restore Behavior
+
+### Manual Reopen Loop Test
+
+To validate that position restore works correctly without drift, use this test procedure:
+
+```dart
+// 1. Open a book and navigate to a specific position
+await flureadium.openPublication('test_book.epub');
+await flureadium.goToLocator(testLocator);  // e.g., chapter 3, progression 0.317
+
+// 2. Save the position
+final savedLocator = flureadium.currentLocator;
+await saveProgress(savedLocator);
+
+// 3. Close and reopen the book
+await flureadium.closePublication();
+final restoredLocator = await loadProgress('test_book_id');
+await flureadium.openPublication('test_book.epub', initialLocator: restoredLocator);
+
+// 4. Verify position matches
+final currentLocator = flureadium.currentLocator;
+assert(currentLocator.href == savedLocator.href);
+assert((currentLocator.locations.progression - savedLocator.locations.progression).abs() < 0.01);
+```
+
+### Reopen Loop Validation
+
+Test restore stability by repeating the close/reopen cycle:
+
+**Test Procedure:**
+1. Open a book
+2. Navigate to a specific page (e.g., page 27, progression ~0.317)
+3. Close the book
+4. Reopen the book with saved position
+5. **Expected**: Should restore to the exact same page and progression
+6. Repeat steps 3-5 at least 5-10 times
+7. **Success criteria**: Position remains stable across all reopens (no drift to different chapters or positions)
+
+**Platform-Specific Validation:**
+- **Android**: Check logs for `::goToLocator: Already at ... with correct progression, skipping scroll to avoid drift`
+- **iOS**: Position should be set via `initialLocation` parameter during navigator initialization
+
+### Common Issues
+
+**Issue**: Position drifts on Android after close/reopen
+
+**Cause**: JavaScript `scrollToLocations()` recalculates progression from element bounding rect geometry, producing slightly different values than saved progression, then overwrites StateFlow
+
+**Fix**: The Android implementation now skips `scrollToLocations()` when already positioned correctly (within 1% delta)
+
+**Issue**: Position jumps to end of chapter on restore
+
+**Cause**: Late locator emissions after restore window settles due to preference re-rendering or fragment lifecycle changes
+
+**Fix**: Grace period validation (5s) suppresses late jumps that differ significantly from restore target
+
+### Automated Tests
+
+The plugin includes unit tests for restore behavior:
+
+```bash
+# Run Android unit tests
+cd flureadium/example/android
+./gradlew testDebugUnitTest
+
+# Run specific test class
+./gradlew testDebugUnitTest --tests "*.EpubNavigatorRestoreTest"
+```
+
+**Test Coverage:**
+- Progression delta calculation (1% threshold)
+- Small drift detection (JavaScript recalculation)
+- Large progression differences requiring scroll
+- Null progression value handling
+- Edge cases (start/end of chapter)
+- Locator href equivalence
+
+See: [android/src/test/kotlin/dev/mulev/flureadium/navigators/EpubNavigatorRestoreTest.kt](../../android/src/test/kotlin/dev/mulev/flureadium/navigators/EpubNavigatorRestoreTest.kt)
+
+### Debug Logging
+
+Enable verbose logging to diagnose restore issues:
+
+**Android:**
+```bash
+adb logcat | grep -E "(EpubNavigator|EpubReaderFragment|ReadiumReaderWidget)"
+```
+
+**Key log messages to look for:**
+- `::setupNavigatorListeners - StateFlow emit` - Position updates
+- `::onPageLoaded` - Page load events and pending scroll execution
+- `::goToLocator: Already at ... skipping scroll` - Drift prevention
+- `restore: settled after Xms` - Restore window lifecycle
+- `SUPPRESS late jump during grace period!` - Grace period validation
+
 ## See Also
 
 - [Locator Reference](../api-reference/locator.md) - Position model
 - [Streams and Events](../api-reference/streams-events.md) - Position streams
 - [Highlights Guide](highlights-annotations.md) - Saving annotations
+- [Troubleshooting](../troubleshooting.md) - Common issues and solutions
