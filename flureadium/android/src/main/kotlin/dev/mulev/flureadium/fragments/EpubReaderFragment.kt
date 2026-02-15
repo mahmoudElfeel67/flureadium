@@ -233,7 +233,9 @@ class EpubReaderFragment : VisualReaderFragment(), EpubNavigatorFragment.Listene
         try {
             Log.d(TAG, "::onPause - $instance")
 
-            epubVm?.locator = currentLocator?.value
+            val savedLocator = currentLocator?.value
+            epubVm?.locator = savedLocator
+            Log.d(TAG, "::onPause - saved locator: href=${savedLocator?.href} prog=${savedLocator?.locations?.progression}")
 
             epubNavigator?.let { fragment ->
                 childFragmentManager.commitNow {

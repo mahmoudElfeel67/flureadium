@@ -33,6 +33,7 @@ import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.html.cssSelector
 import org.readium.r2.shared.publication.html.domRange
 import org.readium.r2.shared.util.AbsoluteUrl
+import kotlin.math.abs
 
 private const val TAG = "ReadiumReaderView"
 internal const val viewTypeChannelName = "dev.mulev.flureadium/ReadiumReaderWidget"
@@ -174,9 +175,13 @@ class ReadiumReaderWidget(
 
     // To avoid duplicate onPageChanged events forwarded to Flutter.
     private var lastForwardedLocatorKey: String? = null
+    private var lastStableEpubLocator: Locator? = null
     private var isRestoringInitialEpubLocator = false
     private var restoreStartedAtMs: Long = 0L
     private var restoreTargetHref: String? = null
+    private var restoreTargetProgression: Double? = null
+    private var restoreSettledAtMs: Long = 0L
+    private var restoreGracePeriodMs: Long = 5000L  // 5 seconds grace period after restore
 
     private fun locatorForwardKey(locator: Locator): String {
         val progression = locator.locations.progression?.toString() ?: "null"
@@ -185,30 +190,63 @@ class ReadiumReaderWidget(
         return "${locator.href}|$progression|$position|$cssSelector"
     }
 
-    private fun forwardLocatorIfChanged(locator: Locator) {
-        val currentKey = locatorForwardKey(locator)
+    private fun locatorDebugSummary(locator: Locator): String {
+        val locations = locator.locations
+        return "href=${locator.href}, progression=${locations.progression}, position=${locations.position}, totalProgression=${locations.totalProgression}, cssSelector=${locations.cssSelector}, fragments=${locations.fragments}"
+    }
+
+    private fun forwardLocatorIfChanged(locator: Locator, source: String = "unknown") {
+        val normalizedLocator = if (isPdf) locator else normalizeEpubLocator(locator)
+        if (!isPdf && isStableEpubLocator(normalizedLocator)) {
+            lastStableEpubLocator = normalizedLocator
+        }
+
+        val currentKey = locatorForwardKey(normalizedLocator)
         if (lastForwardedLocatorKey == currentKey) {
+            Log.d(TAG, "forwardLocatorIfChanged[$source]: skip duplicate ${locatorDebugSummary(normalizedLocator)}")
             return
         }
         lastForwardedLocatorKey = currentKey
-        mainScope.launch { emitOnPageChanged(locator) }
+        Log.d(TAG, "forwardLocatorIfChanged[$source]: emit ${locatorDebugSummary(normalizedLocator)}")
+        mainScope.launch { emitOnPageChanged(normalizedLocator) }
     }
 
     private fun markInitialEpubRestoreStarted(locator: Locator) {
         isRestoringInitialEpubLocator = true
         restoreStartedAtMs = System.currentTimeMillis()
         restoreTargetHref = locator.href.toString()
-        Log.d(TAG, "restore: started for ${locator.href}")
+        restoreTargetProgression = locator.locations.progression
+        Log.d(TAG, "restore: started for ${locator.href}, progression=${restoreTargetProgression}")
+
+        // Safety timeout: force settle after 3 seconds
+        mainScope.launch {
+            kotlinx.coroutines.delay(3000)
+            if (isRestoringInitialEpubLocator) {
+                Log.w(TAG, "restore: timeout after 3000ms, force settling")
+                isRestoringInitialEpubLocator = false
+                restoreTargetHref = null
+                restoreTargetProgression = null
+            }
+        }
     }
 
     private fun markInitialEpubRestoreSettled(locator: Locator) {
         val elapsedMs = System.currentTimeMillis() - restoreStartedAtMs
         Log.d(
             TAG,
-            "restore: settled after ${elapsedMs}ms (target=$restoreTargetHref, current=${locator.href})"
+            "restore: settled after ${elapsedMs}ms (target=$restoreTargetHref @ $restoreTargetProgression, current=${locator.href} @ ${locator.locations.progression})"
         )
         isRestoringInitialEpubLocator = false
-        restoreTargetHref = null
+        restoreSettledAtMs = System.currentTimeMillis()
+        // Keep restoreTargetHref and restoreTargetProgression for grace period validation
+
+        // Clear grace period after timeout
+        mainScope.launch {
+            kotlinx.coroutines.delay(restoreGracePeriodMs)
+            Log.d(TAG, "restore: grace period ended")
+            restoreTargetHref = null
+            restoreTargetProgression = null
+        }
     }
 
     override fun onPageChanged(pageIndex: Int, totalPages: Int, locator: Locator) {
@@ -226,7 +264,7 @@ class ReadiumReaderWidget(
             return
         }
 
-        forwardLocatorIfChanged(locator)
+        forwardLocatorIfChanged(locator, "pageChanged")
     }
 
     override fun onExternalLinkActivated(url: AbsoluteUrl) {
@@ -235,17 +273,48 @@ class ReadiumReaderWidget(
     }
 
     override fun onVisualCurrentLocationChanged(locator: Locator) {
-        Log.d(TAG, "::onVisualCurrentLocationChanged $locator")
+        Log.d(TAG, "::onVisualCurrentLocationChanged ${locatorDebugSummary(locator)}")
 
-        if (isPdf) {
+        if (isPdf) return
+
+        if (isRestoringInitialEpubLocator) {
+            val targetHref = restoreTargetHref
+            val locatorHref = locator.href.toString()
+            val elapsed = System.currentTimeMillis() - restoreStartedAtMs
+
+            if (targetHref != null && locatorHref == targetHref && elapsed > 50) {
+                markInitialEpubRestoreSettled(locator)
+                forwardLocatorIfChanged(locator, "visualLocator")
+            } else {
+                Log.d(TAG, "::onVisualCurrentLocationChanged - suppress during restore " +
+                    "(targetHref=$targetHref, locatorHref=$locatorHref, elapsed=${elapsed}ms)")
+            }
             return
         }
 
-        if (isRestoringInitialEpubLocator) {
-            markInitialEpubRestoreSettled(locator)
+        // Grace period validation: check if we're still within grace period after restore
+        val targetHref = restoreTargetHref
+        val targetProgression = restoreTargetProgression
+        if (targetHref != null && restoreSettledAtMs > 0) {
+            val elapsedSinceSettle = System.currentTimeMillis() - restoreSettledAtMs
+            if (elapsedSinceSettle < restoreGracePeriodMs) {
+                val locatorHref = locator.href.toString()
+                val locatorProgression = locator.locations.progression
+
+                // If href matches but progression is far off, suppress
+                if (locatorHref == targetHref && targetProgression != null && locatorProgression != null) {
+                    val progressionDelta = kotlin.math.abs(locatorProgression - targetProgression)
+                    if (progressionDelta > 0.2) {  // More than 20% difference
+                        Log.w(TAG, "::onVisualCurrentLocationChanged - SUPPRESS late jump during grace period! " +
+                            "target=$targetProgression, current=$locatorProgression, delta=$progressionDelta, " +
+                            "elapsed=${elapsedSinceSettle}ms")
+                        return
+                    }
+                }
+            }
         }
 
-        forwardLocatorIfChanged(locator)
+        forwardLocatorIfChanged(locator, "visualLocator")
     }
 
     override fun onVisualReaderIsReady() {
@@ -264,21 +333,21 @@ class ReadiumReaderWidget(
     private suspend fun emitOnPageChanged(locator: Locator) {
         try {
             if (isPdf) {
-                // PDF locators don't need fragment extraction
                 channel.onPageChanged(locator)
                 textLocatorEventChannel?.sendEvent(locator)
             } else {
                 val locatorWithFragments = ReadiumReader.getEpubLocatorFragments(locator)
-                if (locatorWithFragments == null) {
-                    Log.e(TAG, "emitOnPageChanged: window.epubPage.getVisibleRange failed!")
-                    return
+                val finalLocator = if (locatorWithFragments != null) {
+                    normalizeEpubLocator(locatorWithFragments)
+                } else {
+                    Log.e(TAG, "emitOnPageChanged: getVisibleRange failed, using base locator")
+                    normalizeEpubLocator(locator)
                 }
-
-                channel.onPageChanged(locatorWithFragments)
-                textLocatorEventChannel?.sendEvent(locatorWithFragments)
+                channel.onPageChanged(finalLocator)
+                textLocatorEventChannel?.sendEvent(finalLocator)
             }
         } catch (e: Exception) {
-            Log.e(TAG, "emitOnPageChanged: ${if (isPdf) "PDF" else "EPUB"} page change failed! $e")
+            Log.e(TAG, "emitOnPageChanged: ${if (isPdf) "PDF" else "EPUB"} failed! $e")
         }
     }
 
@@ -305,20 +374,226 @@ class ReadiumReaderWidget(
         return !domRangeStartSelector.isNullOrBlank()
     }
 
-    private suspend fun getBestEpubCurrentLocator(): Locator? {
-        val currentLocator = ReadiumReader.epubCurrentLocator ?: return null
-        return try {
-            val enrichedLocator = ReadiumReader.getEpubLocatorFragments(currentLocator)
-            if (enrichedLocator == null) {
-                Log.w(TAG, "getCurrentLocator: Failed to enrich EPUB locator, using current locator")
-                currentLocator
-            } else {
-                enrichedLocator
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "getCurrentLocator: Error enriching EPUB locator, using fallback locator", e)
-            currentLocator
+    private fun normalizeCssSelector(cssSelector: String?): String? {
+        if (cssSelector.isNullOrBlank()) {
+            return cssSelector
         }
+
+        return cssSelector.replaceFirst(":root > :nth-child(2)", "body")
+    }
+
+    private fun normalizeEpubFragments(fragments: List<String>): List<String> {
+        if (fragments.isEmpty()) {
+            return fragments
+        }
+
+        val passthrough = mutableListOf<String>()
+        var pageFragment: String? = null
+        var totalPagesFragment: String? = null
+        var tocFragment: String? = null
+        var physicalPageFragment: String? = null
+
+        for (fragment in fragments) {
+            when {
+                fragment.startsWith("page=") -> pageFragment = fragment
+                fragment.startsWith("totalPages=") -> totalPagesFragment = fragment
+                fragment.startsWith("toc=") -> tocFragment = fragment
+                fragment.startsWith("physicalPage=") -> physicalPageFragment = fragment
+                passthrough.contains(fragment).not() -> passthrough.add(fragment)
+            }
+        }
+
+        val normalized = mutableListOf<String>()
+        normalized.addAll(passthrough)
+        pageFragment?.let(normalized::add)
+        totalPagesFragment?.let(normalized::add)
+        tocFragment?.let(normalized::add)
+        physicalPageFragment?.let(normalized::add)
+
+        return normalized
+    }
+
+    private fun normalizeEpubLocator(locator: Locator): Locator {
+        val locations = locator.locations
+        val normalizedFragments = normalizeEpubFragments(locations.fragments)
+        val normalizedCssSelector = normalizeCssSelector(locations.cssSelector)
+
+        if (normalizedFragments == locations.fragments && normalizedCssSelector == locations.cssSelector) {
+            return locator
+        }
+
+        Log.d(
+            TAG,
+            "normalizeEpubLocator: before=${locatorDebugSummary(locator)}, afterCss=$normalizedCssSelector, afterFragments=$normalizedFragments"
+        )
+
+        val normalizedOtherLocations = locations.otherLocations.toMutableMap().apply {
+            if (normalizedCssSelector.isNullOrBlank()) {
+                remove("cssSelector")
+            } else {
+                this["cssSelector"] = normalizedCssSelector
+            }
+        }
+
+        return locator.copy(
+            locations = locations.copy(
+                fragments = normalizedFragments,
+                otherLocations = normalizedOtherLocations
+            )
+        )
+    }
+
+    private fun isStableEpubLocator(locator: Locator): Boolean {
+        return locator.locations.progression != null || locator.locations.position != null
+    }
+
+    private fun scoreEpubLocator(locator: Locator): Int {
+        val locations = locator.locations
+        var score = 0
+
+        if (locations.progression != null) {
+            score += 4
+        }
+
+        if (locations.position != null) {
+            score += 3
+        }
+
+        val cssSelector = locations.cssSelector
+        if (!cssSelector.isNullOrBlank() && !cssSelector.startsWith(":root")) {
+            score += 2
+        }
+
+        if (locations.fragments.any { it.startsWith("page=") }) {
+            score += 1
+        }
+
+        if (!hasConsistentPageFragments(locator)) {
+            score -= 3
+        }
+
+        return score
+    }
+
+    private fun fragmentInt(fragments: List<String>, key: String): Int? {
+        val prefix = "$key="
+        val value = fragments.firstOrNull { it.startsWith(prefix) }?.substringAfter(prefix)
+        return value?.toIntOrNull()
+    }
+
+    private fun progressionFromPageFragments(locator: Locator): Double? {
+        val page = fragmentInt(locator.locations.fragments, "page") ?: return null
+        val totalPages = fragmentInt(locator.locations.fragments, "totalPages") ?: return null
+        if (totalPages <= 1) {
+            return 0.0
+        }
+
+        val clampedPage = page.coerceIn(1, totalPages)
+        return (clampedPage - 1).toDouble() / (totalPages - 1).toDouble()
+    }
+
+    private fun hasConsistentPageFragments(locator: Locator): Boolean {
+        val progression = locator.locations.progression ?: return true
+        val progressionFromFragments = progressionFromPageFragments(locator) ?: return true
+        val delta = abs(progressionFromFragments - progression)
+        return delta <= 0.25
+    }
+
+    private fun pickConsistentEpubLocator(
+        baseLocator: Locator,
+        candidateLocator: Locator
+    ): Locator {
+        if (hasConsistentPageFragments(candidateLocator)) {
+            return candidateLocator
+        }
+
+        val candidateProgression = candidateLocator.locations.progression
+        val candidateFragmentsProgression = progressionFromPageFragments(candidateLocator)
+        val delta = if (candidateProgression != null && candidateFragmentsProgression != null) {
+            abs(candidateProgression - candidateFragmentsProgression)
+        } else {
+            null
+        }
+
+        Log.w(
+            TAG,
+            "emitOnPageChanged: inconsistent candidate locator; falling back to base locator. candidate=${locatorDebugSummary(candidateLocator)}, delta=$delta, base=${locatorDebugSummary(baseLocator)}"
+        )
+
+        return baseLocator
+    }
+
+    private suspend fun getBestEpubCurrentLocator(): Locator? {
+        val candidates = mutableListOf<Pair<String, Locator>>()
+
+        val firstVisibleLocator = ReadiumReader.getFirstVisibleLocator()
+        if (firstVisibleLocator != null) {
+            try {
+                val enrichedVisibleLocator = ReadiumReader.getEpubLocatorFragments(firstVisibleLocator)
+                val bestVisibleLocator = enrichedVisibleLocator ?: firstVisibleLocator
+                candidates += "firstVisible" to normalizeEpubLocator(bestVisibleLocator)
+                Log.d(
+                    TAG,
+                    "getCurrentLocator: firstVisible candidate ${locatorDebugSummary(candidates.last().second)}"
+                )
+            } catch (e: Exception) {
+                Log.w(TAG, "getCurrentLocator: Error enriching first visible locator, falling back", e)
+            }
+        }
+
+        ReadiumReader.epubCurrentLocator?.let { currentLocator ->
+            try {
+                val enrichedLocator = ReadiumReader.getEpubLocatorFragments(currentLocator)
+                val bestCurrentLocator = enrichedLocator ?: currentLocator
+                candidates += "current" to normalizeEpubLocator(bestCurrentLocator)
+                Log.d(
+                    TAG,
+                    "getCurrentLocator: current candidate ${locatorDebugSummary(candidates.last().second)}"
+                )
+            } catch (e: Exception) {
+                Log.w(TAG, "getCurrentLocator: Error enriching EPUB current locator, using fallback locator", e)
+                candidates += "current-fallback" to normalizeEpubLocator(currentLocator)
+                Log.d(
+                    TAG,
+                    "getCurrentLocator: current-fallback candidate ${locatorDebugSummary(candidates.last().second)}"
+                )
+            }
+        }
+
+        val selected = candidates.maxByOrNull { (_, locator) -> scoreEpubLocator(locator) }
+
+        if (selected == null) {
+            Log.d(
+                TAG,
+                "getCurrentLocator: no candidates, returning lastStable=${lastStableEpubLocator?.let(::locatorDebugSummary)}"
+            )
+            return lastStableEpubLocator
+        }
+
+        val (source, locator) = selected
+        val score = scoreEpubLocator(locator)
+        Log.d(TAG, "getCurrentLocator: selected $source (score=$score) $locator")
+
+        // Guard: if selected href differs from stable, prefer stable if score comparable
+        val stable = lastStableEpubLocator
+        if (stable != null && locator.href != stable.href) {
+            val stableScore = scoreEpubLocator(stable)
+            if (stableScore >= score) {
+                Log.w(TAG, "getCurrentLocator: selected href differs from stable, preferring stable")
+                return stable
+            }
+        }
+
+        if (isStableEpubLocator(locator)) {
+            lastStableEpubLocator = locator
+            return locator
+        }
+
+        Log.d(
+            TAG,
+            "getCurrentLocator: selected locator not stable, using lastStable=${lastStableEpubLocator?.let(::locatorDebugSummary)}"
+        )
+        return lastStableEpubLocator ?: locator
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
@@ -482,6 +757,10 @@ class ReadiumReaderWidget(
                     } else {
                         getBestEpubCurrentLocator()
                     }
+                    Log.d(
+                        TAG,
+                        "getCurrentLocator: result=${locator?.let(::locatorDebugSummary)}"
+                    )
                     result.success(locator?.let { jsonEncode(it.toJSON()) })
                 }
 
