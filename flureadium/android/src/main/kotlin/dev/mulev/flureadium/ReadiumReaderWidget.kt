@@ -30,6 +30,8 @@ import org.json.JSONObject
 import org.readium.r2.navigator.epub.EpubPreferences
 import org.readium.r2.shared.ExperimentalReadiumApi
 import org.readium.r2.shared.publication.Locator
+import org.readium.r2.shared.publication.html.cssSelector
+import org.readium.r2.shared.publication.html.domRange
 import org.readium.r2.shared.util.AbsoluteUrl
 
 private const val TAG = "ReadiumReaderView"
@@ -247,6 +249,32 @@ class ReadiumReaderWidget(
         evaluateJavascript("window.epubPage.setLocation($json, $isAudioBookWithText);")
     }
 
+    private fun canApplyJsSetLocation(locator: Locator): Boolean {
+        val cssSelector = locator.locations.cssSelector
+        if (!cssSelector.isNullOrBlank()) {
+            return true
+        }
+
+        val domRangeStartSelector = locator.locations.domRange?.start?.cssSelector
+        return !domRangeStartSelector.isNullOrBlank()
+    }
+
+    private suspend fun getBestEpubCurrentLocator(): Locator? {
+        val currentLocator = ReadiumReader.epubCurrentLocator ?: return null
+        return try {
+            val enrichedLocator = ReadiumReader.getEpubLocatorFragments(currentLocator)
+            if (enrichedLocator == null) {
+                Log.w(TAG, "getCurrentLocator: Failed to enrich EPUB locator, using current locator")
+                currentLocator
+            } else {
+                enrichedLocator
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "getCurrentLocator: Error enriching EPUB locator, using fallback locator", e)
+            currentLocator
+        }
+    }
+
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         // TODO: To be safe we're doing everything on the Main thread right now.
         // Could probably optimize by using .IO and then change to Main
@@ -287,7 +315,22 @@ class ReadiumReaderWidget(
                         ReadiumReader.pdfGoToLocator(locator, animated)
                     } else {
                         ReadiumReader.epubGoToLocator(locator, animated)
-                        setLocation(locator, isAudioBookWithText)
+                        if (isAudioBookWithText && canApplyJsSetLocation(locator)) {
+                            try {
+                                setLocation(locator, isAudioBookWithText)
+                            } catch (e: Exception) {
+                                Log.w(
+                                    TAG,
+                                    "go: JS setLocation failed after native locator navigation, keeping native result",
+                                    e
+                                )
+                            }
+                        } else {
+                            Log.d(
+                                TAG,
+                                "go: Skipping JS setLocation for non-audiobook restore or locator without cssSelector/domRange.start"
+                            )
+                        }
                     }
                     result.success(null)
                 }
@@ -383,7 +426,7 @@ class ReadiumReaderWidget(
                     val locator = if (isPdf) {
                         ReadiumReader.pdfCurrentLocator
                     } else {
-                        ReadiumReader.epubCurrentLocator
+                        getBestEpubCurrentLocator()
                     }
                     result.success(locator?.let { jsonEncode(it.toJSON()) })
                 }

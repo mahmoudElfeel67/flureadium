@@ -481,8 +481,10 @@ class _BookReaderState extends State<BookReader> {
 2. **Use book identifiers** - Not file paths
 3. **Handle missing positions** - Start from beginning
 4. **Validate locators** - Check href exists in publication
-5. **Background sync** - Don't block UI for cloud sync
-6. **Handle conflicts** - Prefer higher progress
+5. **Prefer enriched locators** - Keep `cssSelector`/`domRange` when available for precise restore
+6. **Android restore fallback** - Progression-only locators restore with native navigation when selector data is missing
+7. **Background sync** - Don't block UI for cloud sync
+8. **Handle conflicts** - Prefer higher progress
 
 ## See Also
 
