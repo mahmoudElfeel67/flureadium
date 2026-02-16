@@ -85,7 +85,7 @@ class PDFPreferences {
   /// Defaults to true (enabled) when null.
   bool? enableSwipeNavigation;
 
-  /// Edge tap area as a percentage of screen width (10–30). iOS only.
+  /// Edge tap area as a percentage of screen width (5–30). iOS only.
   /// Defaults to 12 when null.
   double? edgeTapAreaPercent;
 

@@ -205,7 +205,7 @@ final class EdgeTapInterceptViewTests: XCTestCase {
         // The view is a dumb component - clamping happens in reader views, not here
         let view = EdgeTapInterceptView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
         view.edgeThresholdPercent = 0.05
-        XCTAssertEqual(view.edgeThresholdPercent, 0.05, "View should accept values below 10% range")
+        XCTAssertEqual(view.edgeThresholdPercent, 0.05, "View should accept values below 5% range")
 
         view.edgeThresholdPercent = 0.50
         XCTAssertEqual(view.edgeThresholdPercent, 0.50, "View should accept values above 30% range")

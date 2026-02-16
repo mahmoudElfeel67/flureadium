@@ -80,7 +80,7 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
     enableEdgeTapNavigation = flutterPrefs.enableEdgeTapNavigation ?? true
     enableSwipeNavigation = flutterPrefs.enableSwipeNavigation ?? true
     if let rawPercent = flutterPrefs.edgeTapAreaPercent {
-      edgeTapAreaPercent = CGFloat(min(max(rawPercent / 100.0, 0.10), 0.30))
+      edgeTapAreaPercent = CGFloat(min(max(rawPercent / 100.0, 0.05), 0.30))
     } else {
       edgeTapAreaPercent = nil
     }

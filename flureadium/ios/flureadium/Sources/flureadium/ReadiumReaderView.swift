@@ -80,7 +80,7 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
     // Read edge tap area percentage (serialized as string from Dart)
     if let edgeTapAreaStr = preferencesMap??["edgeTapAreaPercent"],
        let edgeTapArea = Double(edgeTapAreaStr) {
-      edgeTapAreaPercent = CGFloat(min(max(edgeTapArea / 100.0, 0.10), 0.30))
+      edgeTapAreaPercent = CGFloat(min(max(edgeTapArea / 100.0, 0.05), 0.30))
     }
 
     let locatorStr = creationParams["initialLocator"] as? String

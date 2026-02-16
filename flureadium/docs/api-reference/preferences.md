@@ -138,7 +138,7 @@ enableSwipeNavigation: false  // Swipe navigation disabled
 
 **Type:** `double?`
 
-Edge tap area as a percentage of screen width (10–30). Controls how wide the left/right tap zones are for page navigation. Defaults to 12 when null. Values are clamped to the 10–30 range on the native side.
+Edge tap area as a percentage of screen width (5–30). Controls how wide the left/right tap zones are for page navigation. Defaults to 12 when null. Values are clamped to the 5–30 range on the native side.
 
 ```dart
 edgeTapAreaPercent: 10   // Narrow tap zones (10% each side)
@@ -553,7 +553,7 @@ enableSwipeNavigation: false  // Swipe navigation disabled
 
 **Type:** `double?`
 
-Edge tap area as a percentage of screen width (10–30). Controls how wide the left/right tap zones are for page navigation. Defaults to 12 when null. Values are clamped to the 10–30 range on the native side.
+Edge tap area as a percentage of screen width (5–30). Controls how wide the left/right tap zones are for page navigation. Defaults to 12 when null. Values are clamped to the 5–30 range on the native side.
 
 ```dart
 edgeTapAreaPercent: 10   // Narrow tap zones (10% each side)

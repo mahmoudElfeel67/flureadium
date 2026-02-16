@@ -617,7 +617,7 @@ PDFPreferences(
 
 ### Edge Tap Area Size (iOS)
 
-You can configure how wide the edge tap zones are using `edgeTapAreaPercent`. The value is a percentage of screen width (10–30), and defaults to 12 when null. The default of 12% ensures at least 44pt tap targets on the smallest iOS device (iPhone SE, 375pt width).
+You can configure how wide the edge tap zones are using `edgeTapAreaPercent`. The value is a percentage of screen width (5–30), and defaults to 12 when null. The default of 12% ensures at least 44pt tap targets on the smallest iOS device (iPhone SE, 375pt width).
 
 ```dart
 // EPUB: smaller edge tap zones
@@ -639,7 +639,7 @@ PDFPreferences(
 )
 ```
 
-Values outside the 10–30 range are clamped automatically. This preference only affects iOS; on Android, edge taps are handled internally by the Readium Kotlin Toolkit.
+Values outside the 5–30 range are clamped automatically. This preference only affects iOS; on Android, edge taps are handled internally by the Readium Kotlin Toolkit.
 
 ## See Also
 
