@@ -170,6 +170,19 @@ edgeTapView.edgeThresholdPercent = 0.25 // 25% of screen width
 - `ReadiumReaderView.swift` - EPUB reader using EdgeTapInterceptView
 - `PdfReaderView.swift` - PDF reader using EdgeTapInterceptView
 
+### Stream and View Lifecycle
+
+Flureadium iOS uses `EventStreamHandler` to manage Flutter EventChannel streams (text locator, reader status, errors). Proper lifecycle management is critical:
+
+- **Stream disposal** (sending `FlutterEndOfEventStream` and clearing handlers) must happen in the `"dispose"` method call from Dart, while the Flutter engine is still alive
+- **`deinit`** only nils out references as a safety net — it must NOT send messages on Flutter channels, as `deinit` may be triggered during engine teardown when channels are no longer valid
+
+This separation prevents crashes during app termination, where `FlutterEngine.destroyContext` triggers deallocation of native views after the message channels are already torn down.
+
+**Files:**
+- `EventStreamHandler.swift` - Stream handler with `dispose()` that sends `FlutterEndOfEventStream`
+- `ReadiumReaderView.swift` - Calls stream `dispose()` in method call handler, not in `deinit`
+
 ## Troubleshooting
 
 ### Pod Install Fails
