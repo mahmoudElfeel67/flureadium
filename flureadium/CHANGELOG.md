@@ -1,3 +1,15 @@
+## 0.3.2
+
+### Bug Fixes
+
+- **iOS**: Fix crash on app close caused by stream handlers sending `FlutterEndOfEventStream` during `deinit`, after the Flutter engine has already torn down its channels.
+  - Move all `EventStreamHandler.dispose()` calls from `deinit` to the Dart `"dispose"` method call handler, which runs while the engine is still alive.
+  - `deinit` now only nils out references as a safety net without sending any messages.
+
+### Testing
+
+- Add `EventStreamHandlerTests` covering dispose lifecycle, double-dispose safety, send-after-dispose no-op, and listener registration/cancellation.
+
 ## 0.3.1
 
 ### Bug Fixes

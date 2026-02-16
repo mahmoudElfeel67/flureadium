@@ -223,6 +223,14 @@ await flureadium.goRight();
    );
    ```
 
+### iOS: Crash on App Close
+
+**Symptom:** App crashes when closing/terminating, with a stack trace through `EventStreamHandler.dispose()` → `FlutterBinaryMessengerRelay sendOnChannel` → `FlutterEngine destroyContext`.
+
+**Cause:** Native stream handlers are trying to send `FlutterEndOfEventStream` during `deinit`, but `deinit` is triggered by the Flutter engine teardown — the channel is already dead.
+
+**Fix:** Ensure all stream handler `.dispose()` calls happen in the platform view's `"dispose"` method call handler (called from Dart while the engine is alive), not in `deinit`. The `deinit` should only nil out references without sending any messages. See [iOS Platform - Stream and View Lifecycle](platform-specific/ios.md#stream-and-view-lifecycle).
+
 ## Platform-Specific Issues
 
 ### iOS: Localhost Connection Failed
