@@ -126,6 +126,10 @@ public struct FlutterPdfPreferences {
     /// Defaults to true (enabled) when nil.
     var enableSwipeNavigation: Bool?
 
+    /// Edge tap area as a percentage of screen width (10–30). iOS only.
+    /// Defaults to 12 when nil.
+    var edgeTapAreaPercent: Double?
+
     /// Creates FlutterPdfPreferences with default values.
     init(
         fit: FlutterPdfFit? = nil,
@@ -137,7 +141,8 @@ public struct FlutterPdfPreferences {
         disableDragGestures: Bool? = nil,
         disableTextSelectionMenu: Bool? = nil,
         enableEdgeTapNavigation: Bool? = nil,
-        enableSwipeNavigation: Bool? = nil
+        enableSwipeNavigation: Bool? = nil,
+        edgeTapAreaPercent: Double? = nil
     ) {
         self.fit = fit
         self.scrollMode = scrollMode
@@ -149,6 +154,7 @@ public struct FlutterPdfPreferences {
         self.disableTextSelectionMenu = disableTextSelectionMenu
         self.enableEdgeTapNavigation = enableEdgeTapNavigation
         self.enableSwipeNavigation = enableSwipeNavigation
+        self.edgeTapAreaPercent = edgeTapAreaPercent
     }
 
     /// Creates FlutterPdfPreferences from a Flutter dictionary.
@@ -168,7 +174,8 @@ public struct FlutterPdfPreferences {
             disableDragGestures: map["disableDragGestures"] as? Bool,
             disableTextSelectionMenu: map["disableTextSelectionMenu"] as? Bool,
             enableEdgeTapNavigation: map["enableEdgeTapNavigation"] as? Bool,
-            enableSwipeNavigation: map["enableSwipeNavigation"] as? Bool
+            enableSwipeNavigation: map["enableSwipeNavigation"] as? Bool,
+            edgeTapAreaPercent: map["edgeTapAreaPercent"] as? Double
         )
     }
 
@@ -223,6 +230,9 @@ public struct FlutterPdfPreferences {
         }
         if let enableSwipeNavigation = enableSwipeNavigation {
             map["enableSwipeNavigation"] = enableSwipeNavigation
+        }
+        if let edgeTapAreaPercent = edgeTapAreaPercent {
+            map["edgeTapAreaPercent"] = edgeTapAreaPercent
         }
         return map
     }

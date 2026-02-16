@@ -14,6 +14,7 @@ class EPUBPreferences {
     this.pageMargins,
     this.enableEdgeTapNavigation,
     this.enableSwipeNavigation,
+    this.edgeTapAreaPercent,
   });
 
   factory EPUBPreferences.fromJsonMap(final Map<String, dynamic> map) =>
@@ -44,6 +45,10 @@ class EPUBPreferences {
   /// Defaults to true (enabled) when null.
   bool? enableSwipeNavigation;
 
+  /// Edge tap area as a percentage of screen width (10–30). iOS only.
+  /// Defaults to 12 when null.
+  double? edgeTapAreaPercent;
+
   // TODO: Add more preferences,
   //see https://github.com/readium/swift-toolkit/blob/develop/Sources/Navigator/EPUB/Preferences/EPUBPreferences.swift
 
@@ -64,6 +69,9 @@ class EPUBPreferences {
     }
     if (enableSwipeNavigation != null) {
       map['enableSwipeNavigation'] = enableSwipeNavigation.toString();
+    }
+    if (edgeTapAreaPercent != null) {
+      map['edgeTapAreaPercent'] = edgeTapAreaPercent.toString();
     }
     return map;
   }

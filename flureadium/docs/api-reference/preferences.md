@@ -19,6 +19,9 @@ EPUBPreferences({
   required Color? backgroundColor,
   required Color? textColor,
   double? pageMargins,
+  bool? enableEdgeTapNavigation,    // iOS only
+  bool? enableSwipeNavigation,      // iOS only
+  double? edgeTapAreaPercent,       // iOS only
 })
 ```
 
@@ -129,6 +132,19 @@ Whether swipe gesture navigation is enabled. When true, swiping left/right navig
 ```dart
 enableSwipeNavigation: true   // Swipe navigates pages (default)
 enableSwipeNavigation: false  // Swipe navigation disabled
+```
+
+#### edgeTapAreaPercent (iOS only)
+
+**Type:** `double?`
+
+Edge tap area as a percentage of screen width (10–30). Controls how wide the left/right tap zones are for page navigation. Defaults to 12 when null. Values are clamped to the 10–30 range on the native side.
+
+```dart
+edgeTapAreaPercent: 10   // Narrow tap zones (10% each side)
+edgeTapAreaPercent: 12   // Default tap zones
+edgeTapAreaPercent: 20   // Wider tap zones
+edgeTapAreaPercent: 30   // Maximum tap zones (30% each side)
 ```
 
 ### Methods
@@ -416,6 +432,7 @@ PDFPreferences({
   bool? disableTextSelectionMenu,  // iOS only
   bool? enableEdgeTapNavigation,   // iOS only
   bool? enableSwipeNavigation,     // iOS only
+  double? edgeTapAreaPercent,      // iOS only
 })
 ```
 
@@ -532,6 +549,19 @@ enableSwipeNavigation: true   // Swipe navigates pages (default)
 enableSwipeNavigation: false  // Swipe navigation disabled
 ```
 
+#### edgeTapAreaPercent (iOS only)
+
+**Type:** `double?`
+
+Edge tap area as a percentage of screen width (10–30). Controls how wide the left/right tap zones are for page navigation. Defaults to 12 when null. Values are clamped to the 10–30 range on the native side.
+
+```dart
+edgeTapAreaPercent: 10   // Narrow tap zones (10% each side)
+edgeTapAreaPercent: 12   // Default tap zones
+edgeTapAreaPercent: 20   // Wider tap zones
+edgeTapAreaPercent: 30   // Maximum tap zones (30% each side)
+```
+
 ### Methods
 
 #### toJson
@@ -566,6 +596,7 @@ PDFPreferences copyWith({
   bool? disableTextSelectionMenu,
   bool? enableEdgeTapNavigation,
   bool? enableSwipeNavigation,
+  double? edgeTapAreaPercent,
 })
 ```
 

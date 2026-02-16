@@ -20,8 +20,8 @@ class EdgeTapInterceptView: UIView {
     var onSwipeLeft: (() -> Void)?
     /// Callback for swipe right gesture (in edge zones)
     var onSwipeRight: (() -> Void)?
-    /// Edge threshold as percentage of width (default 30%)
-    var edgeThresholdPercent: CGFloat = 0.3
+    /// Edge threshold as percentage of width (default 12%)
+    var edgeThresholdPercent: CGFloat = 0.12
 
     override init(frame: CGRect) {
         super.init(frame: frame)

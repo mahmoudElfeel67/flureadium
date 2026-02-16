@@ -82,6 +82,54 @@ void main() {
       });
     });
 
+    group('edgeTapAreaPercent', () {
+      test('defaults to null', () {
+        final prefs = PDFPreferences();
+        expect(prefs.edgeTapAreaPercent, isNull);
+      });
+
+      test('can be set via constructor', () {
+        final prefs = PDFPreferences(edgeTapAreaPercent: 15.0);
+        expect(prefs.edgeTapAreaPercent, equals(15.0));
+      });
+
+      test('serializes correctly', () {
+        final prefs = PDFPreferences(edgeTapAreaPercent: 20.0);
+        final json = prefs.toJson();
+        expect(json['edgeTapAreaPercent'], equals(20.0));
+      });
+
+      test('not included when null', () {
+        final prefs = PDFPreferences();
+        final json = prefs.toJson();
+        expect(json.containsKey('edgeTapAreaPercent'), false);
+      });
+
+      test('fromJsonMap parses edgeTapAreaPercent', () {
+        final json = {'edgeTapAreaPercent': 18.0};
+        final prefs = PDFPreferences.fromJsonMap(json);
+        expect(prefs.edgeTapAreaPercent, equals(18.0));
+      });
+
+      test('fromJsonMap parses edgeTapAreaPercent from int', () {
+        final json = {'edgeTapAreaPercent': 15};
+        final prefs = PDFPreferences.fromJsonMap(json);
+        expect(prefs.edgeTapAreaPercent, equals(15.0));
+      });
+
+      test('copyWith preserves edgeTapAreaPercent', () {
+        final prefs1 = PDFPreferences(edgeTapAreaPercent: 20.0);
+        final prefs2 = prefs1.copyWith();
+        expect(prefs2.edgeTapAreaPercent, equals(20.0));
+      });
+
+      test('copyWith can override edgeTapAreaPercent', () {
+        final prefs1 = PDFPreferences(edgeTapAreaPercent: 20.0);
+        final prefs2 = prefs1.copyWith(edgeTapAreaPercent: 10.0);
+        expect(prefs2.edgeTapAreaPercent, equals(10.0));
+      });
+    });
+
     group('enableSwipeNavigation', () {
       test('defaults to null', () {
         final prefs = PDFPreferences();

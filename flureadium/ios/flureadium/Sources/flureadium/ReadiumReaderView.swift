@@ -34,6 +34,7 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
   private var hasSentReady = false
   private let enableEdgeTapNavigation: Bool
   private let enableSwipeNavigation: Bool
+  private var edgeTapAreaPercent: CGFloat?
 
   // Retain the navigation adapter to prevent ARC deallocation
   private var directionalNavigationAdapter: DirectionalNavigationAdapter?
@@ -75,6 +76,12 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
     enableEdgeTapNavigation = edgeTapStr != "false"  // default true
     let swipeStr = preferencesMap??["enableSwipeNavigation"]
     enableSwipeNavigation = swipeStr != "false"  // default true
+
+    // Read edge tap area percentage (serialized as string from Dart)
+    if let edgeTapAreaStr = preferencesMap??["edgeTapAreaPercent"],
+       let edgeTapArea = Double(edgeTapAreaStr) {
+      edgeTapAreaPercent = CGFloat(min(max(edgeTapArea / 100.0, 0.10), 0.30))
+    }
 
     let locatorStr = creationParams["initialLocator"] as? String
     let locator = locatorStr == nil ? nil : try! Locator.init(jsonString: locatorStr!)
@@ -277,6 +284,10 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
   /// In paginated mode, edge taps trigger goLeft/goRight for page navigation.
   private func configureEdgeTapHandlers(isScrollMode: Bool) {
     guard let edgeTapView = _view as? EdgeTapInterceptView else { return }
+
+    if let percent = edgeTapAreaPercent {
+      edgeTapView.edgeThresholdPercent = percent
+    }
 
     if isScrollMode {
       // Disable edge tap and swipe navigation in scroll mode

@@ -14,7 +14,7 @@ final class EdgeTapInterceptViewTests: XCTestCase {
 
     func testDefaultEdgeThreshold() {
         let view = EdgeTapInterceptView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
-        XCTAssertEqual(view.edgeThresholdPercent, 0.3)
+        XCTAssertEqual(view.edgeThresholdPercent, 0.12)
     }
 
     func testCallbacksDefaultToNil() {
@@ -33,28 +33,28 @@ final class EdgeTapInterceptViewTests: XCTestCase {
 
     func testLeftEdgeDetection() {
         let view = EdgeTapInterceptView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
-        // With 30% threshold, left edge is 0-30 pixels
+        // With 12% threshold, left edge is 0-12 pixels
 
-        // Point at x=15 should be in left edge (15 < 30)
-        let leftEdgePoint = CGPoint(x: 15, y: 50)
+        // Point at x=5 should be in left edge (5 < 12)
+        let leftEdgePoint = CGPoint(x: 5, y: 50)
         let edgeSize = view.bounds.width * view.edgeThresholdPercent
-        XCTAssertTrue(leftEdgePoint.x < edgeSize, "Point at x=15 should be in left edge zone")
+        XCTAssertTrue(leftEdgePoint.x < edgeSize, "Point at x=5 should be in left edge zone")
 
-        // Point at x=50 should NOT be in left edge (50 > 30)
+        // Point at x=50 should NOT be in left edge (50 > 12)
         let centerPoint = CGPoint(x: 50, y: 50)
         XCTAssertFalse(centerPoint.x < edgeSize, "Point at x=50 should not be in left edge zone")
     }
 
     func testRightEdgeDetection() {
         let view = EdgeTapInterceptView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
-        // With 30% threshold, right edge is 70-100 pixels
+        // With 12% threshold, right edge is 88-100 pixels
 
-        // Point at x=85 should be in right edge (85 > 70)
-        let rightEdgePoint = CGPoint(x: 85, y: 50)
+        // Point at x=95 should be in right edge (95 > 88)
+        let rightEdgePoint = CGPoint(x: 95, y: 50)
         let edgeSize = view.bounds.width * view.edgeThresholdPercent
-        XCTAssertTrue(rightEdgePoint.x > view.bounds.width - edgeSize, "Point at x=85 should be in right edge zone")
+        XCTAssertTrue(rightEdgePoint.x > view.bounds.width - edgeSize, "Point at x=95 should be in right edge zone")
 
-        // Point at x=50 should NOT be in right edge (50 < 70)
+        // Point at x=50 should NOT be in right edge (50 < 88)
         let centerPoint = CGPoint(x: 50, y: 50)
         XCTAssertFalse(centerPoint.x > view.bounds.width - edgeSize, "Point at x=50 should not be in right edge zone")
     }
@@ -78,8 +78,8 @@ final class EdgeTapInterceptViewTests: XCTestCase {
         let view = EdgeTapInterceptView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
         // No callbacks set
 
-        let leftEdgePoint = CGPoint(x: 15, y: 50)
-        let rightEdgePoint = CGPoint(x: 85, y: 50)
+        let leftEdgePoint = CGPoint(x: 5, y: 50)
+        let rightEdgePoint = CGPoint(x: 95, y: 50)
 
         XCTAssertNil(view.hitTest(leftEdgePoint, with: nil), "Hit test should return nil for left edge when no callback")
         XCTAssertNil(view.hitTest(rightEdgePoint, with: nil), "Hit test should return nil for right edge when no callback")
@@ -89,7 +89,7 @@ final class EdgeTapInterceptViewTests: XCTestCase {
         let view = EdgeTapInterceptView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
         view.onLeftEdgeTap = { }
 
-        let leftEdgePoint = CGPoint(x: 15, y: 50)
+        let leftEdgePoint = CGPoint(x: 5, y: 50)
         XCTAssertEqual(view.hitTest(leftEdgePoint, with: nil), view, "Hit test should return self for left edge with callback")
     }
 
@@ -97,7 +97,7 @@ final class EdgeTapInterceptViewTests: XCTestCase {
         let view = EdgeTapInterceptView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
         view.onRightEdgeTap = { }
 
-        let rightEdgePoint = CGPoint(x: 85, y: 50)
+        let rightEdgePoint = CGPoint(x: 95, y: 50)
         XCTAssertEqual(view.hitTest(rightEdgePoint, with: nil), view, "Hit test should return self for right edge with callback")
     }
 
@@ -149,9 +149,9 @@ final class EdgeTapInterceptViewTests: XCTestCase {
     func testExactlyOnLeftEdgeBoundary() {
         let view = EdgeTapInterceptView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
         view.onLeftEdgeTap = { }
-        let edgeSize = view.bounds.width * view.edgeThresholdPercent // 30
+        let edgeSize = view.bounds.width * view.edgeThresholdPercent // 12
 
-        // Point exactly at boundary (x=30) should NOT be in left edge (30 < 30 is false)
+        // Point exactly at boundary (x=12) should NOT be in left edge (12 < 12 is false)
         let boundaryPoint = CGPoint(x: edgeSize, y: 50)
         XCTAssertNil(view.hitTest(boundaryPoint, with: nil), "Point exactly at left boundary should not trigger")
     }
@@ -159,10 +159,10 @@ final class EdgeTapInterceptViewTests: XCTestCase {
     func testExactlyOnRightEdgeBoundary() {
         let view = EdgeTapInterceptView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
         view.onRightEdgeTap = { }
-        let edgeSize = view.bounds.width * view.edgeThresholdPercent // 30
-        let rightBoundary = view.bounds.width - edgeSize // 70
+        let edgeSize = view.bounds.width * view.edgeThresholdPercent // 12
+        let rightBoundary = view.bounds.width - edgeSize // 88
 
-        // Point exactly at boundary (x=70) should NOT be in right edge (70 > 70 is false)
+        // Point exactly at boundary (x=88) should NOT be in right edge (88 > 88 is false)
         let boundaryPoint = CGPoint(x: rightBoundary, y: 50)
         XCTAssertNil(view.hitTest(boundaryPoint, with: nil), "Point exactly at right boundary should not trigger")
     }
@@ -174,9 +174,9 @@ final class EdgeTapInterceptViewTests: XCTestCase {
         view.onLeftEdgeTap = { }
         view.onRightEdgeTap = { }
 
-        // With 30% threshold on 1000px width, left edge is 0-300, right edge is 700-1000
-        let leftEdgePoint = CGPoint(x: 150, y: 400)
-        let rightEdgePoint = CGPoint(x: 850, y: 400)
+        // With 12% threshold on 1000px width, left edge is 0-120, right edge is 880-1000
+        let leftEdgePoint = CGPoint(x: 60, y: 400)
+        let rightEdgePoint = CGPoint(x: 950, y: 400)
         let centerPoint = CGPoint(x: 500, y: 400)
 
         XCTAssertEqual(view.hitTest(leftEdgePoint, with: nil), view, "Left edge detection should work on large view")
@@ -189,9 +189,9 @@ final class EdgeTapInterceptViewTests: XCTestCase {
         view.onLeftEdgeTap = { }
         view.onRightEdgeTap = { }
 
-        // With 30% threshold on 50px width, left edge is 0-15, right edge is 35-50
-        let leftEdgePoint = CGPoint(x: 7, y: 25)
-        let rightEdgePoint = CGPoint(x: 43, y: 25)
+        // With 12% threshold on 50px width, left edge is 0-6, right edge is 44-50
+        let leftEdgePoint = CGPoint(x: 3, y: 25)
+        let rightEdgePoint = CGPoint(x: 47, y: 25)
         let centerPoint = CGPoint(x: 25, y: 25)
 
         XCTAssertEqual(view.hitTest(leftEdgePoint, with: nil), view, "Left edge detection should work on small view")
@@ -200,6 +200,23 @@ final class EdgeTapInterceptViewTests: XCTestCase {
     }
 
     // MARK: - Custom Threshold Tests
+
+    func testEdgeThresholdAcceptsAnyValue() {
+        // The view is a dumb component - clamping happens in reader views, not here
+        let view = EdgeTapInterceptView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
+        view.edgeThresholdPercent = 0.05
+        XCTAssertEqual(view.edgeThresholdPercent, 0.05, "View should accept values below 10% range")
+
+        view.edgeThresholdPercent = 0.50
+        XCTAssertEqual(view.edgeThresholdPercent, 0.50, "View should accept values above 30% range")
+    }
+
+    func testDefaultThresholdGivesMinimum44ptOnSmallestDevice() {
+        // iPhone SE has 375pt width. 12% of 375 = 45pt, which is >= 44pt minimum tap target
+        let view = EdgeTapInterceptView(frame: CGRect(x: 0, y: 0, width: 375, height: 667))
+        let edgeSize = view.bounds.width * view.edgeThresholdPercent
+        XCTAssertGreaterThanOrEqual(edgeSize, 44.0, "Default 12% threshold should give >= 44pt on iPhone SE (375pt width)")
+    }
 
     func testCustomThresholdChangesEdgeZones() {
         let view = EdgeTapInterceptView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))

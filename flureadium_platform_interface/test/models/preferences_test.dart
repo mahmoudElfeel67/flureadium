@@ -186,6 +186,73 @@ void main() {
       });
     });
 
+    group('edgeTapAreaPercent', () {
+      test('defaults to null', () {
+        final prefs = EPUBPreferences(
+          fontFamily: 'Arial',
+          fontSize: 100,
+          fontWeight: 400.0,
+          verticalScroll: false,
+          backgroundColor: null,
+          textColor: null,
+        );
+        expect(prefs.edgeTapAreaPercent, isNull);
+      });
+
+      test('can be set via constructor', () {
+        final prefs = EPUBPreferences(
+          fontFamily: 'Arial',
+          fontSize: 100,
+          fontWeight: 400.0,
+          verticalScroll: false,
+          backgroundColor: null,
+          textColor: null,
+          edgeTapAreaPercent: 15.0,
+        );
+        expect(prefs.edgeTapAreaPercent, equals(15.0));
+      });
+
+      test('serializes to JSON when set', () {
+        final prefs = EPUBPreferences(
+          fontFamily: 'Arial',
+          fontSize: 100,
+          fontWeight: 400.0,
+          verticalScroll: false,
+          backgroundColor: null,
+          textColor: null,
+          edgeTapAreaPercent: 20.0,
+        );
+        final json = prefs.toJson();
+        expect(json['edgeTapAreaPercent'], equals('20.0'));
+      });
+
+      test('not included in JSON when null', () {
+        final prefs = EPUBPreferences(
+          fontFamily: 'Arial',
+          fontSize: 100,
+          fontWeight: 400.0,
+          verticalScroll: false,
+          backgroundColor: null,
+          textColor: null,
+        );
+        final json = prefs.toJson();
+        expect(json.containsKey('edgeTapAreaPercent'), isFalse);
+      });
+
+      test('can be modified', () {
+        final prefs = EPUBPreferences(
+          fontFamily: 'Arial',
+          fontSize: 100,
+          fontWeight: 400.0,
+          verticalScroll: false,
+          backgroundColor: null,
+          textColor: null,
+        )..edgeTapAreaPercent = 25.0;
+
+        expect(prefs.edgeTapAreaPercent, equals(25.0));
+      });
+    });
+
     group('enableSwipeNavigation', () {
       test('defaults to null', () {
         final prefs = EPUBPreferences(
@@ -561,6 +628,7 @@ void main() {
         expect(json.containsKey('disableTextSelection'), isFalse);
         expect(json.containsKey('enableEdgeTapNavigation'), isFalse);
         expect(json.containsKey('enableSwipeNavigation'), isFalse);
+        expect(json.containsKey('edgeTapAreaPercent'), isFalse);
       });
 
       test('serializes disableDoubleTapZoom when set', () {

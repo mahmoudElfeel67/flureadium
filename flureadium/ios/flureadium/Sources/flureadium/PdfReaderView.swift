@@ -34,6 +34,7 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
   private let disableTextSelectionMenu: Bool
   private let enableEdgeTapNavigation: Bool
   private let enableSwipeNavigation: Bool
+  private let edgeTapAreaPercent: CGFloat?
 
   var publicationIdentifier: String?
 
@@ -78,6 +79,11 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
     disableTextSelectionMenu = flutterPrefs.disableTextSelectionMenu ?? false
     enableEdgeTapNavigation = flutterPrefs.enableEdgeTapNavigation ?? true
     enableSwipeNavigation = flutterPrefs.enableSwipeNavigation ?? true
+    if let rawPercent = flutterPrefs.edgeTapAreaPercent {
+      edgeTapAreaPercent = CGFloat(min(max(rawPercent / 100.0, 0.10), 0.30))
+    } else {
+      edgeTapAreaPercent = nil
+    }
     print(TAG, "PDF Preferences - disableDoubleTapZoom: \(disableDoubleTapZoom), disableTextSelection: \(disableTextSelection), disableDragGestures: \(disableDragGestures), disableTextSelectionMenu: \(disableTextSelectionMenu), enableEdgeTapNavigation: \(enableEdgeTapNavigation), enableSwipeNavigation: \(enableSwipeNavigation)")
 
     let locatorStr = creationParams["initialLocator"] as? String
@@ -223,6 +229,10 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
   /// Tapping on the right 30% of the screen triggers goRight (next page).
   private func configureEdgeTapHandlers() {
     guard let edgeTapView = _view as? EdgeTapInterceptView else { return }
+
+    if let percent = edgeTapAreaPercent {
+      edgeTapView.edgeThresholdPercent = percent
+    }
 
     if enableEdgeTapNavigation {
       edgeTapView.onLeftEdgeTap = { [weak self] in
