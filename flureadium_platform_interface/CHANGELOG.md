@@ -1,3 +1,8 @@
+## 0.3.1
+
+- Add `edgeTapAreaPoints` to `EPUBPreferences` — configures the edge tap zone width in absolute points (44–120pt). iOS only. Defaults to 44pt (iOS HIG minimum tap target) when null.
+- Add `edgeTapAreaPoints` to `PDFPreferences` — same control for the PDF reader.
+
 ## 0.3.0
 
 - Add `renderFirstPage` method to `FlureadiumPlatform` and `MethodChannelFlureadium` — renders the first page of a PDF as a JPEG image for cover generation.
