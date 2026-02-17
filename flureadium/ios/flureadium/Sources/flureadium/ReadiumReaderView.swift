@@ -32,9 +32,18 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
   private let readiumViewController: EPUBNavigatorViewController
   private var isVerticalScroll = false
   private var hasSentReady = false
-  private let enableEdgeTapNavigation: Bool
-  private let enableSwipeNavigation: Bool
+  private var enableEdgeTapNavigation: Bool
+  private var enableSwipeNavigation: Bool
   private var edgeTapAreaPoints: CGFloat?
+
+  /// Keys owned by the app developer (navigation UX config). Extracted separately
+  /// in the setPreferences handler and must NOT be forwarded to
+  /// EPUBPreferences.init(fromMap:), which only understands Readium preference keys.
+  private static let developerConfigKeys: Set<String> = [
+    "enableEdgeTapNavigation",
+    "enableSwipeNavigation",
+    "edgeTapAreaPoints",
+  ]
 
   // Retain the navigation adapter to prevent ARC deallocation
   private var directionalNavigationAdapter: DirectionalNavigationAdapter?
@@ -69,7 +78,8 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
     let publication = getCurrentPublication()!
 
     let preferencesMap = creationParams["preferences"] as? Dictionary<String, String>?
-    let defaultPreferences = preferencesMap == nil ? nil : EPUBPreferences.init(fromMap: preferencesMap!!)
+    let filteredPrefsMap = preferencesMap == nil ? nil : preferencesMap!!.filter { !ReadiumReaderView.developerConfigKeys.contains($0.key) }
+    let defaultPreferences = filteredPrefsMap == nil ? nil : EPUBPreferences.init(fromMap: filteredPrefsMap!)
 
     // Read navigation gesture preferences (serialized as strings from Dart)
     let edgeTapStr = preferencesMap??["enableEdgeTapNavigation"]
@@ -527,11 +537,15 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
     case "setPreferences":
       let args = call.arguments as! [String: String]
       print(TAG, "onMethodCall[setPreferences] args = \(args)")
-      if let edgeTapAreaStr = args["edgeTapAreaPoints"],
-         let edgeTapArea = Double(edgeTapAreaStr) {
-        edgeTapAreaPoints = CGFloat(min(max(edgeTapArea, 44.0), 120.0))
+      // Extract developer config keys first — these control navigation UX and are
+      // not Readium reader settings. They must not be forwarded to EPUBPreferences.
+      if let v = args["enableEdgeTapNavigation"] { enableEdgeTapNavigation = v != "false" }
+      if let v = args["enableSwipeNavigation"] { enableSwipeNavigation = v != "false" }
+      if let pts = args["edgeTapAreaPoints"].flatMap(Double.init) {
+        edgeTapAreaPoints = CGFloat(min(max(pts, 44.0), 120.0))
       }
-      let preferences = EPUBPreferences.init(fromMap: args)
+      let readerPrefs = args.filter { !ReadiumReaderView.developerConfigKeys.contains($0.key) }
+      let preferences = EPUBPreferences.init(fromMap: readerPrefs)
       setUserPreferences(preferences: preferences)
       break
     case "applyDecorations":
