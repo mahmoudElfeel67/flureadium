@@ -186,7 +186,7 @@ void main() {
       });
     });
 
-    group('edgeTapAreaPercent', () {
+    group('edgeTapAreaPoints', () {
       test('defaults to null', () {
         final prefs = EPUBPreferences(
           fontFamily: 'Arial',
@@ -196,7 +196,7 @@ void main() {
           backgroundColor: null,
           textColor: null,
         );
-        expect(prefs.edgeTapAreaPercent, isNull);
+        expect(prefs.edgeTapAreaPoints, isNull);
       });
 
       test('can be set via constructor', () {
@@ -207,9 +207,9 @@ void main() {
           verticalScroll: false,
           backgroundColor: null,
           textColor: null,
-          edgeTapAreaPercent: 15.0,
+          edgeTapAreaPoints: 60.0,
         );
-        expect(prefs.edgeTapAreaPercent, equals(15.0));
+        expect(prefs.edgeTapAreaPoints, equals(60.0));
       });
 
       test('serializes to JSON when set', () {
@@ -220,10 +220,10 @@ void main() {
           verticalScroll: false,
           backgroundColor: null,
           textColor: null,
-          edgeTapAreaPercent: 20.0,
+          edgeTapAreaPoints: 80.0,
         );
         final json = prefs.toJson();
-        expect(json['edgeTapAreaPercent'], equals('20.0'));
+        expect(json['edgeTapAreaPoints'], equals('80.0'));
       });
 
       test('not included in JSON when null', () {
@@ -236,7 +236,7 @@ void main() {
           textColor: null,
         );
         final json = prefs.toJson();
-        expect(json.containsKey('edgeTapAreaPercent'), isFalse);
+        expect(json.containsKey('edgeTapAreaPoints'), isFalse);
       });
 
       test('can be modified', () {
@@ -247,9 +247,9 @@ void main() {
           verticalScroll: false,
           backgroundColor: null,
           textColor: null,
-        )..edgeTapAreaPercent = 25.0;
+        )..edgeTapAreaPoints = 100.0;
 
-        expect(prefs.edgeTapAreaPercent, equals(25.0));
+        expect(prefs.edgeTapAreaPoints, equals(100.0));
       });
     });
 
@@ -628,7 +628,7 @@ void main() {
         expect(json.containsKey('disableTextSelection'), isFalse);
         expect(json.containsKey('enableEdgeTapNavigation'), isFalse);
         expect(json.containsKey('enableSwipeNavigation'), isFalse);
-        expect(json.containsKey('edgeTapAreaPercent'), isFalse);
+        expect(json.containsKey('edgeTapAreaPoints'), isFalse);
       });
 
       test('serializes disableDoubleTapZoom when set', () {

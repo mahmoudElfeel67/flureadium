@@ -34,7 +34,7 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
   private let disableTextSelectionMenu: Bool
   private let enableEdgeTapNavigation: Bool
   private let enableSwipeNavigation: Bool
-  private let edgeTapAreaPercent: CGFloat?
+  private var edgeTapAreaPoints: CGFloat?
 
   var publicationIdentifier: String?
 
@@ -79,10 +79,10 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
     disableTextSelectionMenu = flutterPrefs.disableTextSelectionMenu ?? false
     enableEdgeTapNavigation = flutterPrefs.enableEdgeTapNavigation ?? true
     enableSwipeNavigation = flutterPrefs.enableSwipeNavigation ?? true
-    if let rawPercent = flutterPrefs.edgeTapAreaPercent {
-      edgeTapAreaPercent = CGFloat(min(max(rawPercent / 100.0, 0.05), 0.30))
+    if let rawPoints = flutterPrefs.edgeTapAreaPoints {
+      edgeTapAreaPoints = CGFloat(min(max(rawPoints, 44.0), 120.0))
     } else {
-      edgeTapAreaPercent = nil
+      edgeTapAreaPoints = nil
     }
     print(TAG, "PDF Preferences - disableDoubleTapZoom: \(disableDoubleTapZoom), disableTextSelection: \(disableTextSelection), disableDragGestures: \(disableDragGestures), disableTextSelectionMenu: \(disableTextSelectionMenu), enableEdgeTapNavigation: \(enableEdgeTapNavigation), enableSwipeNavigation: \(enableSwipeNavigation)")
 
@@ -222,19 +222,19 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
 
   private func setUserPreferences(preferences: PDFPreferences) {
     self.pdfViewController.submitPreferences(preferences)
+    configureEdgeTapHandlers()
   }
 
   /// Configure edge tap handlers for page navigation.
-  /// Tapping on the left 30% of the screen triggers goLeft (previous page).
-  /// Tapping on the right 30% of the screen triggers goRight (next page).
+  /// Tapping on the left edge triggers goLeft (previous page).
+  /// Tapping on the right edge triggers goRight (next page).
   private func configureEdgeTapHandlers() {
     guard let edgeTapView = _view as? EdgeTapInterceptView else { return }
 
-    if let percent = edgeTapAreaPercent {
-      edgeTapView.edgeThresholdPercent = percent
-    }
-
     if enableEdgeTapNavigation {
+      if let points = edgeTapAreaPoints {
+        edgeTapView.edgeThresholdPoints = points
+      }
       edgeTapView.onLeftEdgeTap = { [weak self] in
         guard let self = self else { return }
         print(TAG, "[FALLBACK] Triggering goLeft via edge tap")
@@ -439,6 +439,9 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
     case "setPreferences":
       let args = call.arguments as! [String: Any]
       print(TAG, "onMethodCall[setPreferences] args = \(args)")
+      if let rawPoints = args["edgeTapAreaPoints"] as? Double {
+        edgeTapAreaPoints = CGFloat(min(max(rawPoints, 44.0), 120.0))
+      }
       let preferences = PDFPreferences(fromMap: args)
       setUserPreferences(preferences: preferences)
       result(nil)

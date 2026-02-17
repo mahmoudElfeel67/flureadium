@@ -21,7 +21,7 @@ EPUBPreferences({
   double? pageMargins,
   bool? enableEdgeTapNavigation,    // iOS only
   bool? enableSwipeNavigation,      // iOS only
-  double? edgeTapAreaPercent,       // iOS only
+  double? edgeTapAreaPoints,        // iOS only
 })
 ```
 
@@ -134,17 +134,17 @@ enableSwipeNavigation: true   // Swipe navigates pages (default)
 enableSwipeNavigation: false  // Swipe navigation disabled
 ```
 
-#### edgeTapAreaPercent (iOS only)
+#### edgeTapAreaPoints (iOS only)
 
 **Type:** `double?`
 
-Edge tap area as a percentage of screen width (5–30). Controls how wide the left/right tap zones are for page navigation. Defaults to 12 when null. Values are clamped to the 5–30 range on the native side.
+Edge tap area in absolute points (44–120). Controls how wide the left/right tap zones are for page navigation. Defaults to 44pt (iOS HIG minimum tap target) when null. Values are clamped to the 44–120 range on the native side.
 
 ```dart
-edgeTapAreaPercent: 10   // Narrow tap zones (10% each side)
-edgeTapAreaPercent: 12   // Default tap zones
-edgeTapAreaPercent: 20   // Wider tap zones
-edgeTapAreaPercent: 30   // Maximum tap zones (30% each side)
+edgeTapAreaPoints: 44   // Default tap zones (iOS HIG minimum)
+edgeTapAreaPoints: 60   // Wider tap zones
+edgeTapAreaPoints: 80   // Even wider tap zones
+edgeTapAreaPoints: 120  // Maximum tap zones
 ```
 
 ### Methods
@@ -432,7 +432,7 @@ PDFPreferences({
   bool? disableTextSelectionMenu,  // iOS only
   bool? enableEdgeTapNavigation,   // iOS only
   bool? enableSwipeNavigation,     // iOS only
-  double? edgeTapAreaPercent,      // iOS only
+  double? edgeTapAreaPoints,       // iOS only
 })
 ```
 
@@ -549,17 +549,17 @@ enableSwipeNavigation: true   // Swipe navigates pages (default)
 enableSwipeNavigation: false  // Swipe navigation disabled
 ```
 
-#### edgeTapAreaPercent (iOS only)
+#### edgeTapAreaPoints (iOS only)
 
 **Type:** `double?`
 
-Edge tap area as a percentage of screen width (5–30). Controls how wide the left/right tap zones are for page navigation. Defaults to 12 when null. Values are clamped to the 5–30 range on the native side.
+Edge tap area in absolute points (44–120). Controls how wide the left/right tap zones are for page navigation. Defaults to 44pt (iOS HIG minimum tap target) when null. Values are clamped to the 44–120 range on the native side.
 
 ```dart
-edgeTapAreaPercent: 10   // Narrow tap zones (10% each side)
-edgeTapAreaPercent: 12   // Default tap zones
-edgeTapAreaPercent: 20   // Wider tap zones
-edgeTapAreaPercent: 30   // Maximum tap zones (30% each side)
+edgeTapAreaPoints: 44   // Default tap zones (iOS HIG minimum)
+edgeTapAreaPoints: 60   // Wider tap zones
+edgeTapAreaPoints: 80   // Even wider tap zones
+edgeTapAreaPoints: 120  // Maximum tap zones
 ```
 
 ### Methods
@@ -596,7 +596,7 @@ PDFPreferences copyWith({
   bool? disableTextSelectionMenu,
   bool? enableEdgeTapNavigation,
   bool? enableSwipeNavigation,
-  double? edgeTapAreaPercent,
+  double? edgeTapAreaPoints,
 })
 ```
 

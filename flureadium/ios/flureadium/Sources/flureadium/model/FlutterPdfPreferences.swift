@@ -126,9 +126,9 @@ public struct FlutterPdfPreferences {
     /// Defaults to true (enabled) when nil.
     var enableSwipeNavigation: Bool?
 
-    /// Edge tap area as a percentage of screen width (10–30). iOS only.
-    /// Defaults to 12 when nil.
-    var edgeTapAreaPercent: Double?
+    /// Edge tap area in absolute points (44–120). iOS only.
+    /// Defaults to 44pt (iOS HIG minimum tap target) when nil.
+    var edgeTapAreaPoints: Double?
 
     /// Creates FlutterPdfPreferences with default values.
     init(
@@ -142,7 +142,7 @@ public struct FlutterPdfPreferences {
         disableTextSelectionMenu: Bool? = nil,
         enableEdgeTapNavigation: Bool? = nil,
         enableSwipeNavigation: Bool? = nil,
-        edgeTapAreaPercent: Double? = nil
+        edgeTapAreaPoints: Double? = nil
     ) {
         self.fit = fit
         self.scrollMode = scrollMode
@@ -154,7 +154,7 @@ public struct FlutterPdfPreferences {
         self.disableTextSelectionMenu = disableTextSelectionMenu
         self.enableEdgeTapNavigation = enableEdgeTapNavigation
         self.enableSwipeNavigation = enableSwipeNavigation
-        self.edgeTapAreaPercent = edgeTapAreaPercent
+        self.edgeTapAreaPoints = edgeTapAreaPoints
     }
 
     /// Creates FlutterPdfPreferences from a Flutter dictionary.
@@ -175,7 +175,7 @@ public struct FlutterPdfPreferences {
             disableTextSelectionMenu: map["disableTextSelectionMenu"] as? Bool,
             enableEdgeTapNavigation: map["enableEdgeTapNavigation"] as? Bool,
             enableSwipeNavigation: map["enableSwipeNavigation"] as? Bool,
-            edgeTapAreaPercent: map["edgeTapAreaPercent"] as? Double
+            edgeTapAreaPoints: map["edgeTapAreaPoints"] as? Double
         )
     }
 
@@ -231,8 +231,8 @@ public struct FlutterPdfPreferences {
         if let enableSwipeNavigation = enableSwipeNavigation {
             map["enableSwipeNavigation"] = enableSwipeNavigation
         }
-        if let edgeTapAreaPercent = edgeTapAreaPercent {
-            map["edgeTapAreaPercent"] = edgeTapAreaPercent
+        if let edgeTapAreaPoints = edgeTapAreaPoints {
+            map["edgeTapAreaPoints"] = edgeTapAreaPoints
         }
         return map
     }

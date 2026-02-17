@@ -617,10 +617,10 @@ PDFPreferences(
 
 ### Edge Tap Area Size (iOS)
 
-You can configure how wide the edge tap zones are using `edgeTapAreaPercent`. The value is a percentage of screen width (5–30), and defaults to 12 when null. The default of 12% ensures at least 44pt tap targets on the smallest iOS device (iPhone SE, 375pt width).
+You can configure how wide the edge tap zones are using `edgeTapAreaPoints`. The value is in absolute iOS points (44–120), and defaults to 44pt (iOS HIG minimum tap target) when null. Using absolute points ensures consistent tap zones across all devices and multitasking modes, including iPad split-screen.
 
 ```dart
-// EPUB: smaller edge tap zones
+// EPUB: default tap zones (iOS HIG minimum)
 EPUBPreferences(
   fontFamily: 'Georgia',
   fontSize: 100,
@@ -628,18 +628,18 @@ EPUBPreferences(
   verticalScroll: false,
   backgroundColor: null,
   textColor: null,
-  edgeTapAreaPercent: 10,  // 10% of screen width per side
+  edgeTapAreaPoints: 44,  // 44pt per side (iOS HIG minimum, default)
 )
 
-// PDF: larger edge tap zones
+// PDF: wider tap zones for accessibility
 PDFPreferences(
   fit: PDFFit.width,
   scrollMode: PDFScrollMode.horizontal,
-  edgeTapAreaPercent: 25,  // 25% of screen width per side
+  edgeTapAreaPoints: 80,  // 80pt per side
 )
 ```
 
-Values outside the 5–30 range are clamped automatically. This preference only affects iOS; on Android, edge taps are handled internally by the Readium Kotlin Toolkit.
+Values outside the 44–120 range are clamped automatically. This preference only affects iOS; on Android, edge taps are handled internally by the Readium Kotlin Toolkit.
 
 ## See Also
 

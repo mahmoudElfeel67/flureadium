@@ -34,7 +34,7 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
   private var hasSentReady = false
   private let enableEdgeTapNavigation: Bool
   private let enableSwipeNavigation: Bool
-  private var edgeTapAreaPercent: CGFloat?
+  private var edgeTapAreaPoints: CGFloat?
 
   // Retain the navigation adapter to prevent ARC deallocation
   private var directionalNavigationAdapter: DirectionalNavigationAdapter?
@@ -77,10 +77,10 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
     let swipeStr = preferencesMap??["enableSwipeNavigation"]
     enableSwipeNavigation = swipeStr != "false"  // default true
 
-    // Read edge tap area percentage (serialized as string from Dart)
-    if let edgeTapAreaStr = preferencesMap??["edgeTapAreaPercent"],
+    // Read edge tap area in points (serialized as string from Dart)
+    if let edgeTapAreaStr = preferencesMap??["edgeTapAreaPoints"],
        let edgeTapArea = Double(edgeTapAreaStr) {
-      edgeTapAreaPercent = CGFloat(min(max(edgeTapArea / 100.0, 0.05), 0.30))
+      edgeTapAreaPoints = CGFloat(min(max(edgeTapArea, 44.0), 120.0))
     }
 
     let locatorStr = creationParams["initialLocator"] as? String
@@ -285,10 +285,6 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
   private func configureEdgeTapHandlers(isScrollMode: Bool) {
     guard let edgeTapView = _view as? EdgeTapInterceptView else { return }
 
-    if let percent = edgeTapAreaPercent {
-      edgeTapView.edgeThresholdPercent = percent
-    }
-
     if isScrollMode {
       // Disable edge tap and swipe navigation in scroll mode
       edgeTapView.onLeftEdgeTap = nil
@@ -298,6 +294,9 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
     } else {
       // Enable edge tap navigation in paginated mode (if preference allows)
       if enableEdgeTapNavigation {
+        if let points = edgeTapAreaPoints {
+          edgeTapView.edgeThresholdPoints = points
+        }
         edgeTapView.onLeftEdgeTap = { [weak self] in
           guard let self = self else { return }
           print(TAG, "[FALLBACK] Triggering goLeft via fallback tap handler")
@@ -530,6 +529,10 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
     case "setPreferences":
       let args = call.arguments as! [String: String]
       print(TAG, "onMethodCall[setPreferences] args = \(args)")
+      if let edgeTapAreaStr = args["edgeTapAreaPoints"],
+         let edgeTapArea = Double(edgeTapAreaStr) {
+        edgeTapAreaPoints = CGFloat(min(max(edgeTapArea, 44.0), 120.0))
+      }
       let preferences = EPUBPreferences.init(fromMap: args)
       setUserPreferences(preferences: preferences)
       break

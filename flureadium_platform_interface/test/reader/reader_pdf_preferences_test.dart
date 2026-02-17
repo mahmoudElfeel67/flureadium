@@ -82,51 +82,51 @@ void main() {
       });
     });
 
-    group('edgeTapAreaPercent', () {
+    group('edgeTapAreaPoints', () {
       test('defaults to null', () {
         final prefs = PDFPreferences();
-        expect(prefs.edgeTapAreaPercent, isNull);
+        expect(prefs.edgeTapAreaPoints, isNull);
       });
 
       test('can be set via constructor', () {
-        final prefs = PDFPreferences(edgeTapAreaPercent: 15.0);
-        expect(prefs.edgeTapAreaPercent, equals(15.0));
+        final prefs = PDFPreferences(edgeTapAreaPoints: 60.0);
+        expect(prefs.edgeTapAreaPoints, equals(60.0));
       });
 
       test('serializes correctly', () {
-        final prefs = PDFPreferences(edgeTapAreaPercent: 20.0);
+        final prefs = PDFPreferences(edgeTapAreaPoints: 80.0);
         final json = prefs.toJson();
-        expect(json['edgeTapAreaPercent'], equals(20.0));
+        expect(json['edgeTapAreaPoints'], equals(80.0));
       });
 
       test('not included when null', () {
         final prefs = PDFPreferences();
         final json = prefs.toJson();
-        expect(json.containsKey('edgeTapAreaPercent'), false);
+        expect(json.containsKey('edgeTapAreaPoints'), false);
       });
 
-      test('fromJsonMap parses edgeTapAreaPercent', () {
-        final json = {'edgeTapAreaPercent': 18.0};
+      test('fromJsonMap parses edgeTapAreaPoints', () {
+        final json = {'edgeTapAreaPoints': 72.0};
         final prefs = PDFPreferences.fromJsonMap(json);
-        expect(prefs.edgeTapAreaPercent, equals(18.0));
+        expect(prefs.edgeTapAreaPoints, equals(72.0));
       });
 
-      test('fromJsonMap parses edgeTapAreaPercent from int', () {
-        final json = {'edgeTapAreaPercent': 15};
+      test('fromJsonMap parses edgeTapAreaPoints from int', () {
+        final json = {'edgeTapAreaPoints': 60};
         final prefs = PDFPreferences.fromJsonMap(json);
-        expect(prefs.edgeTapAreaPercent, equals(15.0));
+        expect(prefs.edgeTapAreaPoints, equals(60.0));
       });
 
-      test('copyWith preserves edgeTapAreaPercent', () {
-        final prefs1 = PDFPreferences(edgeTapAreaPercent: 20.0);
+      test('copyWith preserves edgeTapAreaPoints', () {
+        final prefs1 = PDFPreferences(edgeTapAreaPoints: 80.0);
         final prefs2 = prefs1.copyWith();
-        expect(prefs2.edgeTapAreaPercent, equals(20.0));
+        expect(prefs2.edgeTapAreaPoints, equals(80.0));
       });
 
-      test('copyWith can override edgeTapAreaPercent', () {
-        final prefs1 = PDFPreferences(edgeTapAreaPercent: 20.0);
-        final prefs2 = prefs1.copyWith(edgeTapAreaPercent: 10.0);
-        expect(prefs2.edgeTapAreaPercent, equals(10.0));
+      test('copyWith can override edgeTapAreaPoints', () {
+        final prefs1 = PDFPreferences(edgeTapAreaPoints: 80.0);
+        final prefs2 = prefs1.copyWith(edgeTapAreaPoints: 44.0);
+        expect(prefs2.edgeTapAreaPoints, equals(44.0));
       });
     });
 

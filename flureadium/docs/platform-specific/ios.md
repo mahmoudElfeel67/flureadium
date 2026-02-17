@@ -159,10 +159,10 @@ EPUBPreferences(
 
 **Edge Threshold:**
 
-The edge threshold (30% by default) can be customized in Swift:
+The edge threshold defaults to 44pt (iOS HIG minimum tap target) and is controlled via the `edgeTapAreaPoints` preference (44–120pt range, clamped automatically). The raw property on `EdgeTapInterceptView` can also be set directly in Swift:
 
 ```swift
-edgeTapView.edgeThresholdPercent = 0.25 // 25% of screen width
+edgeTapView.edgeThresholdPoints = 80.0 // 80pt per side
 ```
 
 **Files:**
