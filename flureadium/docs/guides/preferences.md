@@ -615,6 +615,32 @@ PDFPreferences(
 
 **Note:** When `null` (default), both gestures are enabled. In EPUB scroll mode, both are automatically disabled regardless of these settings.
 
+### Edge Tap Area Size (iOS)
+
+You can configure how wide the edge tap zones are using `edgeTapAreaPoints`. The value is in absolute iOS points (44–120), and defaults to 44pt (iOS HIG minimum tap target) when null. Using absolute points ensures consistent tap zones across all devices and multitasking modes, including iPad split-screen.
+
+```dart
+// EPUB: default tap zones (iOS HIG minimum)
+EPUBPreferences(
+  fontFamily: 'Georgia',
+  fontSize: 100,
+  fontWeight: 400,
+  verticalScroll: false,
+  backgroundColor: null,
+  textColor: null,
+  edgeTapAreaPoints: 44,  // 44pt per side (iOS HIG minimum, default)
+)
+
+// PDF: wider tap zones for accessibility
+PDFPreferences(
+  fit: PDFFit.width,
+  scrollMode: PDFScrollMode.horizontal,
+  edgeTapAreaPoints: 80,  // 80pt per side
+)
+```
+
+Values outside the 44–120 range are clamped automatically. This preference only affects iOS; on Android, edge taps are handled internally by the Readium Kotlin Toolkit.
+
 ## See Also
 
 - [EPUBPreferences Reference](../api-reference/preferences.md#epubpreferences)

@@ -19,6 +19,9 @@ EPUBPreferences({
   required Color? backgroundColor,
   required Color? textColor,
   double? pageMargins,
+  bool? enableEdgeTapNavigation,    // iOS only
+  bool? enableSwipeNavigation,      // iOS only
+  double? edgeTapAreaPoints,        // iOS only
 })
 ```
 
@@ -109,26 +112,45 @@ pageMargins: 0.1   // 10% margins
 pageMargins: 0.15  // 15% margins
 ```
 
-#### enableEdgeTapNavigation (iOS only)
+#### enableEdgeTapNavigation (iOS only — developer config)
 
 **Type:** `bool?`
 
 Whether edge tap navigation is enabled. When true, tapping on the left/right edges of the screen navigates pages. Defaults to true when null.
+
+This is a **developer config key**: it controls navigation UX behaviour set by the app developer, not a user-facing Readium reading preference. On the native side, the reader view handler extracts and consumes this key before passing the remaining map to Readium's preference mapper.
 
 ```dart
 enableEdgeTapNavigation: true   // Edge taps navigate pages (default)
 enableEdgeTapNavigation: false  // Edge taps disabled
 ```
 
-#### enableSwipeNavigation (iOS only)
+#### enableSwipeNavigation (iOS only — developer config)
 
 **Type:** `bool?`
 
 Whether swipe gesture navigation is enabled. When true, swiping left/right navigates pages. Defaults to true when null.
 
+This is a **developer config key** (see `enableEdgeTapNavigation` above).
+
 ```dart
 enableSwipeNavigation: true   // Swipe navigates pages (default)
 enableSwipeNavigation: false  // Swipe navigation disabled
+```
+
+#### edgeTapAreaPoints (iOS only — developer config)
+
+**Type:** `double?`
+
+Edge tap area in absolute points (44–120). Controls how wide the left/right tap zones are for page navigation. Defaults to 44pt (iOS HIG minimum tap target) when null. Values are clamped to the 44–120 range on the native side.
+
+This is a **developer config key** (see `enableEdgeTapNavigation` above).
+
+```dart
+edgeTapAreaPoints: 44   // Default tap zones (iOS HIG minimum)
+edgeTapAreaPoints: 60   // Wider tap zones
+edgeTapAreaPoints: 80   // Even wider tap zones
+edgeTapAreaPoints: 120  // Maximum tap zones
 ```
 
 ### Methods
@@ -416,6 +438,7 @@ PDFPreferences({
   bool? disableTextSelectionMenu,  // iOS only
   bool? enableEdgeTapNavigation,   // iOS only
   bool? enableSwipeNavigation,     // iOS only
+  double? edgeTapAreaPoints,       // iOS only
 })
 ```
 
@@ -510,26 +533,45 @@ disableTextSelectionMenu: false  // Selection menu enabled (default)
 disableTextSelectionMenu: true   // Selection menu disabled
 ```
 
-#### enableEdgeTapNavigation (iOS only)
+#### enableEdgeTapNavigation (iOS only — developer config)
 
 **Type:** `bool?`
 
 Whether edge tap navigation is enabled. When true, tapping on the left/right edges of the screen navigates pages. Defaults to true when null.
+
+This is a **developer config key**: it controls navigation UX behaviour set by the app developer, not a user-facing Readium reading preference. On the native side, the reader view handler extracts and consumes this key before passing the remaining map to Readium's preference mapper.
 
 ```dart
 enableEdgeTapNavigation: true   // Edge taps navigate pages (default)
 enableEdgeTapNavigation: false  // Edge taps disabled
 ```
 
-#### enableSwipeNavigation (iOS only)
+#### enableSwipeNavigation (iOS only — developer config)
 
 **Type:** `bool?`
 
 Whether swipe gesture navigation is enabled. When true, swiping left/right navigates pages. Defaults to true when null.
 
+This is a **developer config key** (see `enableEdgeTapNavigation` above).
+
 ```dart
 enableSwipeNavigation: true   // Swipe navigates pages (default)
 enableSwipeNavigation: false  // Swipe navigation disabled
+```
+
+#### edgeTapAreaPoints (iOS only — developer config)
+
+**Type:** `double?`
+
+Edge tap area in absolute points (44–120). Controls how wide the left/right tap zones are for page navigation. Defaults to 44pt (iOS HIG minimum tap target) when null. Values are clamped to the 44–120 range on the native side.
+
+This is a **developer config key** (see `enableEdgeTapNavigation` above).
+
+```dart
+edgeTapAreaPoints: 44   // Default tap zones (iOS HIG minimum)
+edgeTapAreaPoints: 60   // Wider tap zones
+edgeTapAreaPoints: 80   // Even wider tap zones
+edgeTapAreaPoints: 120  // Maximum tap zones
 ```
 
 ### Methods
@@ -566,6 +608,7 @@ PDFPreferences copyWith({
   bool? disableTextSelectionMenu,
   bool? enableEdgeTapNavigation,
   bool? enableSwipeNavigation,
+  double? edgeTapAreaPoints,
 })
 ```
 

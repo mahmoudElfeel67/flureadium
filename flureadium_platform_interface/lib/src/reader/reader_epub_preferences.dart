@@ -14,6 +14,7 @@ class EPUBPreferences {
     this.pageMargins,
     this.enableEdgeTapNavigation,
     this.enableSwipeNavigation,
+    this.edgeTapAreaPoints,
   });
 
   factory EPUBPreferences.fromJsonMap(final Map<String, dynamic> map) =>
@@ -44,6 +45,10 @@ class EPUBPreferences {
   /// Defaults to true (enabled) when null.
   bool? enableSwipeNavigation;
 
+  /// Edge tap area in absolute points (44–120). iOS only.
+  /// Defaults to 44pt (iOS HIG minimum tap target) when null.
+  double? edgeTapAreaPoints;
+
   // TODO: Add more preferences,
   //see https://github.com/readium/swift-toolkit/blob/develop/Sources/Navigator/EPUB/Preferences/EPUBPreferences.swift
 
@@ -64,6 +69,9 @@ class EPUBPreferences {
     }
     if (enableSwipeNavigation != null) {
       map['enableSwipeNavigation'] = enableSwipeNavigation.toString();
+    }
+    if (edgeTapAreaPoints != null) {
+      map['edgeTapAreaPoints'] = edgeTapAreaPoints.toString();
     }
     return map;
   }

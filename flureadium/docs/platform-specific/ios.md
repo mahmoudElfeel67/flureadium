@@ -157,12 +157,16 @@ EPUBPreferences(
 
 **Note:** In EPUB scroll mode, both gestures are automatically disabled regardless of preference values.
 
+**Developer Config vs Readium Preferences:**
+
+`enableEdgeTapNavigation`, `enableSwipeNavigation`, and `edgeTapAreaPoints` are **developer config keys** — they control navigation UX behaviour defined by the app developer, not user-facing reading appearance. They are serialized alongside Readium preferences in the same `setPreferences` call for convenience, but the native `ReadiumReaderView` and `PdfReaderView` handlers extract and consume these keys before forwarding the remaining map to `EPUBPreferences.init(fromMap:)` / `PDFPreferences.init(fromMap:)`. This keeps Readium's preference mapping clean and prevents spurious "Cannot map property" warnings.
+
 **Edge Threshold:**
 
-The edge threshold (30% by default) can be customized in Swift:
+The edge threshold defaults to 44pt (iOS HIG minimum tap target) and is controlled via the `edgeTapAreaPoints` preference (44–120pt range, clamped automatically). The raw property on `EdgeTapInterceptView` can also be set directly in Swift:
 
 ```swift
-edgeTapView.edgeThresholdPercent = 0.25 // 25% of screen width
+edgeTapView.edgeThresholdPoints = 80.0 // 80pt per side
 ```
 
 **Files:**

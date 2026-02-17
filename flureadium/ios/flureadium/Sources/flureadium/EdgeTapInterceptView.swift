@@ -20,8 +20,8 @@ class EdgeTapInterceptView: UIView {
     var onSwipeLeft: (() -> Void)?
     /// Callback for swipe right gesture (in edge zones)
     var onSwipeRight: (() -> Void)?
-    /// Edge threshold as percentage of width (default 30%)
-    var edgeThresholdPercent: CGFloat = 0.3
+    /// Edge threshold in absolute points (default 44pt, iOS HIG minimum tap target)
+    var edgeThresholdPoints: CGFloat = 44.0
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -68,7 +68,7 @@ class EdgeTapInterceptView: UIView {
 
     @objc private func handleTap(_ gesture: UITapGestureRecognizer) {
         let location = gesture.location(in: self)
-        let edgeSize = bounds.width * edgeThresholdPercent
+        let edgeSize = edgeThresholdPoints
 
         if location.x < edgeSize {
             onLeftEdgeTap?()
@@ -80,7 +80,7 @@ class EdgeTapInterceptView: UIView {
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         let result = super.hitTest(point, with: event)
 
-        let edgeSize = bounds.width * edgeThresholdPercent
+        let edgeSize = edgeThresholdPoints
         let isLeftEdge = point.x < edgeSize
         let isRightEdge = point.x > bounds.width - edgeSize
 

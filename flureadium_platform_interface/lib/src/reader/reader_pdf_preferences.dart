@@ -19,6 +19,7 @@ class PDFPreferences {
     this.disableTextSelectionMenu,
     this.enableEdgeTapNavigation,
     this.enableSwipeNavigation,
+    this.edgeTapAreaPoints,
   });
 
   factory PDFPreferences.fromJsonMap(Map<String, dynamic> map) =>
@@ -39,6 +40,7 @@ class PDFPreferences {
         disableTextSelectionMenu: map['disableTextSelectionMenu'] as bool?,
         enableEdgeTapNavigation: map['enableEdgeTapNavigation'] as bool?,
         enableSwipeNavigation: map['enableSwipeNavigation'] as bool?,
+        edgeTapAreaPoints: (map['edgeTapAreaPoints'] as num?)?.toDouble(),
       );
 
   /// How the page fits in the viewport.
@@ -83,6 +85,10 @@ class PDFPreferences {
   /// Defaults to true (enabled) when null.
   bool? enableSwipeNavigation;
 
+  /// Edge tap area in absolute points (44–120). iOS only.
+  /// Defaults to 44pt (iOS HIG minimum tap target) when null.
+  double? edgeTapAreaPoints;
+
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{};
     if (fit != null) map['fit'] = fit!.name;
@@ -107,6 +113,9 @@ class PDFPreferences {
     if (enableSwipeNavigation != null) {
       map['enableSwipeNavigation'] = enableSwipeNavigation;
     }
+    if (edgeTapAreaPoints != null) {
+      map['edgeTapAreaPoints'] = edgeTapAreaPoints;
+    }
     return map;
   }
 
@@ -121,6 +130,7 @@ class PDFPreferences {
     bool? disableTextSelectionMenu,
     bool? enableEdgeTapNavigation,
     bool? enableSwipeNavigation,
+    double? edgeTapAreaPoints,
   }) => PDFPreferences(
     fit: fit ?? this.fit,
     scrollMode: scrollMode ?? this.scrollMode,
@@ -134,6 +144,7 @@ class PDFPreferences {
     enableEdgeTapNavigation:
         enableEdgeTapNavigation ?? this.enableEdgeTapNavigation,
     enableSwipeNavigation: enableSwipeNavigation ?? this.enableSwipeNavigation,
+    edgeTapAreaPoints: edgeTapAreaPoints ?? this.edgeTapAreaPoints,
   );
 }
 

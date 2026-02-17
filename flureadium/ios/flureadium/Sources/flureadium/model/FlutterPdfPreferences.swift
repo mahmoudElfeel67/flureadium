@@ -126,6 +126,10 @@ public struct FlutterPdfPreferences {
     /// Defaults to true (enabled) when nil.
     var enableSwipeNavigation: Bool?
 
+    /// Edge tap area in absolute points (44–120). iOS only.
+    /// Defaults to 44pt (iOS HIG minimum tap target) when nil.
+    var edgeTapAreaPoints: Double?
+
     /// Creates FlutterPdfPreferences with default values.
     init(
         fit: FlutterPdfFit? = nil,
@@ -137,7 +141,8 @@ public struct FlutterPdfPreferences {
         disableDragGestures: Bool? = nil,
         disableTextSelectionMenu: Bool? = nil,
         enableEdgeTapNavigation: Bool? = nil,
-        enableSwipeNavigation: Bool? = nil
+        enableSwipeNavigation: Bool? = nil,
+        edgeTapAreaPoints: Double? = nil
     ) {
         self.fit = fit
         self.scrollMode = scrollMode
@@ -149,6 +154,7 @@ public struct FlutterPdfPreferences {
         self.disableTextSelectionMenu = disableTextSelectionMenu
         self.enableEdgeTapNavigation = enableEdgeTapNavigation
         self.enableSwipeNavigation = enableSwipeNavigation
+        self.edgeTapAreaPoints = edgeTapAreaPoints
     }
 
     /// Creates FlutterPdfPreferences from a Flutter dictionary.
@@ -168,7 +174,8 @@ public struct FlutterPdfPreferences {
             disableDragGestures: map["disableDragGestures"] as? Bool,
             disableTextSelectionMenu: map["disableTextSelectionMenu"] as? Bool,
             enableEdgeTapNavigation: map["enableEdgeTapNavigation"] as? Bool,
-            enableSwipeNavigation: map["enableSwipeNavigation"] as? Bool
+            enableSwipeNavigation: map["enableSwipeNavigation"] as? Bool,
+            edgeTapAreaPoints: map["edgeTapAreaPoints"] as? Double
         )
     }
 
@@ -223,6 +230,9 @@ public struct FlutterPdfPreferences {
         }
         if let enableSwipeNavigation = enableSwipeNavigation {
             map["enableSwipeNavigation"] = enableSwipeNavigation
+        }
+        if let edgeTapAreaPoints = edgeTapAreaPoints {
+            map["edgeTapAreaPoints"] = edgeTapAreaPoints
         }
         return map
     }
