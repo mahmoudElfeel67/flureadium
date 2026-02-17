@@ -493,15 +493,13 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
       let args = call.arguments as? String ?? "null"
       print(TAG, "onMethodCall[currentLocator] args = \(args)")
       Task.detached(priority: .high) { [isVerticalScroll] in
-        let json = await self.readiumViewController.currentLocation?.jsonString ?? nil
-        if (json == nil) {
-          await MainActor.run() {
-            return result(nil)
-          }
+        guard let json = await self.readiumViewController.currentLocation?.jsonString else {
+          await MainActor.run { result(nil) }
+          return
         }
-        let data = await self.getLocatorFragments(json!, isVerticalScroll)
-        await MainActor.run() {
-          return result(data?.jsonString)
+        let data = await self.getLocatorFragments(json, isVerticalScroll)
+        await MainActor.run {
+          result(data?.jsonString)
         }
       }
       break
