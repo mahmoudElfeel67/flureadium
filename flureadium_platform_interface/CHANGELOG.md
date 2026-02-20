@@ -1,3 +1,12 @@
+## 0.4.0
+
+### Breaking Changes
+
+- **PDFPreferences**: Rename `disableTextSelectionMenu` to `disableDoubleTapTextSelection`. The old name
+  was misleading — this preference removes `UITextNonEditableInteraction` from `PDFTextInputView`,
+  preventing double-tap word selection entirely. Long-press text selection and the Look Up/Translate/
+  Search Web menu remain fully functional.
+
 ## 0.3.1
 
 - Add `edgeTapAreaPoints` to `EPUBPreferences` — configures the edge tap zone width in absolute points (44–120pt). iOS only. Defaults to 44pt (iOS HIG minimum tap target) when null.

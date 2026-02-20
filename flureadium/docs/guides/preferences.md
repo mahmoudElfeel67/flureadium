@@ -575,7 +575,7 @@ PDFPreferences(
   disableDoubleTapZoom: true,      // Disable double-tap to zoom
   disableTextSelection: true,       // Disable long-press text selection
   disableDragGestures: true,        // Disable drag gestures
-  disableTextSelectionMenu: true,   // Disable Copy/Translate menu
+  disableDoubleTapTextSelection: true,  // Disable double-tap word selection
 )
 ```
 

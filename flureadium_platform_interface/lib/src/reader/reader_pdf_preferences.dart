@@ -16,7 +16,7 @@ class PDFPreferences {
     this.disableDoubleTapZoom,
     this.disableTextSelection,
     this.disableDragGestures,
-    this.disableTextSelectionMenu,
+    this.disableDoubleTapTextSelection,
     this.enableEdgeTapNavigation,
     this.enableSwipeNavigation,
     this.edgeTapAreaPoints,
@@ -37,7 +37,8 @@ class PDFPreferences {
         disableDoubleTapZoom: map['disableDoubleTapZoom'] as bool?,
         disableTextSelection: map['disableTextSelection'] as bool?,
         disableDragGestures: map['disableDragGestures'] as bool?,
-        disableTextSelectionMenu: map['disableTextSelectionMenu'] as bool?,
+        disableDoubleTapTextSelection:
+            map['disableDoubleTapTextSelection'] as bool?,
         enableEdgeTapNavigation: map['enableEdgeTapNavigation'] as bool?,
         enableSwipeNavigation: map['enableSwipeNavigation'] as bool?,
         edgeTapAreaPoints: (map['edgeTapAreaPoints'] as num?)?.toDouble(),
@@ -70,10 +71,11 @@ class PDFPreferences {
   /// Defaults to false (drag gestures enabled).
   bool? disableDragGestures;
 
-  /// Whether to disable the text selection menu (iOS only).
-  /// When true, the Copy/Look Up/Translate menu won't appear when text is selected.
-  /// Defaults to false (selection menu enabled).
-  bool? disableTextSelectionMenu;
+  /// Whether to disable double-tap word selection in PDF text (iOS only).
+  /// When true, double-tapping on PDF text won't select a word or show the
+  /// Copy/Look Up/Translate menu. Long-press text selection remains functional.
+  /// Defaults to false (double-tap selection enabled).
+  bool? disableDoubleTapTextSelection;
 
   /// Whether edge tap navigation is enabled (iOS only).
   /// When true, tapping on the left/right edges of the screen navigates pages.
@@ -104,8 +106,8 @@ class PDFPreferences {
     if (disableDragGestures != null) {
       map['disableDragGestures'] = disableDragGestures;
     }
-    if (disableTextSelectionMenu != null) {
-      map['disableTextSelectionMenu'] = disableTextSelectionMenu;
+    if (disableDoubleTapTextSelection != null) {
+      map['disableDoubleTapTextSelection'] = disableDoubleTapTextSelection;
     }
     if (enableEdgeTapNavigation != null) {
       map['enableEdgeTapNavigation'] = enableEdgeTapNavigation;
@@ -127,7 +129,7 @@ class PDFPreferences {
     bool? disableDoubleTapZoom,
     bool? disableTextSelection,
     bool? disableDragGestures,
-    bool? disableTextSelectionMenu,
+    bool? disableDoubleTapTextSelection,
     bool? enableEdgeTapNavigation,
     bool? enableSwipeNavigation,
     double? edgeTapAreaPoints,
@@ -139,8 +141,8 @@ class PDFPreferences {
     disableDoubleTapZoom: disableDoubleTapZoom ?? this.disableDoubleTapZoom,
     disableTextSelection: disableTextSelection ?? this.disableTextSelection,
     disableDragGestures: disableDragGestures ?? this.disableDragGestures,
-    disableTextSelectionMenu:
-        disableTextSelectionMenu ?? this.disableTextSelectionMenu,
+    disableDoubleTapTextSelection:
+        disableDoubleTapTextSelection ?? this.disableDoubleTapTextSelection,
     enableEdgeTapNavigation:
         enableEdgeTapNavigation ?? this.enableEdgeTapNavigation,
     enableSwipeNavigation: enableSwipeNavigation ?? this.enableSwipeNavigation,

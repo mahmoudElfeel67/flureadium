@@ -435,8 +435,8 @@ PDFPreferences({
   bool? disableDoubleTapZoom,      // iOS only
   bool? disableTextSelection,      // iOS only
   bool? disableDragGestures,       // iOS only
-  bool? disableTextSelectionMenu,  // iOS only
-  bool? enableEdgeTapNavigation,   // iOS only
+  bool? disableDoubleTapTextSelection,  // iOS only
+  bool? enableEdgeTapNavigation,        // iOS only
   bool? enableSwipeNavigation,     // iOS only
   double? edgeTapAreaPoints,       // iOS only
 })
@@ -522,15 +522,15 @@ disableDragGestures: false  // Drag gestures enabled (default)
 disableDragGestures: true   // Drag gestures disabled
 ```
 
-#### disableTextSelectionMenu (iOS only)
+#### disableDoubleTapTextSelection (iOS only)
 
 **Type:** `bool?`
 
-Whether to disable the text selection menu. When true, the Copy/Look Up/Translate menu won't appear when text is selected.
+Whether to disable double-tap word selection in PDF text. When true, double-tapping on PDF text won't select a word or show the Copy/Look Up/Translate menu. Long-press text selection and the Look Up/Translate/Search Web menu remain fully functional, matching ePub behavior.
 
 ```dart
-disableTextSelectionMenu: false  // Selection menu enabled (default)
-disableTextSelectionMenu: true   // Selection menu disabled
+disableDoubleTapTextSelection: false  // Double-tap selection enabled (default)
+disableDoubleTapTextSelection: true   // Double-tap selection disabled
 ```
 
 #### enableEdgeTapNavigation (iOS only — developer config)
@@ -605,7 +605,7 @@ PDFPreferences copyWith({
   bool? disableDoubleTapZoom,
   bool? disableTextSelection,
   bool? disableDragGestures,
-  bool? disableTextSelectionMenu,
+  bool? disableDoubleTapTextSelection,
   bool? enableEdgeTapNavigation,
   bool? enableSwipeNavigation,
   double? edgeTapAreaPoints,
@@ -650,7 +650,7 @@ final readOnlyPrefs = PDFPreferences(
   disableDoubleTapZoom: true,
   disableTextSelection: true,
   disableDragGestures: true,
-  disableTextSelectionMenu: true,
+  disableDoubleTapTextSelection: true,
 );
 ```
 
