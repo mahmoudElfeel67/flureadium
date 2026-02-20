@@ -565,81 +565,55 @@ await flureadium.setPDFPreferences(PDFPreferences(
 ));
 ```
 
-### iOS-Specific Options
+### iOS-Specific Gesture Controls
 
-On iOS, additional gesture controls are available:
+On iOS, PDF gesture behavior can be customized via `ReaderNavigationConfig`:
 
 ```dart
-PDFPreferences(
-  // ... basic options
-  disableDoubleTapZoom: true,      // Disable double-tap to zoom
-  disableTextSelection: true,       // Disable long-press text selection
-  disableDragGestures: true,        // Disable drag gestures
-  disableDoubleTapTextSelection: true,  // Disable double-tap word selection
-)
+// Read-only mode: disable all interactive gestures
+await flureadium.setNavigationConfig(
+  ReaderNavigationConfig(
+    disableDoubleTapZoom: true,
+    disableTextSelection: true,
+    disableDragGestures: true,
+    disableDoubleTapTextSelection: true,
+  ),
+);
 ```
 
 These are useful for creating a simplified reading experience or when your app handles gestures differently.
 
-### Navigation Gesture Configuration (iOS)
+### Navigation Configuration (iOS)
 
-On iOS, you can independently control edge tap and swipe navigation for both EPUB and PDF readers. Both are enabled by default.
+Navigation behavior (edge taps, swipe, edge tap area) is configured separately from Readium reading preferences using `setNavigationConfig()`. Both edge tap and swipe navigation default to enabled.
 
 ```dart
-// EPUB: disable edge taps but keep swipes
-EPUBPreferences(
-  fontFamily: 'Georgia',
-  fontSize: 100,
-  fontWeight: 400,
-  verticalScroll: false,
-  backgroundColor: null,
-  textColor: null,
-  enableEdgeTapNavigation: false,  // No edge tap page turns
-  enableSwipeNavigation: true,     // Swipe still works
-)
+// Disable edge taps but keep swipe navigation
+await flureadium.setNavigationConfig(
+  ReaderNavigationConfig(
+    enableEdgeTapNavigation: false,
+    enableSwipeNavigation: true,
+  ),
+);
 
-// PDF: disable swipes but keep edge taps
-PDFPreferences(
-  fit: PDFFit.width,
-  scrollMode: PDFScrollMode.horizontal,
-  enableEdgeTapNavigation: true,   // Edge taps work
-  enableSwipeNavigation: false,    // No swipe page turns
-)
+// Wider edge tap zones for accessibility
+await flureadium.setNavigationConfig(
+  ReaderNavigationConfig(
+    enableEdgeTapNavigation: true,
+    edgeTapAreaPoints: 80,  // 80pt per side (default: 44pt)
+  ),
+);
 
 // Disable all gesture-based navigation
-PDFPreferences(
-  enableEdgeTapNavigation: false,
-  enableSwipeNavigation: false,
-)
+await flureadium.setNavigationConfig(
+  ReaderNavigationConfig(
+    enableEdgeTapNavigation: false,
+    enableSwipeNavigation: false,
+  ),
+);
 ```
 
-**Note:** When `null` (default), both gestures are enabled. In EPUB scroll mode, both are automatically disabled regardless of these settings.
-
-### Edge Tap Area Size (iOS)
-
-You can configure how wide the edge tap zones are using `edgeTapAreaPoints`. The value is in absolute iOS points (44–120), and defaults to 44pt (iOS HIG minimum tap target) when null. Using absolute points ensures consistent tap zones across all devices and multitasking modes, including iPad split-screen.
-
-```dart
-// EPUB: default tap zones (iOS HIG minimum)
-EPUBPreferences(
-  fontFamily: 'Georgia',
-  fontSize: 100,
-  fontWeight: 400,
-  verticalScroll: false,
-  backgroundColor: null,
-  textColor: null,
-  edgeTapAreaPoints: 44,  // 44pt per side (iOS HIG minimum, default)
-)
-
-// PDF: wider tap zones for accessibility
-PDFPreferences(
-  fit: PDFFit.width,
-  scrollMode: PDFScrollMode.horizontal,
-  edgeTapAreaPoints: 80,  // 80pt per side
-)
-```
-
-Values outside the 44–120 range are clamped automatically. This preference only affects iOS; on Android, edge taps are handled internally by the Readium Kotlin Toolkit.
+`edgeTapAreaPoints` uses absolute iOS points (44–120, clamped automatically), ensuring consistent tap zones across all devices including iPad split-screen. In EPUB scroll mode, both gestures are automatically disabled regardless of configuration.
 
 ## See Also
 

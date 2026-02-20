@@ -125,49 +125,35 @@ The flureadium iOS plugin supports both edge tap and swipe gesture navigation fo
 **How It Works:**
 
 The `EdgeTapInterceptView` is a transparent UIView overlay that:
-- Intercepts single taps on the left 30% of the screen width → triggers `goLeft()` (previous page)
-- Intercepts single taps on the right 30% of the screen width → triggers `goRight()` (next page)
-- Intercepts swipe left gestures → triggers `goRight()` (next page)
-- Intercepts swipe right gestures → triggers `goLeft()` (previous page)
+- Intercepts single taps on the left/right edges of the screen → triggers `goLeft()` / `goRight()`
+- Intercepts swipe left/right gestures → triggers `goRight()` / `goLeft()`
 - Passes through all other touches to the underlying reader view
+
+**Note:** In EPUB scroll mode, both gestures are automatically disabled regardless of configuration.
 
 **Configuring from Dart:**
 
-Both edge tap and swipe navigation can be independently controlled via preferences. Both default to enabled (`true`).
+Navigation behavior is configured via `setNavigationConfig()`, which is separate from Readium reading preferences:
 
 ```dart
-// PDF: control navigation gestures
-PDFPreferences(
-  enableEdgeTapNavigation: true,   // Edge taps navigate (default)
-  enableSwipeNavigation: false,    // Disable swipe navigation
-)
+// EPUB: disable edge taps but keep swipes
+await flureadium.setNavigationConfig(
+  ReaderNavigationConfig(
+    enableEdgeTapNavigation: false,
+    enableSwipeNavigation: true,
+  ),
+);
 
-// EPUB: control navigation gestures
-EPUBPreferences(
-  fontFamily: 'Georgia',
-  fontSize: 100,
-  fontWeight: 400,
-  verticalScroll: false,
-  backgroundColor: null,
-  textColor: null,
-  enableEdgeTapNavigation: false,  // Disable edge taps
-  enableSwipeNavigation: true,     // Keep swipe navigation
-)
+// PDF: wider tap zones
+await flureadium.setNavigationConfig(
+  ReaderNavigationConfig(
+    enableEdgeTapNavigation: true,
+    edgeTapAreaPoints: 80,
+  ),
+);
 ```
 
-**Note:** In EPUB scroll mode, both gestures are automatically disabled regardless of preference values.
-
-**Developer Config vs Readium Preferences:**
-
-`enableEdgeTapNavigation`, `enableSwipeNavigation`, and `edgeTapAreaPoints` are **developer config keys** — they control navigation UX behaviour defined by the app developer, not user-facing reading appearance. They are serialized alongside Readium preferences in the same `setPreferences` call for convenience, but the native `ReadiumReaderView` and `PdfReaderView` handlers extract and consume these keys before forwarding the remaining map to `EPUBPreferences.init(fromMap:)` / `PDFPreferences.init(fromMap:)`. This keeps Readium's preference mapping clean and prevents spurious "Cannot map property" warnings.
-
-**Edge Threshold:**
-
-The edge threshold defaults to 44pt (iOS HIG minimum tap target) and is controlled via the `edgeTapAreaPoints` preference (44–120pt range, clamped automatically). The raw property on `EdgeTapInterceptView` can also be set directly in Swift:
-
-```swift
-edgeTapView.edgeThresholdPoints = 80.0 // 80pt per side
-```
+Both default to enabled (`true`) when not set. The `edgeTapAreaPoints` value is in absolute iOS points (44–120, clamped automatically) and defaults to 44pt (iOS HIG minimum tap target).
 
 **Files:**
 - `EdgeTapInterceptView.swift` - Shared edge tap and swipe detection view
