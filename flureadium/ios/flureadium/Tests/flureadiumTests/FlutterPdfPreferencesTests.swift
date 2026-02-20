@@ -201,33 +201,33 @@ final class FlutterPdfPreferencesTests: XCTestCase {
         XCTAssertTrue(map.isEmpty)
     }
 
-    // MARK: - disableTextSelectionMenu Tests
+    // MARK: - disableDoubleTapTextSelection Tests
 
-    func testDisableTextSelectionMenu() {
-        let preferences = FlutterPdfPreferences(disableTextSelectionMenu: true)
-        XCTAssertEqual(preferences.disableTextSelectionMenu, true)
+    func testDisableDoubleTapTextSelection() {
+        let preferences = FlutterPdfPreferences(disableDoubleTapTextSelection: true)
+        XCTAssertEqual(preferences.disableDoubleTapTextSelection, true)
     }
 
-    func testDisableTextSelectionMenuFromMap() {
-        let map: [String: Any] = ["disableTextSelectionMenu": true]
+    func testDisableDoubleTapTextSelectionFromMap() {
+        let map: [String: Any] = ["disableDoubleTapTextSelection": true]
         let preferences = FlutterPdfPreferences(fromMap: map)
-        XCTAssertEqual(preferences.disableTextSelectionMenu, true)
+        XCTAssertEqual(preferences.disableDoubleTapTextSelection, true)
     }
 
-    func testDisableTextSelectionMenuToMap() {
-        let preferences = FlutterPdfPreferences(disableTextSelectionMenu: true)
+    func testDisableDoubleTapTextSelectionToMap() {
+        let preferences = FlutterPdfPreferences(disableDoubleTapTextSelection: true)
         let map = preferences.toMap()
-        XCTAssertEqual(map["disableTextSelectionMenu"] as? Bool, true)
+        XCTAssertEqual(map["disableDoubleTapTextSelection"] as? Bool, true)
     }
 
-    func testDisableTextSelectionMenuDefaultsToNil() {
+    func testDisableDoubleTapTextSelectionDefaultsToNil() {
         let preferences = FlutterPdfPreferences()
-        XCTAssertNil(preferences.disableTextSelectionMenu)
+        XCTAssertNil(preferences.disableDoubleTapTextSelection)
     }
 
-    func testDisableTextSelectionMenuNotInMapWhenNil() {
+    func testDisableDoubleTapTextSelectionNotInMapWhenNil() {
         let preferences = FlutterPdfPreferences()
         let map = preferences.toMap()
-        XCTAssertNil(map["disableTextSelectionMenu"])
+        XCTAssertNil(map["disableDoubleTapTextSelection"])
     }
 }

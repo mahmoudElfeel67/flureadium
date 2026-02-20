@@ -5,39 +5,39 @@ import 'package:flureadium_platform_interface/flureadium_platform_interface.dart
 
 void main() {
   group('PDFPreferences', () {
-    group('disableTextSelectionMenu', () {
+    group('disableDoubleTapTextSelection', () {
       test('defaults to null', () {
         final prefs = PDFPreferences();
-        expect(prefs.disableTextSelectionMenu, isNull);
+        expect(prefs.disableDoubleTapTextSelection, isNull);
       });
 
       test('can be set to true', () {
-        final prefs = PDFPreferences(disableTextSelectionMenu: true);
-        expect(prefs.disableTextSelectionMenu, true);
+        final prefs = PDFPreferences(disableDoubleTapTextSelection: true);
+        expect(prefs.disableDoubleTapTextSelection, true);
       });
 
       test('serializes correctly', () {
-        final prefs = PDFPreferences(disableTextSelectionMenu: true);
+        final prefs = PDFPreferences(disableDoubleTapTextSelection: true);
         final json = prefs.toJson();
-        expect(json['disableTextSelectionMenu'], true);
+        expect(json['disableDoubleTapTextSelection'], true);
       });
 
       test('not included when null', () {
         final prefs = PDFPreferences();
         final json = prefs.toJson();
-        expect(json.containsKey('disableTextSelectionMenu'), false);
+        expect(json.containsKey('disableDoubleTapTextSelection'), false);
       });
 
-      test('copyWith preserves disableTextSelectionMenu', () {
-        final prefs1 = PDFPreferences(disableTextSelectionMenu: true);
+      test('copyWith preserves disableDoubleTapTextSelection', () {
+        final prefs1 = PDFPreferences(disableDoubleTapTextSelection: true);
         final prefs2 = prefs1.copyWith();
-        expect(prefs2.disableTextSelectionMenu, true);
+        expect(prefs2.disableDoubleTapTextSelection, true);
       });
 
-      test('copyWith can override disableTextSelectionMenu', () {
-        final prefs1 = PDFPreferences(disableTextSelectionMenu: true);
-        final prefs2 = prefs1.copyWith(disableTextSelectionMenu: false);
-        expect(prefs2.disableTextSelectionMenu, false);
+      test('copyWith can override disableDoubleTapTextSelection', () {
+        final prefs1 = PDFPreferences(disableDoubleTapTextSelection: true);
+        final prefs2 = prefs1.copyWith(disableDoubleTapTextSelection: false);
+        expect(prefs2.disableDoubleTapTextSelection, false);
       });
     });
 
