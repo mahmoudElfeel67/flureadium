@@ -83,6 +83,7 @@ public enum FlutterPdfPageLayout: String {
 
 /// PDF preferences for Flutter Readium.
 /// Maps to PDFPreferences class in Flutter's reader_pdf_preferences.dart.
+/// Navigation UX settings (gestures, edge tap, etc.) have moved to FlutterNavigationConfig.
 public struct FlutterPdfPreferences {
     /// How the page fits in the viewport.
     var fit: FlutterPdfFit?
@@ -96,66 +97,17 @@ public struct FlutterPdfPreferences {
     /// Whether to offset the first page in double-page spreads (for covers).
     var offsetFirstPage: Bool?
 
-    /// Whether to disable the built-in double-tap-to-zoom gesture (iOS only).
-    /// When true, double-tap won't zoom the PDF content.
-    /// Defaults to false (zoom enabled).
-    var disableDoubleTapZoom: Bool?
-
-    /// Whether to disable text selection gestures (iOS only).
-    /// When true, long-press won't select text in the PDF.
-    /// Defaults to false (text selection enabled).
-    var disableTextSelection: Bool?
-
-    /// Whether to disable drag gestures (iOS only).
-    /// When true, drag gestures won't trigger text selection or drag-and-drop.
-    /// Defaults to false (drag gestures enabled).
-    var disableDragGestures: Bool?
-
-    /// Whether to disable double-tap word selection in PDF text (iOS only).
-    /// When true, double-tapping on PDF text won't select a word or show the
-    /// Copy/Look Up/Translate menu. Long-press text selection remains functional.
-    /// Defaults to false (double-tap selection enabled).
-    var disableDoubleTapTextSelection: Bool?
-
-    /// Whether edge tap navigation is enabled (iOS only).
-    /// When true, tapping on the left/right edges of the screen navigates pages.
-    /// Defaults to true (enabled) when nil.
-    var enableEdgeTapNavigation: Bool?
-
-    /// Whether swipe gesture navigation is enabled (iOS only).
-    /// When true, swiping left/right navigates pages.
-    /// Defaults to true (enabled) when nil.
-    var enableSwipeNavigation: Bool?
-
-    /// Edge tap area in absolute points (44–120). iOS only.
-    /// Defaults to 44pt (iOS HIG minimum tap target) when nil.
-    var edgeTapAreaPoints: Double?
-
     /// Creates FlutterPdfPreferences with default values.
     init(
         fit: FlutterPdfFit? = nil,
         scrollMode: FlutterPdfScrollMode? = nil,
         pageLayout: FlutterPdfPageLayout? = nil,
-        offsetFirstPage: Bool? = nil,
-        disableDoubleTapZoom: Bool? = nil,
-        disableTextSelection: Bool? = nil,
-        disableDragGestures: Bool? = nil,
-        disableDoubleTapTextSelection: Bool? = nil,
-        enableEdgeTapNavigation: Bool? = nil,
-        enableSwipeNavigation: Bool? = nil,
-        edgeTapAreaPoints: Double? = nil
+        offsetFirstPage: Bool? = nil
     ) {
         self.fit = fit
         self.scrollMode = scrollMode
         self.pageLayout = pageLayout
         self.offsetFirstPage = offsetFirstPage
-        self.disableDoubleTapZoom = disableDoubleTapZoom
-        self.disableTextSelection = disableTextSelection
-        self.disableDragGestures = disableDragGestures
-        self.disableDoubleTapTextSelection = disableDoubleTapTextSelection
-        self.enableEdgeTapNavigation = enableEdgeTapNavigation
-        self.enableSwipeNavigation = enableSwipeNavigation
-        self.edgeTapAreaPoints = edgeTapAreaPoints
     }
 
     /// Creates FlutterPdfPreferences from a Flutter dictionary.
@@ -169,14 +121,7 @@ public struct FlutterPdfPreferences {
             fit: FlutterPdfFit.fromString(map["fit"] as? String),
             scrollMode: FlutterPdfScrollMode.fromString(map["scrollMode"] as? String),
             pageLayout: FlutterPdfPageLayout.fromString(map["pageLayout"] as? String),
-            offsetFirstPage: map["offsetFirstPage"] as? Bool,
-            disableDoubleTapZoom: map["disableDoubleTapZoom"] as? Bool,
-            disableTextSelection: map["disableTextSelection"] as? Bool,
-            disableDragGestures: map["disableDragGestures"] as? Bool,
-            disableDoubleTapTextSelection: map["disableDoubleTapTextSelection"] as? Bool,
-            enableEdgeTapNavigation: map["enableEdgeTapNavigation"] as? Bool,
-            enableSwipeNavigation: map["enableSwipeNavigation"] as? Bool,
-            edgeTapAreaPoints: map["edgeTapAreaPoints"] as? Double
+            offsetFirstPage: map["offsetFirstPage"] as? Bool
         )
     }
 
@@ -214,27 +159,6 @@ public struct FlutterPdfPreferences {
         if let scrollMode = scrollMode { map["scrollMode"] = scrollMode.rawValue }
         if let pageLayout = pageLayout { map["pageLayout"] = pageLayout.rawValue }
         if let offsetFirstPage = offsetFirstPage { map["offsetFirstPage"] = offsetFirstPage }
-        if let disableDoubleTapZoom = disableDoubleTapZoom {
-            map["disableDoubleTapZoom"] = disableDoubleTapZoom
-        }
-        if let disableTextSelection = disableTextSelection {
-            map["disableTextSelection"] = disableTextSelection
-        }
-        if let disableDragGestures = disableDragGestures {
-            map["disableDragGestures"] = disableDragGestures
-        }
-        if let disableDoubleTapTextSelection = disableDoubleTapTextSelection {
-            map["disableDoubleTapTextSelection"] = disableDoubleTapTextSelection
-        }
-        if let enableEdgeTapNavigation = enableEdgeTapNavigation {
-            map["enableEdgeTapNavigation"] = enableEdgeTapNavigation
-        }
-        if let enableSwipeNavigation = enableSwipeNavigation {
-            map["enableSwipeNavigation"] = enableSwipeNavigation
-        }
-        if let edgeTapAreaPoints = edgeTapAreaPoints {
-            map["edgeTapAreaPoints"] = edgeTapAreaPoints
-        }
         return map
     }
 }

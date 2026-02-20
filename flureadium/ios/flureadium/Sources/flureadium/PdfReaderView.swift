@@ -36,19 +36,6 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
   private var enableSwipeNavigation: Bool
   private var edgeTapAreaPoints: CGFloat?
 
-  /// Keys owned by the app developer (navigation UX config). Extracted via
-  /// FlutterPdfPreferences in the setPreferences handler and must NOT be forwarded
-  /// to PDFPreferences.init(fromMap:), which only understands Readium preference keys.
-  private static let developerConfigKeys: Set<String> = [
-    "enableEdgeTapNavigation",
-    "enableSwipeNavigation",
-    "edgeTapAreaPoints",
-    "disableDoubleTapZoom",
-    "disableTextSelection",
-    "disableDragGestures",
-    "disableDoubleTapTextSelection",
-  ]
-
   var publicationIdentifier: String?
 
   func view() -> UIView {
@@ -81,23 +68,17 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
 
     let publication = getCurrentPublication()!
 
-    let preferencesMap = creationParams["preferences"] as? Dictionary<String, Any>
+    let preferencesMap = creationParams["preferences"] as? [String: Any]
     let pdfPreferences = preferencesMap != nil ? PDFPreferences(fromMap: preferencesMap!) : PDFPreferences()
 
-    // Read Flutter PDF preferences for gesture control settings
-    let flutterPrefs = FlutterPdfPreferences(fromMap: preferencesMap)
-    disableDoubleTapZoom = flutterPrefs.disableDoubleTapZoom ?? false
-    disableTextSelection = flutterPrefs.disableTextSelection ?? false
-    disableDragGestures = flutterPrefs.disableDragGestures ?? false
-    disableDoubleTapTextSelection = flutterPrefs.disableDoubleTapTextSelection ?? false
-    enableEdgeTapNavigation = flutterPrefs.enableEdgeTapNavigation ?? true
-    enableSwipeNavigation = flutterPrefs.enableSwipeNavigation ?? true
-    if let rawPoints = flutterPrefs.edgeTapAreaPoints {
-      edgeTapAreaPoints = CGFloat(min(max(rawPoints, 44.0), 120.0))
-    } else {
-      edgeTapAreaPoints = nil
-    }
-    print(TAG, "PDF Preferences - disableDoubleTapZoom: \(disableDoubleTapZoom), disableTextSelection: \(disableTextSelection), disableDragGestures: \(disableDragGestures), disableDoubleTapTextSelection: \(disableDoubleTapTextSelection), enableEdgeTapNavigation: \(enableEdgeTapNavigation), enableSwipeNavigation: \(enableSwipeNavigation)")
+    // Navigation config uses defaults; updated via setNavigationConfig channel call
+    disableDoubleTapZoom = false
+    disableTextSelection = false
+    disableDragGestures = false
+    disableDoubleTapTextSelection = false
+    enableEdgeTapNavigation = true
+    enableSwipeNavigation = true
+    edgeTapAreaPoints = nil
 
     let locatorStr = creationParams["initialLocator"] as? String
     let locator = locatorStr == nil ? nil : try! Locator.init(jsonString: locatorStr!)
@@ -494,22 +475,39 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
     case "setPreferences":
       let args = call.arguments as! [String: Any]
       print(TAG, "onMethodCall[setPreferences] args = \(args)")
-      // Extract developer config keys via FlutterPdfPreferences — these control
-      // navigation UX and are not Readium reader settings. They must not be
-      // forwarded to PDFPreferences.init(fromMap:).
-      let flutterPrefs = FlutterPdfPreferences(fromMap: args)
-      enableEdgeTapNavigation = flutterPrefs.enableEdgeTapNavigation ?? enableEdgeTapNavigation
-      enableSwipeNavigation = flutterPrefs.enableSwipeNavigation ?? enableSwipeNavigation
-      disableDoubleTapZoom = flutterPrefs.disableDoubleTapZoom ?? disableDoubleTapZoom
-      disableTextSelection = flutterPrefs.disableTextSelection ?? disableTextSelection
-      disableDragGestures = flutterPrefs.disableDragGestures ?? disableDragGestures
-      disableDoubleTapTextSelection = flutterPrefs.disableDoubleTapTextSelection ?? disableDoubleTapTextSelection
-      if let pts = flutterPrefs.edgeTapAreaPoints {
+      let preferences = PDFPreferences(fromMap: args)
+      setUserPreferences(preferences: preferences)
+      result(nil)
+    case "setNavigationConfig":
+      let args = call.arguments as! [String: Any]
+      print(TAG, "onMethodCall[setNavigationConfig] args = \(args)")
+      let navConfig = FlutterNavigationConfig(fromMap: args)
+      if let v = navConfig.enableEdgeTapNavigation { enableEdgeTapNavigation = v }
+      if let v = navConfig.enableSwipeNavigation { enableSwipeNavigation = v }
+      if let v = navConfig.disableDoubleTapZoom {
+        disableDoubleTapZoom = v
+        // setupPDFView has already run — apply immediately to the live view
+        if v { disableDoubleTapZoomGesture(in: pdfViewController.view) }
+      }
+      if let v = navConfig.disableTextSelection {
+        disableTextSelection = v
+        if v { disableTextSelectionGesture(in: pdfViewController.view) }
+      }
+      if let v = navConfig.disableDragGestures {
+        disableDragGestures = v
+        if v { disableDragGesturesRecognizer(in: pdfViewController.view) }
+      }
+      if let v = navConfig.disableDoubleTapTextSelection {
+        disableDoubleTapTextSelection = v
+        if v {
+          removeEditMenuInteractions(in: pdfViewController.view)
+          scheduleDisableDoubleTapWordSelection()
+        }
+      }
+      if let pts = navConfig.edgeTapAreaPoints {
         edgeTapAreaPoints = CGFloat(min(max(pts, 44.0), 120.0))
       }
-      let readerArgs = args.filter { !PdfReaderView.developerConfigKeys.contains($0.key) }
-      let preferences = PDFPreferences(fromMap: readerArgs)
-      setUserPreferences(preferences: preferences)
+      configureEdgeTapHandlers()
       result(nil)
     case "dispose":
       print(TAG, "Disposing pdfViewController")

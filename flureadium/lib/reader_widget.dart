@@ -73,7 +73,9 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
 
     _readerWidget = _buildNativeReader();
     enableWakelock();
-    setCurrentWidgetInterface(this);
+    // setCurrentWidgetInterface is called in _onPlatformViewCreated after
+    // _channel is assigned, so that callers receive a widget whose channel
+    // is ready to send method calls.
   }
 
   @override
@@ -311,6 +313,11 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
   }
 
   @override
+  Future<void> setNavigationConfig(ReaderNavigationConfig config) async {
+    _channel?.setNavigationConfig(config);
+  }
+
+  @override
   Future<void> applyDecorations(
     String id,
     List<ReaderDecoration> decorations,
@@ -405,6 +412,11 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
         }
       },
     );
+
+    // Register as current widget only after _channel is assigned.
+    // This ensures waitForCurrentReaderWidget() callers receive a widget
+    // whose channel is ready, so method calls aren't silently dropped.
+    setCurrentWidgetInterface(this);
 
     R2Log.d('New widget is: ${_channel?.name}');
 

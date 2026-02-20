@@ -1,6 +1,6 @@
 # Preferences
 
-Flureadium provides preference classes for customizing the reader experience: EPUB visual preferences, TTS preferences, Audio preferences, and PDF preferences.
+Flureadium provides preference classes for customizing the reader experience: EPUB visual preferences, TTS preferences, Audio preferences, PDF preferences, and navigation configuration.
 
 ## EPUBPreferences
 
@@ -19,9 +19,6 @@ EPUBPreferences({
   required Color? backgroundColor,
   required Color? textColor,
   double? pageMargins,
-  bool? enableEdgeTapNavigation,    // iOS only
-  bool? enableSwipeNavigation,      // iOS only
-  double? edgeTapAreaPoints,        // iOS only
 })
 ```
 
@@ -110,47 +107,6 @@ Page margins as a decimal (0.0 to 1.0).
 pageMargins: 0.05  // 5% margins
 pageMargins: 0.1   // 10% margins
 pageMargins: 0.15  // 15% margins
-```
-
-#### enableEdgeTapNavigation (iOS only — developer config)
-
-**Type:** `bool?`
-
-Whether edge tap navigation is enabled. When true, tapping on the left/right edges of the screen navigates pages. Defaults to true when null.
-
-This is a **developer config key**: it controls navigation UX behaviour set by the app developer, not a user-facing Readium reading preference. On the native side, the reader view handler extracts and consumes this key before passing the remaining map to Readium's preference mapper.
-
-```dart
-enableEdgeTapNavigation: true   // Edge taps navigate pages (default)
-enableEdgeTapNavigation: false  // Edge taps disabled
-```
-
-#### enableSwipeNavigation (iOS only — developer config)
-
-**Type:** `bool?`
-
-Whether swipe gesture navigation is enabled. When true, swiping left/right navigates pages. Defaults to true when null.
-
-This is a **developer config key** (see `enableEdgeTapNavigation` above).
-
-```dart
-enableSwipeNavigation: true   // Swipe navigates pages (default)
-enableSwipeNavigation: false  // Swipe navigation disabled
-```
-
-#### edgeTapAreaPoints (iOS only — developer config)
-
-**Type:** `double?`
-
-Edge tap area in absolute points (44–120). Controls how wide the left/right tap zones are for page navigation. Defaults to 44pt (iOS HIG minimum tap target) when null. Values are clamped to the 44–120 range on the native side.
-
-This is a **developer config key** (see `enableEdgeTapNavigation` above).
-
-```dart
-edgeTapAreaPoints: 44   // Default tap zones (iOS HIG minimum)
-edgeTapAreaPoints: 60   // Wider tap zones
-edgeTapAreaPoints: 80   // Even wider tap zones
-edgeTapAreaPoints: 120  // Maximum tap zones
 ```
 
 ### Methods
@@ -432,13 +388,6 @@ PDFPreferences({
   PDFScrollMode? scrollMode,
   PDFPageLayout? pageLayout,
   bool? offsetFirstPage,
-  bool? disableDoubleTapZoom,      // iOS only
-  bool? disableTextSelection,      // iOS only
-  bool? disableDragGestures,       // iOS only
-  bool? disableDoubleTapTextSelection,  // iOS only
-  bool? enableEdgeTapNavigation,        // iOS only
-  bool? enableSwipeNavigation,     // iOS only
-  double? edgeTapAreaPoints,       // iOS only
 })
 ```
 
@@ -489,6 +438,125 @@ offsetFirstPage: true   // First page displayed alone, then pairs
 offsetFirstPage: false  // All pages displayed in pairs
 ```
 
+### Methods
+
+#### toJson
+
+Converts to JSON for platform communication.
+
+```dart
+Map<String, dynamic> toJson()
+```
+
+#### fromJsonMap
+
+Creates preferences from a JSON map.
+
+```dart
+factory PDFPreferences.fromJsonMap(Map<String, dynamic> map)
+```
+
+#### copyWith
+
+Creates a copy with specified values overridden.
+
+```dart
+PDFPreferences copyWith({
+  PDFFit? fit,
+  PDFScrollMode? scrollMode,
+  PDFPageLayout? pageLayout,
+  bool? offsetFirstPage,
+})
+```
+
+### Example Usage
+
+```dart
+// Default reading mode
+final defaultPrefs = PDFPreferences(
+  fit: PDFFit.width,
+  scrollMode: PDFScrollMode.horizontal,
+  pageLayout: PDFPageLayout.single,
+);
+
+// Document viewing mode (vertical scroll, fit whole page)
+final documentPrefs = PDFPreferences(
+  fit: PDFFit.contain,
+  scrollMode: PDFScrollMode.vertical,
+  pageLayout: PDFPageLayout.single,
+);
+
+// Book spread mode (two pages side-by-side)
+final spreadPrefs = PDFPreferences(
+  fit: PDFFit.contain,
+  scrollMode: PDFScrollMode.horizontal,
+  pageLayout: PDFPageLayout.double,
+  offsetFirstPage: true,  // Cover page alone
+);
+
+// Modify existing preferences
+final updated = defaultPrefs.copyWith(
+  scrollMode: PDFScrollMode.vertical,
+);
+```
+
+## ReaderNavigationConfig
+
+Controls navigation UX behavior in the reader. These settings are app-developer concerns — they define how the reader responds to user gestures — and are separate from Readium reading preferences.
+
+**Source:** [reader_navigation_config.dart](../../../flureadium_platform_interface/lib/src/reader/reader_navigation_config.dart)
+
+### Constructor
+
+```dart
+ReaderNavigationConfig({
+  bool? enableEdgeTapNavigation,
+  bool? enableSwipeNavigation,
+  double? edgeTapAreaPoints,
+  bool? disableDoubleTapZoom,
+  bool? disableTextSelection,
+  bool? disableDragGestures,
+  bool? disableDoubleTapTextSelection,
+})
+```
+
+### Properties
+
+#### enableEdgeTapNavigation
+
+**Type:** `bool?`
+
+Whether tapping the left/right edges of the screen navigates pages. Defaults to `true` when null on the native side.
+
+```dart
+enableEdgeTapNavigation: true   // Edge taps navigate pages (default)
+enableEdgeTapNavigation: false  // Edge taps disabled
+```
+
+#### enableSwipeNavigation
+
+**Type:** `bool?`
+
+Whether swiping left/right navigates pages. Defaults to `true` when null on the native side.
+
+```dart
+enableSwipeNavigation: true   // Swipe navigates pages (default)
+enableSwipeNavigation: false  // Swipe navigation disabled
+```
+
+#### edgeTapAreaPoints
+
+**Type:** `double?`
+
+Edge tap zone width in absolute points (44–120). Controls how wide the left/right tap zones are for page navigation. Values are clamped to the 44–120 range on the native side.
+
+```dart
+edgeTapAreaPoints: 44   // Default (iOS HIG minimum tap target)
+edgeTapAreaPoints: 60   // Wider tap zones
+edgeTapAreaPoints: 80   // Even wider tap zones
+edgeTapAreaPoints: 120  // Maximum tap zones
+```
+
 #### disableDoubleTapZoom (iOS only)
 
 **Type:** `bool?`
@@ -526,131 +594,38 @@ disableDragGestures: true   // Drag gestures disabled
 
 **Type:** `bool?`
 
-Whether to disable double-tap word selection in PDF text. When true, double-tapping on PDF text won't select a word or show the Copy/Look Up/Translate menu. Long-press text selection and the Look Up/Translate/Search Web menu remain fully functional, matching ePub behavior.
+Whether to disable double-tap word selection in PDF text. When true, double-tapping on PDF text won't select a word or show the Copy/Look Up/Translate menu. Long-press text selection remains fully functional.
 
 ```dart
 disableDoubleTapTextSelection: false  // Double-tap selection enabled (default)
 disableDoubleTapTextSelection: true   // Double-tap selection disabled
 ```
 
-#### enableEdgeTapNavigation (iOS only — developer config)
-
-**Type:** `bool?`
-
-Whether edge tap navigation is enabled. When true, tapping on the left/right edges of the screen navigates pages. Defaults to true when null.
-
-This is a **developer config key**: it controls navigation UX behaviour set by the app developer, not a user-facing Readium reading preference. On the native side, the reader view handler extracts and consumes this key before passing the remaining map to Readium's preference mapper.
-
-```dart
-enableEdgeTapNavigation: true   // Edge taps navigate pages (default)
-enableEdgeTapNavigation: false  // Edge taps disabled
-```
-
-#### enableSwipeNavigation (iOS only — developer config)
-
-**Type:** `bool?`
-
-Whether swipe gesture navigation is enabled. When true, swiping left/right navigates pages. Defaults to true when null.
-
-This is a **developer config key** (see `enableEdgeTapNavigation` above).
-
-```dart
-enableSwipeNavigation: true   // Swipe navigates pages (default)
-enableSwipeNavigation: false  // Swipe navigation disabled
-```
-
-#### edgeTapAreaPoints (iOS only — developer config)
-
-**Type:** `double?`
-
-Edge tap area in absolute points (44–120). Controls how wide the left/right tap zones are for page navigation. Defaults to 44pt (iOS HIG minimum tap target) when null. Values are clamped to the 44–120 range on the native side.
-
-This is a **developer config key** (see `enableEdgeTapNavigation` above).
-
-```dart
-edgeTapAreaPoints: 44   // Default tap zones (iOS HIG minimum)
-edgeTapAreaPoints: 60   // Wider tap zones
-edgeTapAreaPoints: 80   // Even wider tap zones
-edgeTapAreaPoints: 120  // Maximum tap zones
-```
-
-### Methods
-
-#### toJson
-
-Converts to JSON for platform communication.
-
-```dart
-Map<String, dynamic> toJson()
-```
-
-#### fromJsonMap
-
-Creates preferences from a JSON map.
-
-```dart
-factory PDFPreferences.fromJsonMap(Map<String, dynamic> map)
-```
-
-#### copyWith
-
-Creates a copy with specified values overridden.
-
-```dart
-PDFPreferences copyWith({
-  PDFFit? fit,
-  PDFScrollMode? scrollMode,
-  PDFPageLayout? pageLayout,
-  bool? offsetFirstPage,
-  bool? disableDoubleTapZoom,
-  bool? disableTextSelection,
-  bool? disableDragGestures,
-  bool? disableDoubleTapTextSelection,
-  bool? enableEdgeTapNavigation,
-  bool? enableSwipeNavigation,
-  double? edgeTapAreaPoints,
-})
-```
-
 ### Example Usage
 
 ```dart
-// Default reading mode
-final defaultPrefs = PDFPreferences(
-  fit: PDFFit.width,
-  scrollMode: PDFScrollMode.horizontal,
-  pageLayout: PDFPageLayout.single,
+// EPUB: enable edge-tap navigation
+await flureadium.setNavigationConfig(
+  ReaderNavigationConfig(enableEdgeTapNavigation: true),
 );
 
-// Document viewing mode (vertical scroll, fit whole page)
-final documentPrefs = PDFPreferences(
-  fit: PDFFit.contain,
-  scrollMode: PDFScrollMode.vertical,
-  pageLayout: PDFPageLayout.single,
+// PDF: read-only mode (disable all interactive gestures)
+await flureadium.setNavigationConfig(
+  ReaderNavigationConfig(
+    enableEdgeTapNavigation: true,
+    disableDoubleTapZoom: true,
+    disableTextSelection: false,
+    disableDragGestures: true,
+    disableDoubleTapTextSelection: true,
+  ),
 );
 
-// Book spread mode (two pages side-by-side)
-final spreadPrefs = PDFPreferences(
-  fit: PDFFit.contain,
-  scrollMode: PDFScrollMode.horizontal,
-  pageLayout: PDFPageLayout.double,
-  offsetFirstPage: true,  // Cover page alone
-);
-
-// Modify existing preferences
-final updated = defaultPrefs.copyWith(
-  scrollMode: PDFScrollMode.vertical,
-);
-
-// iOS: Disable interactive gestures for read-only mode
-final readOnlyPrefs = PDFPreferences(
-  fit: PDFFit.width,
-  scrollMode: PDFScrollMode.horizontal,
-  pageLayout: PDFPageLayout.single,
-  disableDoubleTapZoom: true,
-  disableTextSelection: true,
-  disableDragGestures: true,
-  disableDoubleTapTextSelection: true,
+// Wider edge tap zones
+await flureadium.setNavigationConfig(
+  ReaderNavigationConfig(
+    enableEdgeTapNavigation: true,
+    edgeTapAreaPoints: 80,
+  ),
 );
 ```
 

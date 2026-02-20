@@ -76,6 +76,9 @@ class MockFlureadiumPlatform
   @override
   PDFPreferences? defaultPdfPreferences;
 
+  @override
+  ReaderNavigationConfig? defaultNavigationConfig;
+
   // Publication Management
   @override
   Future<void> setCustomHeaders(Map<String, String> headers) async {
@@ -154,6 +157,12 @@ class MockFlureadiumPlatform
     calls.add(
       MockMethodCall('setEPUBPreferences', {'preferences': preferences}),
     );
+  }
+
+  @override
+  Future<void> setNavigationConfig(ReaderNavigationConfig config) async {
+    calls.add(MockMethodCall('setNavigationConfig', {'config': config}));
+    defaultNavigationConfig = config;
   }
 
   @override

@@ -13,13 +13,6 @@ class PDFPreferences {
     this.scrollMode,
     this.pageLayout,
     this.offsetFirstPage,
-    this.disableDoubleTapZoom,
-    this.disableTextSelection,
-    this.disableDragGestures,
-    this.disableDoubleTapTextSelection,
-    this.enableEdgeTapNavigation,
-    this.enableSwipeNavigation,
-    this.edgeTapAreaPoints,
   });
 
   factory PDFPreferences.fromJsonMap(Map<String, dynamic> map) =>
@@ -34,14 +27,6 @@ class PDFPreferences {
             ? PDFPageLayout.values.byName(map['pageLayout'] as String)
             : null,
         offsetFirstPage: map['offsetFirstPage'] as bool?,
-        disableDoubleTapZoom: map['disableDoubleTapZoom'] as bool?,
-        disableTextSelection: map['disableTextSelection'] as bool?,
-        disableDragGestures: map['disableDragGestures'] as bool?,
-        disableDoubleTapTextSelection:
-            map['disableDoubleTapTextSelection'] as bool?,
-        enableEdgeTapNavigation: map['enableEdgeTapNavigation'] as bool?,
-        enableSwipeNavigation: map['enableSwipeNavigation'] as bool?,
-        edgeTapAreaPoints: (map['edgeTapAreaPoints'] as num?)?.toDouble(),
       );
 
   /// How the page fits in the viewport.
@@ -56,68 +41,12 @@ class PDFPreferences {
   /// Whether to offset the first page in double-page spreads (for covers).
   bool? offsetFirstPage;
 
-  /// Whether to disable the built-in double-tap-to-zoom gesture (iOS only).
-  /// When true, double-tap won't zoom the PDF content.
-  /// Defaults to false (zoom enabled).
-  bool? disableDoubleTapZoom;
-
-  /// Whether to disable text selection gestures (iOS only).
-  /// When true, long-press won't select text in the PDF.
-  /// Defaults to false (text selection enabled).
-  bool? disableTextSelection;
-
-  /// Whether to disable drag gestures (iOS only).
-  /// When true, drag gestures won't trigger text selection or drag-and-drop.
-  /// Defaults to false (drag gestures enabled).
-  bool? disableDragGestures;
-
-  /// Whether to disable double-tap word selection in PDF text (iOS only).
-  /// When true, double-tapping on PDF text won't select a word or show the
-  /// Copy/Look Up/Translate menu. Long-press text selection remains functional.
-  /// Defaults to false (double-tap selection enabled).
-  bool? disableDoubleTapTextSelection;
-
-  /// Whether edge tap navigation is enabled (iOS only).
-  /// When true, tapping on the left/right edges of the screen navigates pages.
-  /// Defaults to true (enabled) when null.
-  bool? enableEdgeTapNavigation;
-
-  /// Whether swipe gesture navigation is enabled (iOS only).
-  /// When true, swiping left/right navigates pages.
-  /// Defaults to true (enabled) when null.
-  bool? enableSwipeNavigation;
-
-  /// Edge tap area in absolute points (44–120). iOS only.
-  /// Defaults to 44pt (iOS HIG minimum tap target) when null.
-  double? edgeTapAreaPoints;
-
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{};
     if (fit != null) map['fit'] = fit!.name;
     if (scrollMode != null) map['scrollMode'] = scrollMode!.name;
     if (pageLayout != null) map['pageLayout'] = pageLayout!.name;
     if (offsetFirstPage != null) map['offsetFirstPage'] = offsetFirstPage;
-    if (disableDoubleTapZoom != null) {
-      map['disableDoubleTapZoom'] = disableDoubleTapZoom;
-    }
-    if (disableTextSelection != null) {
-      map['disableTextSelection'] = disableTextSelection;
-    }
-    if (disableDragGestures != null) {
-      map['disableDragGestures'] = disableDragGestures;
-    }
-    if (disableDoubleTapTextSelection != null) {
-      map['disableDoubleTapTextSelection'] = disableDoubleTapTextSelection;
-    }
-    if (enableEdgeTapNavigation != null) {
-      map['enableEdgeTapNavigation'] = enableEdgeTapNavigation;
-    }
-    if (enableSwipeNavigation != null) {
-      map['enableSwipeNavigation'] = enableSwipeNavigation;
-    }
-    if (edgeTapAreaPoints != null) {
-      map['edgeTapAreaPoints'] = edgeTapAreaPoints;
-    }
     return map;
   }
 
@@ -126,27 +55,11 @@ class PDFPreferences {
     PDFScrollMode? scrollMode,
     PDFPageLayout? pageLayout,
     bool? offsetFirstPage,
-    bool? disableDoubleTapZoom,
-    bool? disableTextSelection,
-    bool? disableDragGestures,
-    bool? disableDoubleTapTextSelection,
-    bool? enableEdgeTapNavigation,
-    bool? enableSwipeNavigation,
-    double? edgeTapAreaPoints,
   }) => PDFPreferences(
     fit: fit ?? this.fit,
     scrollMode: scrollMode ?? this.scrollMode,
     pageLayout: pageLayout ?? this.pageLayout,
     offsetFirstPage: offsetFirstPage ?? this.offsetFirstPage,
-    disableDoubleTapZoom: disableDoubleTapZoom ?? this.disableDoubleTapZoom,
-    disableTextSelection: disableTextSelection ?? this.disableTextSelection,
-    disableDragGestures: disableDragGestures ?? this.disableDragGestures,
-    disableDoubleTapTextSelection:
-        disableDoubleTapTextSelection ?? this.disableDoubleTapTextSelection,
-    enableEdgeTapNavigation:
-        enableEdgeTapNavigation ?? this.enableEdgeTapNavigation,
-    enableSwipeNavigation: enableSwipeNavigation ?? this.enableSwipeNavigation,
-    edgeTapAreaPoints: edgeTapAreaPoints ?? this.edgeTapAreaPoints,
   );
 }
 

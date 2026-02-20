@@ -185,6 +185,13 @@ class Flureadium {
   Future<void> setEPUBPreferences(EPUBPreferences preferences) =>
       _platform.setEPUBPreferences(preferences);
 
+  /// Sets navigation UX configuration for the reader.
+  ///
+  /// Use this to configure gesture-based navigation independently of
+  /// visual reading preferences.
+  Future<void> setNavigationConfig(ReaderNavigationConfig config) =>
+      _platform.setNavigationConfig(config);
+
   /// Applies decorations (highlights, bookmarks) to the reader.
   ///
   /// The [id] groups related decorations together.

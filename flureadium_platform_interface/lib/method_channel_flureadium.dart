@@ -155,6 +155,12 @@ class MethodChannelFlureadium extends FlureadiumPlatform {
   }
 
   @override
+  Future<void> setNavigationConfig(ReaderNavigationConfig config) async {
+    defaultNavigationConfig = config;
+    await currentReaderWidget?.setNavigationConfig(config);
+  }
+
+  @override
   Future<void> applyDecorations(
     String id,
     List<ReaderDecoration> decorations,

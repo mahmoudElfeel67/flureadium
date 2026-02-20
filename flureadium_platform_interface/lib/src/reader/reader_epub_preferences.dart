@@ -12,9 +12,6 @@ class EPUBPreferences {
     required this.backgroundColor,
     required this.textColor,
     this.pageMargins,
-    this.enableEdgeTapNavigation,
-    this.enableSwipeNavigation,
-    this.edgeTapAreaPoints,
   });
 
   factory EPUBPreferences.fromJsonMap(final Map<String, dynamic> map) =>
@@ -35,20 +32,6 @@ class EPUBPreferences {
   Color? textColor;
   double? pageMargins;
 
-  /// Whether edge tap navigation is enabled (iOS only).
-  /// When true, tapping on the left/right edges of the screen navigates pages.
-  /// Defaults to true (enabled) when null.
-  bool? enableEdgeTapNavigation;
-
-  /// Whether swipe gesture navigation is enabled (iOS only).
-  /// When true, swiping left/right navigates pages.
-  /// Defaults to true (enabled) when null.
-  bool? enableSwipeNavigation;
-
-  /// Edge tap area in absolute points (44–120). iOS only.
-  /// Defaults to 44pt (iOS HIG minimum tap target) when null.
-  double? edgeTapAreaPoints;
-
   // TODO: Add more preferences,
   //see https://github.com/readium/swift-toolkit/blob/develop/Sources/Navigator/EPUB/Preferences/EPUBPreferences.swift
 
@@ -63,15 +46,6 @@ class EPUBPreferences {
     };
     if (pageMargins != null) {
       map['pageMargins'] = pageMargins.toString();
-    }
-    if (enableEdgeTapNavigation != null) {
-      map['enableEdgeTapNavigation'] = enableEdgeTapNavigation.toString();
-    }
-    if (enableSwipeNavigation != null) {
-      map['enableSwipeNavigation'] = enableSwipeNavigation.toString();
-    }
-    if (edgeTapAreaPoints != null) {
-      map['edgeTapAreaPoints'] = edgeTapAreaPoints.toString();
     }
     return map;
   }

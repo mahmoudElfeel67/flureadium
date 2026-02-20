@@ -201,33 +201,4 @@ final class FlutterPdfPreferencesTests: XCTestCase {
         XCTAssertTrue(map.isEmpty)
     }
 
-    // MARK: - disableDoubleTapTextSelection Tests
-
-    func testDisableDoubleTapTextSelection() {
-        let preferences = FlutterPdfPreferences(disableDoubleTapTextSelection: true)
-        XCTAssertEqual(preferences.disableDoubleTapTextSelection, true)
-    }
-
-    func testDisableDoubleTapTextSelectionFromMap() {
-        let map: [String: Any] = ["disableDoubleTapTextSelection": true]
-        let preferences = FlutterPdfPreferences(fromMap: map)
-        XCTAssertEqual(preferences.disableDoubleTapTextSelection, true)
-    }
-
-    func testDisableDoubleTapTextSelectionToMap() {
-        let preferences = FlutterPdfPreferences(disableDoubleTapTextSelection: true)
-        let map = preferences.toMap()
-        XCTAssertEqual(map["disableDoubleTapTextSelection"] as? Bool, true)
-    }
-
-    func testDisableDoubleTapTextSelectionDefaultsToNil() {
-        let preferences = FlutterPdfPreferences()
-        XCTAssertNil(preferences.disableDoubleTapTextSelection)
-    }
-
-    func testDisableDoubleTapTextSelectionNotInMapWhenNil() {
-        let preferences = FlutterPdfPreferences()
-        let map = preferences.toMap()
-        XCTAssertNil(map["disableDoubleTapTextSelection"])
-    }
 }

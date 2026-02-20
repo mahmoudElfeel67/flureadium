@@ -207,15 +207,14 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "0.3.3"
+    version: "0.5.0"
   flureadium_platform_interface:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      name: flureadium_platform_interface
-      sha256: "17bb9b1a1edc4c803a8750b369fc664eb415885dca7febc38dfc641872b531fb"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.3.1"
+      path: "../../flureadium_platform_interface"
+      relative: true
+    source: path
+    version: "0.5.0"
   flutter:
     dependency: "direct main"
     description: flutter

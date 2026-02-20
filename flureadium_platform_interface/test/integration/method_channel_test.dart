@@ -452,6 +452,13 @@ class MockReaderWidget implements ReadiumReaderWidgetInterface {
     setPDFPreferencesCalled = true;
   }
 
+  bool setNavigationConfigCalled = false;
+
+  @override
+  Future<void> setNavigationConfig(ReaderNavigationConfig config) async {
+    setNavigationConfigCalled = true;
+  }
+
   @override
   Future<void> applyDecorations(
     String id,
