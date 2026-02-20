@@ -484,10 +484,26 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
       let navConfig = FlutterNavigationConfig(fromMap: args)
       if let v = navConfig.enableEdgeTapNavigation { enableEdgeTapNavigation = v }
       if let v = navConfig.enableSwipeNavigation { enableSwipeNavigation = v }
-      if let v = navConfig.disableDoubleTapZoom { disableDoubleTapZoom = v }
-      if let v = navConfig.disableTextSelection { disableTextSelection = v }
-      if let v = navConfig.disableDragGestures { disableDragGestures = v }
-      if let v = navConfig.disableDoubleTapTextSelection { disableDoubleTapTextSelection = v }
+      if let v = navConfig.disableDoubleTapZoom {
+        disableDoubleTapZoom = v
+        // setupPDFView has already run — apply immediately to the live view
+        if v { disableDoubleTapZoomGesture(in: pdfViewController.view) }
+      }
+      if let v = navConfig.disableTextSelection {
+        disableTextSelection = v
+        if v { disableTextSelectionGesture(in: pdfViewController.view) }
+      }
+      if let v = navConfig.disableDragGestures {
+        disableDragGestures = v
+        if v { disableDragGesturesRecognizer(in: pdfViewController.view) }
+      }
+      if let v = navConfig.disableDoubleTapTextSelection {
+        disableDoubleTapTextSelection = v
+        if v {
+          removeEditMenuInteractions(in: pdfViewController.view)
+          scheduleDisableDoubleTapWordSelection()
+        }
+      }
       if let pts = navConfig.edgeTapAreaPoints {
         edgeTapAreaPoints = CGFloat(min(max(pts, 44.0), 120.0))
       }
