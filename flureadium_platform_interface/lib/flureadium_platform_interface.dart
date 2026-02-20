@@ -38,6 +38,7 @@ abstract class FlureadiumPlatform extends PlatformInterface {
   ReadiumReaderWidgetInterface? currentReaderWidget;
   EPUBPreferences? defaultPreferences;
   PDFPreferences? defaultPdfPreferences;
+  ReaderNavigationConfig? defaultNavigationConfig;
 
   Future<void> setCustomHeaders(Map<String, String> headers) =>
       throw UnimplementedError(
@@ -93,6 +94,12 @@ abstract class FlureadiumPlatform extends PlatformInterface {
   /// Sets the default EPUB rendering preferences and updates preferences for the ReaderWidgetView.
   Future<void> setEPUBPreferences(EPUBPreferences preferences) =>
       throw UnimplementedError('applyDecorations() has not been implemented');
+
+  /// Sets navigation config and forwards it to the active reader widget.
+  Future<void> setNavigationConfig(ReaderNavigationConfig config) =>
+      throw UnimplementedError(
+        'setNavigationConfig() has not been implemented',
+      );
 
   /// Apply reader decorations (highlights, bookmarks, etc.) to the current ReaderWidgetView.
   /// The `id` parameter is used to identify the decoration set.

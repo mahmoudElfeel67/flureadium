@@ -32,6 +32,9 @@ abstract class ReadiumReaderWidgetInterface {
   /// Set PDF preferences
   Future<void> setPDFPreferences(PDFPreferences preferences);
 
+  /// Set navigation config
+  Future<void> setNavigationConfig(ReaderNavigationConfig config);
+
   /// Apply decorations
   Future<void> applyDecorations(String id, List<ReaderDecoration> decorations);
 }
