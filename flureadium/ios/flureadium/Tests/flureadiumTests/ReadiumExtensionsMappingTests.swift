@@ -2,10 +2,9 @@
 //  ReadiumExtensionsMappingTests.swift
 //  flureadiumTests
 //
-//  Tests that EPUBPreferences and PDFPreferences extensions only receive
-//  Readium-specific keys — never developer config keys.
-//  The filtering contract: ReadiumReaderView and PdfReaderView extract
-//  developer config keys before passing the remaining map to these inits.
+//  Tests that EPUBPreferences and PDFPreferences extensions correctly map
+//  Readium-specific keys from the channel arguments.
+//  Navigation UX config is now handled separately via setNavigationConfig.
 //
 
 import XCTest
@@ -66,136 +65,46 @@ final class ReadiumExtensionsMappingTests: XCTestCase {
         XCTAssertNil(prefs.scroll)
     }
 
-    // MARK: - EPUBPreferences developer config key separation
+    // MARK: - PDFPreferences.init(fromMap:) — Readium key mapping
 
-    /// Verifies the contract: developer config keys must be filtered BEFORE calling
-    /// EPUBPreferences.init(fromMap:). A clean (filtered) map only contains Readium keys.
-    func testEPUBPreferencesFilteredMapContainsOnlyReadiumKeys() {
-        let developerConfigKeys: Set<String> = [
-            "enableEdgeTapNavigation",
-            "enableSwipeNavigation",
-            "edgeTapAreaPoints",
-        ]
-        let fullMap: [String: String] = [
-            "backgroundColor": "#000000",
-            "textColor": "#ffffff",
-            "fontSize": "1.0",
-            "enableEdgeTapNavigation": "true",
-            "enableSwipeNavigation": "true",
-            "edgeTapAreaPoints": "44.0",
-        ]
-
-        let filteredMap = fullMap.filter { !developerConfigKeys.contains($0.key) }
-
-        XCTAssertFalse(filteredMap.keys.contains("enableEdgeTapNavigation"))
-        XCTAssertFalse(filteredMap.keys.contains("enableSwipeNavigation"))
-        XCTAssertFalse(filteredMap.keys.contains("edgeTapAreaPoints"))
-        XCTAssertTrue(filteredMap.keys.contains("backgroundColor"))
-        XCTAssertTrue(filteredMap.keys.contains("textColor"))
-        XCTAssertTrue(filteredMap.keys.contains("fontSize"))
+    func testPDFPreferencesFromMapMapsFitWidth() {
+        let map: [String: Any] = ["fit": "width"]
+        let prefs = PDFPreferences(fromMap: map)
+        XCTAssertEqual(prefs.scroll, true)
     }
 
-    func testEPUBPreferencesFilteredMapMapsCorrectly() {
-        let developerConfigKeys: Set<String> = [
-            "enableEdgeTapNavigation",
-            "enableSwipeNavigation",
-            "edgeTapAreaPoints",
-        ]
-        let fullMap: [String: String] = [
-            "backgroundColor": "#000000",
-            "textColor": "#ffffff",
-            "fontSize": "1.0",
-            "enableEdgeTapNavigation": "true",
-            "enableSwipeNavigation": "false",
-            "edgeTapAreaPoints": "60.0",
-        ]
-
-        let filteredMap = fullMap.filter { !developerConfigKeys.contains($0.key) }
-        let prefs = EPUBPreferences(fromMap: filteredMap)
-
-        XCTAssertNotNil(prefs.backgroundColor)
-        XCTAssertNotNil(prefs.textColor)
-        XCTAssertEqual(prefs.fontSize, 1.0)
+    func testPDFPreferencesFromMapMapsFitContain() {
+        let map: [String: Any] = ["fit": "contain"]
+        let prefs = PDFPreferences(fromMap: map)
+        XCTAssertEqual(prefs.scroll, false)
     }
 
-    // MARK: - PDFPreferences developer config key separation
-
-    func testPDFPreferencesFilteredMapContainsOnlyReadiumKeys() {
-        let developerConfigKeys: Set<String> = [
-            "enableEdgeTapNavigation",
-            "enableSwipeNavigation",
-            "edgeTapAreaPoints",
-            "disableDoubleTapZoom",
-            "disableTextSelection",
-            "disableDragGestures",
-            "disableDoubleTapTextSelection",
-        ]
-        let fullMap: [String: Any] = [
-            "fit": "contain",
-            "scrollMode": "horizontal",
-            "backgroundColor": "#000000",
-            "enableEdgeTapNavigation": true,
-            "enableSwipeNavigation": true,
-            "edgeTapAreaPoints": 44.0,
-            "disableDoubleTapZoom": true,
-            "disableTextSelection": false,
-            "disableDragGestures": false,
-            "disableDoubleTapTextSelection": true,
-        ]
-
-        let filteredMap = fullMap.filter { !developerConfigKeys.contains($0.key) }
-
-        XCTAssertFalse(filteredMap.keys.contains("enableEdgeTapNavigation"))
-        XCTAssertFalse(filteredMap.keys.contains("enableSwipeNavigation"))
-        XCTAssertFalse(filteredMap.keys.contains("edgeTapAreaPoints"))
-        XCTAssertFalse(filteredMap.keys.contains("disableDoubleTapZoom"))
-        XCTAssertFalse(filteredMap.keys.contains("disableTextSelection"))
-        XCTAssertFalse(filteredMap.keys.contains("disableDragGestures"))
-        XCTAssertFalse(filteredMap.keys.contains("disableDoubleTapTextSelection"))
-        XCTAssertTrue(filteredMap.keys.contains("fit"))
-        XCTAssertTrue(filteredMap.keys.contains("scrollMode"))
-        XCTAssertTrue(filteredMap.keys.contains("backgroundColor"))
+    func testPDFPreferencesFromMapMapsScrollModeVertical() {
+        let map: [String: Any] = ["scrollMode": "vertical"]
+        let prefs = PDFPreferences(fromMap: map)
+        XCTAssertEqual(prefs.scrollAxis, .vertical)
     }
 
-    func testPDFPreferencesFilteredMapMapsCorrectly() {
-        let developerConfigKeys: Set<String> = [
-            "enableEdgeTapNavigation",
-            "enableSwipeNavigation",
-            "edgeTapAreaPoints",
-            "disableDoubleTapZoom",
-            "disableTextSelection",
-            "disableDragGestures",
-            "disableDoubleTapTextSelection",
-        ]
-        let fullMap: [String: Any] = [
+    func testPDFPreferencesFromMapMapsScrollModeHorizontal() {
+        let map: [String: Any] = ["scrollMode": "horizontal"]
+        let prefs = PDFPreferences(fromMap: map)
+        XCTAssertEqual(prefs.scrollAxis, .horizontal)
+    }
+
+    func testPDFPreferencesFromMapMapsMultipleReadiumKeys() {
+        let map: [String: Any] = [
             "fit": "width",
             "scrollMode": "vertical",
-            "enableEdgeTapNavigation": true,
-            "disableDoubleTapZoom": true,
         ]
-
-        let filteredMap = fullMap.filter { !developerConfigKeys.contains($0.key) }
-        let prefs = PDFPreferences(fromMap: filteredMap)
-
+        let prefs = PDFPreferences(fromMap: map)
         XCTAssertEqual(prefs.scroll, true)
         XCTAssertEqual(prefs.scrollAxis, .vertical)
     }
 
-    // MARK: - Developer config key extraction
-
-    func testEnableEdgeTapNavigationExtractedFromFullMap() {
-        let fullMap: [String: String] = [
-            "backgroundColor": "#000000",
-            "enableEdgeTapNavigation": "false",
-        ]
-        let edgeTapEnabled = fullMap["enableEdgeTapNavigation"] != "false" ? true :
-            (fullMap["enableEdgeTapNavigation"] == nil ? true : false)
-        XCTAssertFalse(edgeTapEnabled)
-    }
-
-    func testEnableEdgeTapNavigationDefaultsTrueWhenAbsent() {
-        let fullMap: [String: String] = ["backgroundColor": "#000000"]
-        let edgeTapEnabled = fullMap["enableEdgeTapNavigation"].map { $0 != "false" } ?? true
-        XCTAssertTrue(edgeTapEnabled)
+    func testPDFPreferencesFromMapEmptyMapProducesDefaultPrefs() {
+        let map: [String: Any] = [:]
+        let prefs = PDFPreferences(fromMap: map)
+        XCTAssertNil(prefs.scroll)
+        XCTAssertNil(prefs.scrollAxis)
     }
 }
