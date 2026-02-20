@@ -128,7 +128,7 @@ final class ReadiumExtensionsMappingTests: XCTestCase {
             "disableDoubleTapZoom",
             "disableTextSelection",
             "disableDragGestures",
-            "disableTextSelectionMenu",
+            "disableDoubleTapTextSelection",
         ]
         let fullMap: [String: Any] = [
             "fit": "contain",
@@ -140,7 +140,7 @@ final class ReadiumExtensionsMappingTests: XCTestCase {
             "disableDoubleTapZoom": true,
             "disableTextSelection": false,
             "disableDragGestures": false,
-            "disableTextSelectionMenu": true,
+            "disableDoubleTapTextSelection": true,
         ]
 
         let filteredMap = fullMap.filter { !developerConfigKeys.contains($0.key) }
@@ -151,7 +151,7 @@ final class ReadiumExtensionsMappingTests: XCTestCase {
         XCTAssertFalse(filteredMap.keys.contains("disableDoubleTapZoom"))
         XCTAssertFalse(filteredMap.keys.contains("disableTextSelection"))
         XCTAssertFalse(filteredMap.keys.contains("disableDragGestures"))
-        XCTAssertFalse(filteredMap.keys.contains("disableTextSelectionMenu"))
+        XCTAssertFalse(filteredMap.keys.contains("disableDoubleTapTextSelection"))
         XCTAssertTrue(filteredMap.keys.contains("fit"))
         XCTAssertTrue(filteredMap.keys.contains("scrollMode"))
         XCTAssertTrue(filteredMap.keys.contains("backgroundColor"))
@@ -165,7 +165,7 @@ final class ReadiumExtensionsMappingTests: XCTestCase {
             "disableDoubleTapZoom",
             "disableTextSelection",
             "disableDragGestures",
-            "disableTextSelectionMenu",
+            "disableDoubleTapTextSelection",
         ]
         let fullMap: [String: Any] = [
             "fit": "width",

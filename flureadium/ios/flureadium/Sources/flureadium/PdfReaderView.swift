@@ -31,7 +31,7 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
   private var disableDoubleTapZoom: Bool
   private var disableTextSelection: Bool
   private var disableDragGestures: Bool
-  private var disableTextSelectionMenu: Bool
+  private var disableDoubleTapTextSelection: Bool
   private var enableEdgeTapNavigation: Bool
   private var enableSwipeNavigation: Bool
   private var edgeTapAreaPoints: CGFloat?
@@ -46,7 +46,7 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
     "disableDoubleTapZoom",
     "disableTextSelection",
     "disableDragGestures",
-    "disableTextSelectionMenu",
+    "disableDoubleTapTextSelection",
   ]
 
   var publicationIdentifier: String?
@@ -89,7 +89,7 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
     disableDoubleTapZoom = flutterPrefs.disableDoubleTapZoom ?? false
     disableTextSelection = flutterPrefs.disableTextSelection ?? false
     disableDragGestures = flutterPrefs.disableDragGestures ?? false
-    disableTextSelectionMenu = flutterPrefs.disableTextSelectionMenu ?? false
+    disableDoubleTapTextSelection = flutterPrefs.disableDoubleTapTextSelection ?? false
     enableEdgeTapNavigation = flutterPrefs.enableEdgeTapNavigation ?? true
     enableSwipeNavigation = flutterPrefs.enableSwipeNavigation ?? true
     if let rawPoints = flutterPrefs.edgeTapAreaPoints {
@@ -97,7 +97,7 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
     } else {
       edgeTapAreaPoints = nil
     }
-    print(TAG, "PDF Preferences - disableDoubleTapZoom: \(disableDoubleTapZoom), disableTextSelection: \(disableTextSelection), disableDragGestures: \(disableDragGestures), disableTextSelectionMenu: \(disableTextSelectionMenu), enableEdgeTapNavigation: \(enableEdgeTapNavigation), enableSwipeNavigation: \(enableSwipeNavigation)")
+    print(TAG, "PDF Preferences - disableDoubleTapZoom: \(disableDoubleTapZoom), disableTextSelection: \(disableTextSelection), disableDragGestures: \(disableDragGestures), disableDoubleTapTextSelection: \(disableDoubleTapTextSelection), enableEdgeTapNavigation: \(enableEdgeTapNavigation), enableSwipeNavigation: \(enableSwipeNavigation)")
 
     let locatorStr = creationParams["initialLocator"] as? String
     let locator = locatorStr == nil ? nil : try! Locator.init(jsonString: locatorStr!)
@@ -182,6 +182,9 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
       self.readerStatusStreamHandler?.sendEvent(PdfReaderStatusReady)
       hasSentReady = true
     }
+    if disableDoubleTapTextSelection {
+      scheduleDisableDoubleTapWordSelection()
+    }
     emitOnPageChanged(locator: locator)
   }
 
@@ -196,7 +199,7 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
   // MARK: - PDFNavigatorDelegate
 
   func navigator(_ navigator: PDFNavigatorViewController, setupPDFView view: PDFDocumentView) {
-    print(TAG, "setupPDFView called - disableDoubleTapZoom: \(disableDoubleTapZoom), disableTextSelection: \(disableTextSelection), disableDragGestures: \(disableDragGestures), disableTextSelectionMenu: \(disableTextSelectionMenu)")
+    print(TAG, "setupPDFView called - disableDoubleTapZoom: \(disableDoubleTapZoom), disableTextSelection: \(disableTextSelection), disableDragGestures: \(disableDragGestures), disableDoubleTapTextSelection: \(disableDoubleTapTextSelection)")
 
     if disableDoubleTapZoom {
       print(TAG, "Calling disableDoubleTapZoomGesture...")
@@ -208,9 +211,10 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
       disableTextSelectionGesture(in: view)
     }
 
-    if disableTextSelectionMenu {
-      print(TAG, "Calling disableTextSelectionMenu...")
-      disableTextSelectionMenu(in: view)
+    if disableDoubleTapTextSelection {
+      print(TAG, "Calling removeEditMenuInteractions...")
+      removeEditMenuInteractions(in: view)
+      scheduleDisableDoubleTapWordSelection()
     }
 
     if disableDragGestures {
@@ -359,8 +363,8 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
     }
   }
 
-  private func disableTextSelectionMenu(in view: UIView) {
-    print(TAG, "disableTextSelectionMenu: Checking interactions on \(type(of: view))")
+  private func removeEditMenuInteractions(in view: UIView) {
+    print(TAG, "removeEditMenuInteractions: Checking interactions on \(type(of: view))")
 
     // Remove text selection and editing menu interactions (iOS 13+)
     if #available(iOS 13.0, *) {
@@ -383,7 +387,7 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
 
     // Recursively disable on all subviews
     for subview in view.subviews {
-      disableTextSelectionMenu(in: subview)
+      removeEditMenuInteractions(in: subview)
     }
   }
 
@@ -408,6 +412,44 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
       await MainActor.run() {
         self.channel.onExternalLinkActivated(url: url)
       }
+    }
+  }
+
+  // MARK: - Double-Tap Word Selection
+
+  /// Schedules repeated attempts to find PDFTextInputView and remove UITextNonEditableInteraction.
+  /// PDFTextInputView is added asynchronously after page rendering, so a single deferred attempt
+  /// is not sufficient — we retry at 0.1s, 0.5s, and 1.0s after the call.
+  private func scheduleDisableDoubleTapWordSelection() {
+    for delay in [0.1, 0.5, 1.0] {
+      DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+        guard let self = self else { return }
+        self.disableDoubleTapWordSelection(in: self.pdfViewController.view)
+      }
+    }
+  }
+
+  /// Recursively searches the view tree for PDFTextInputView and removes
+  /// UITextNonEditableInteraction — the interaction responsible for double-tap
+  /// word selection. Long-press selection lives in UITextRefinementInteraction
+  /// and is unaffected.
+  private func disableDoubleTapWordSelection(in view: UIView) {
+    let className = String(describing: type(of: view))
+    if className == "PDFTextInputView" {
+      var removed = 0
+      for interaction in view.interactions {
+        if String(describing: type(of: interaction)) == "UITextNonEditableInteraction" {
+          view.removeInteraction(interaction)
+          removed += 1
+        }
+      }
+      if removed > 0 {
+        print(TAG, "disableDoubleTapWordSelection: removed \(removed) UITextNonEditableInteraction(s) from PDFTextInputView")
+      }
+      return
+    }
+    for subview in view.subviews {
+      disableDoubleTapWordSelection(in: subview)
     }
   }
 
@@ -461,7 +503,7 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
       disableDoubleTapZoom = flutterPrefs.disableDoubleTapZoom ?? disableDoubleTapZoom
       disableTextSelection = flutterPrefs.disableTextSelection ?? disableTextSelection
       disableDragGestures = flutterPrefs.disableDragGestures ?? disableDragGestures
-      disableTextSelectionMenu = flutterPrefs.disableTextSelectionMenu ?? disableTextSelectionMenu
+      disableDoubleTapTextSelection = flutterPrefs.disableDoubleTapTextSelection ?? disableDoubleTapTextSelection
       if let pts = flutterPrefs.edgeTapAreaPoints {
         edgeTapAreaPoints = CGFloat(min(max(pts, 44.0), 120.0))
       }
