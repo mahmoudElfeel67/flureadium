@@ -26,10 +26,14 @@ class EventStreamHandler: NSObject, FlutterStreamHandler {
 
   func dispose() {
     print(TAG, "dispose")
-    // End stream and clear the event-sink to prevent memory leaks.
+    // Send end-of-stream so Flutter closes its subscription, then clear the
+    // local sink so further sendEvent calls are no-ops.
+    // Do NOT call channel.setStreamHandler(nil) here: that unregisters the
+    // handler synchronously, but Flutter still needs to complete the "cancel"
+    // round-trip. Removing the handler before that arrives causes a
+    // MissingPluginException on the Dart side.
     eventSink?(FlutterEndOfEventStream)
     eventSink = nil
-    channel.setStreamHandler(nil)
   }
 
   init(withName streamName: String, messenger: FlutterBinaryMessenger) {
