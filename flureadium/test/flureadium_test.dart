@@ -126,9 +126,6 @@ void main() {
         final prefs = PDFPreferences(
           fit: PDFFit.width,
           scrollMode: PDFScrollMode.horizontal,
-          disableDoubleTapZoom: true,
-          disableTextSelection: true,
-          disableDragGestures: true,
         );
 
         flureadium.setDefaultPdfPreferences(prefs);
@@ -138,33 +135,11 @@ void main() {
       });
 
       test('setDefaultPdfPreferences stores preferences in platform', () {
-        final prefs = PDFPreferences(disableDoubleTapZoom: false);
+        final prefs = PDFPreferences(fit: PDFFit.contain);
 
         flureadium.setDefaultPdfPreferences(prefs);
 
-        expect(
-          mockPlatform.defaultPdfPreferences?.disableDoubleTapZoom,
-          isFalse,
-        );
-      });
-
-      test('setDefaultPdfPreferences stores disableTextSelection', () {
-        final prefs = PDFPreferences(disableTextSelection: true);
-
-        flureadium.setDefaultPdfPreferences(prefs);
-
-        expect(
-          mockPlatform.defaultPdfPreferences?.disableTextSelection,
-          isTrue,
-        );
-      });
-
-      test('setDefaultPdfPreferences stores disableDragGestures', () {
-        final prefs = PDFPreferences(disableDragGestures: true);
-
-        flureadium.setDefaultPdfPreferences(prefs);
-
-        expect(mockPlatform.defaultPdfPreferences?.disableDragGestures, isTrue);
+        expect(mockPlatform.defaultPdfPreferences?.fit, equals(PDFFit.contain));
       });
 
       test('setEPUBPreferences calls platform method', () async {

@@ -117,6 +117,11 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
   }
 
   @override
+  Future<void> setNavigationConfig(ReaderNavigationConfig config) async {
+    R2Log.d('setNavigationConfig not implemented in web version');
+  }
+
+  @override
   Future<void> applyDecorations(
     String id,
     List<ReaderDecoration> decorations,

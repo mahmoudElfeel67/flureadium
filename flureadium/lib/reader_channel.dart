@@ -15,6 +15,7 @@ enum _ReaderChannelMethodInvoke {
   isLocatorVisible,
   dispose,
   setPreferences,
+  setNavigationConfig,
 }
 
 /// Internal use only.
@@ -97,6 +98,14 @@ class ReadiumReaderChannel extends MethodChannel {
     await _invokeMethod(
       _ReaderChannelMethodInvoke.setPreferences,
       preferences.toJson(),
+    );
+  }
+
+  /// Set navigation config.
+  Future<void> setNavigationConfig(ReaderNavigationConfig config) async {
+    await _invokeMethod(
+      _ReaderChannelMethodInvoke.setNavigationConfig,
+      config.toJson(),
     );
   }
 

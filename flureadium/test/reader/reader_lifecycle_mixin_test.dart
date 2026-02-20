@@ -40,6 +40,9 @@ class TestLifecycleManager
   Future<void> setPDFPreferences(PDFPreferences preferences) async {}
 
   @override
+  Future<void> setNavigationConfig(ReaderNavigationConfig config) async {}
+
+  @override
   Future<void> skipToNext({bool animated = true}) async {}
 
   @override

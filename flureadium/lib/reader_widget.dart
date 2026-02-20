@@ -311,6 +311,11 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
   }
 
   @override
+  Future<void> setNavigationConfig(ReaderNavigationConfig config) async {
+    _channel?.setNavigationConfig(config);
+  }
+
+  @override
   Future<void> applyDecorations(
     String id,
     List<ReaderDecoration> decorations,
