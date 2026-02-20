@@ -1,3 +1,21 @@
+## 0.4.0
+
+### Breaking Changes
+
+- **iOS / PDFPreferences**: Rename `disableTextSelectionMenu` to `disableDoubleTapTextSelection`.
+  Requires `flureadium_platform_interface` ^0.4.0.
+
+### New Features
+
+- **iOS / PDF**: Fix double-tap word selection in PDF reader. Double-tapping on PDF text no longer
+  selects the word or shows the Copy/Look Up/Translate menu. Only the reader overlay controls toggle.
+  Long-press text selection with the system menu remains fully functional, matching ePub behavior.
+  - Root cause: `UITextNonEditableInteraction.doubleTapInUneditable:` on the lazily-created
+    `PDFTextInputView` was intercepting double taps. Previous attempts failed because `PDFTextInputView`
+    does not exist at `setupPDFView` time — it is added asynchronously after page rendering.
+  - Fix: Deferred traversal (0.1s / 0.5s / 1.0s after `setupPDFView` and each `locationDidChange`)
+    finds `PDFTextInputView` and removes `UITextNonEditableInteraction` from it.
+
 ## 0.3.4
 
 ### Bug Fixes
