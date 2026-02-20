@@ -1,3 +1,15 @@
+## 0.5.0
+
+### Breaking Changes
+
+- **EPUBPreferences**: Remove navigation config fields `enableEdgeTapNavigation`, `enableSwipeNavigation`, `edgeTapAreaPoints`. Use `setNavigationConfig(ReaderNavigationConfig)` instead.
+- **PDFPreferences**: Remove navigation config fields `enableEdgeTapNavigation`, `enableSwipeNavigation`, `edgeTapAreaPoints`, `disableDoubleTapZoom`, `disableTextSelection`, `disableDragGestures`, `disableDoubleTapTextSelection`. Use `setNavigationConfig(ReaderNavigationConfig)` instead.
+
+### New Features
+
+- Add `ReaderNavigationConfig` — dedicated type for app-developer navigation UX settings (edge tap, swipe, gesture disabling). These are separate from Readium user reading preferences.
+- Add `setNavigationConfig(ReaderNavigationConfig)` to `FlureadiumPlatform`, `MethodChannelFlureadium`, `ReadiumReaderWidgetInterface`, `_ReadiumReaderWidgetState`, and `ReadiumReaderChannel`.
+
 ## 0.4.0
 
 ### Breaking Changes
