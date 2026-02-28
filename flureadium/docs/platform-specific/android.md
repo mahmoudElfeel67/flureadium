@@ -199,6 +199,22 @@ PDF is always paginated; scroll mode does not apply.
 | `ReadiumReader.kt` | Exposes `epubSetNavigationConfig`, `epubSetScrollMode`, `pdfSetNavigationConfig` |
 | `ReadiumReaderWidget.kt` | Handles `setNavigationConfig` method call; detects scroll mode from `setPreferences` |
 
+#### Touch dispatch design
+
+`EdgeTapInterceptView` overrides `dispatchTouchEvent` rather than `onInterceptTouchEvent` +
+`onTouchEvent`. The reason matters for future maintenance:
+
+- `onInterceptTouchEvent` returning `true` causes the ViewGroup to call `onTouchEvent`.
+- `onTouchEvent` returns `gestureDetector.onTouchEvent()`, which returns `onDown() = false`
+  (the `SimpleOnGestureListener` default).
+- That `false` propagates out of `dispatchTouchEvent`, so the **parent `FrameLayout` never
+  records this view as the touch target** — `ACTION_UP` never arrives, and
+  `onSingleTapConfirmed` never fires.
+
+`dispatchTouchEvent` avoids this by returning `true` unconditionally for any `ACTION_DOWN`
+that lands in an edge zone (claiming the gesture sequence), and `false` for centre touches
+(passing them straight to the Readium WebView / PDF view).
+
 ## Troubleshooting
 
 ### "MainActivity cannot be cast to FragmentActivity"
@@ -222,6 +238,19 @@ android {
 1. Check TTS engine is installed (Settings > Accessibility > TTS)
 2. Download language data if prompted
 3. Test with system TTS settings
+
+### Edge taps not responding
+
+If edge taps appear in Flutter's `Listener` logs but no navigation occurs:
+
+1. Check logcat for `D/EdgeTapInterceptView: dispatchTouchEvent ACTION_DOWN x=... claimed=true`.
+   If `claimed=false` for a tap at the screen edge, the tap coordinate in **dp** is outside
+   the configured zone — verify `edgeTapAreaPoints` and screen density.
+2. If there are no `EdgeTapInterceptView` logs at all, the overlay was not created. Confirm
+   `attachNavigator()` ran and `view as? FrameLayout` succeeded (the fragment root must be a
+   `FrameLayout`, which it is by default via `fragment_reader.xml`).
+3. In EPUB scroll mode, all overlay gestures are intentionally disabled; check that
+   `setScrollMode(false)` was called when leaving scroll mode.
 
 ### WebView rendering issues
 

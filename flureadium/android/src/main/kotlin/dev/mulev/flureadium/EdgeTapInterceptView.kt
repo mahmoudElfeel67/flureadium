@@ -93,26 +93,53 @@ class EdgeTapInterceptView @JvmOverloads constructor(
         }
     })
 
-    // ── Touch interception ────────────────────────────────────────────────────
+    // ── Touch dispatch ────────────────────────────────────────────────────────
 
-    override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
-        if (ev.action == MotionEvent.ACTION_DOWN) {
-            val thresholdPx = dpToPx(edgeTapThresholdDp, resources.displayMetrics.density)
-            val x = ev.x
-            val inLeftEdge = isInLeftEdge(x, thresholdPx) &&
-                (onLeftEdgeTap != null || onSwipeRight != null)
-            val inRightEdge = isInRightEdge(x, width, thresholdPx) &&
-                (onRightEdgeTap != null || onSwipeLeft != null)
-            if (inLeftEdge || inRightEdge) {
-                gestureDetector.onTouchEvent(ev)
-                return true
+    /**
+     * Tracks whether the current touch sequence was claimed by this overlay.
+     * Set on ACTION_DOWN; cleared on ACTION_UP / ACTION_CANCEL.
+     */
+    private var isClaimed = false
+
+    /**
+     * Intercepts edge-zone touches by claiming the gesture in dispatchTouchEvent.
+     *
+     * Why not onInterceptTouchEvent + onTouchEvent?
+     * onInterceptTouchEvent returning true causes ViewGroup to call onTouchEvent.
+     * onTouchEvent returns gestureDetector.onTouchEvent() which returns onDown() = false
+     * (SimpleOnGestureListener default). The false return propagates out of
+     * dispatchTouchEvent, so the parent FrameLayout never registers this view as the
+     * touch target — subsequent ACTION_MOVE and ACTION_UP events never arrive, and
+     * onSingleTapConfirmed never fires.
+     *
+     * Overriding dispatchTouchEvent directly lets us return true unconditionally for
+     * claimed gestures, keeping the gesture sequence alive until ACTION_UP / CANCEL.
+     * Center touches return false immediately, passing through to the Readium WebView.
+     */
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        when (ev.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                val thresholdPx = dpToPx(edgeTapThresholdDp, resources.displayMetrics.density)
+                val x = ev.x
+                val hasLeft = onLeftEdgeTap != null || onSwipeRight != null
+                val hasRight = onRightEdgeTap != null || onSwipeLeft != null
+                isClaimed = (hasLeft && isInLeftEdge(x, thresholdPx)) ||
+                    (hasRight && isInRightEdge(x, width, thresholdPx))
+                Log.d(TAG, "dispatchTouchEvent ACTION_DOWN x=$x width=$width threshold=$thresholdPx claimed=$isClaimed")
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                val wasClaimed = isClaimed
+                isClaimed = false
+                if (wasClaimed) {
+                    gestureDetector.onTouchEvent(ev)
+                }
+                return wasClaimed
             }
         }
-        return false
-    }
 
-    override fun onTouchEvent(ev: MotionEvent): Boolean {
-        return gestureDetector.onTouchEvent(ev)
+        if (!isClaimed) return false
+        gestureDetector.onTouchEvent(ev)
+        return true
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
