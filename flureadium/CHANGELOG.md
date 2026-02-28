@@ -1,3 +1,18 @@
+## 0.6.0
+
+### New Features
+
+- **iOS / EPUB scroll mode**: Swipe-back now restores the last scroll position within the previous spine item.
+  Previously, swiping back always landed at the start of the item. The position is stored in memory per
+  spine item and restored automatically when a backward swipe is detected.
+  - Explicit navigation (TOC tap, `skipToPrevious`) is unaffected — it clears the stored position for the
+    target item so restoration does not override an intentional jump.
+  - History is session-only; it is not persisted across app launches.
+  - `onLocatorChanged` fires after restoration, so persistent position saving always reflects the
+    final restored position.
+
+---
+
 ## 0.5.0
 
 ### Breaking Changes
