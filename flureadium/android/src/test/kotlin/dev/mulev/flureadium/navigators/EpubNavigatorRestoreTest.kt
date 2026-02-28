@@ -3,8 +3,10 @@ package dev.mulev.flureadium.navigators
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.util.Url
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import org.junit.runner.RunWith
 
 /**
  * Tests for EPUB restore behavior to prevent position drift regression.
@@ -19,7 +21,11 @@ import org.readium.r2.shared.util.Url
  * Fix: Skip scrollToLocations() when already positioned correctly (within 1% delta).
  *
  * See: /Users/mulev/Documents/projects/project_plans/epist/todo/epist_fix_epub_location_restore_android.md
+ *
+ * Uses Robolectric so that Readium's Url class can call android.net.Uri.parse.
  */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34], manifest = Config.NONE)
 internal class EpubNavigatorRestoreTest {
 
     /**

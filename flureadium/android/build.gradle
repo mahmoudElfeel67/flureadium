@@ -60,6 +60,10 @@ android {
   buildFeatures {
     viewBinding = true
   }
+
+  testOptions {
+    unitTests.returnDefaultValues = true
+  }
 }
 
 dependencies {
@@ -100,4 +104,8 @@ dependencies {
   testImplementation 'io.flutter:flutter_embedding_debug:1.0.0-587c18f873b8ab57330422bce09047420d9c7f42'
   testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
   testImplementation 'org.mockito:mockito-core:5.17.0'
+  // Provides real org.json.JSONObject/JSONArray in JVM unit tests (Android stubs are no-ops).
+  testImplementation 'org.json:json:20240303'
+  // Robolectric provides real Android framework implementations (android.net.Uri etc.) in JVM tests.
+  testImplementation 'org.robolectric:robolectric:4.14.1'
 }
