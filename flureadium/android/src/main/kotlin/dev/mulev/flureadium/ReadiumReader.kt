@@ -756,6 +756,13 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
     }
 
     /**
+     * Apply a navigation config to the PDF navigator overlay.
+     */
+    fun pdfSetNavigationConfig(config: FlutterNavigationConfig) {
+        pdfNavigator?.setNavigationConfig(config)
+    }
+
+    /**
      * Go left (previous page) in the PDF navigator.
      */
     fun pdfGoLeft(animated: Boolean) {
@@ -989,6 +996,20 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
      */
     suspend fun epubGo(locator: Locator, animated: Boolean) {
         epubNavigator?.go(locator, animated)
+    }
+
+    /**
+     * Apply a navigation config to the EPUB navigator overlay.
+     */
+    fun epubSetNavigationConfig(config: FlutterNavigationConfig) {
+        epubNavigator?.setNavigationConfig(config)
+    }
+
+    /**
+     * Enable or disable EPUB overlay gestures for scroll mode.
+     */
+    fun epubSetScrollMode(isScrollMode: Boolean) {
+        epubNavigator?.setScrollMode(isScrollMode)
     }
 
     /**

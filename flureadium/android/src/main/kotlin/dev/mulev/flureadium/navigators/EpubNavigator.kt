@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.ViewGroup
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commitNow
+import dev.mulev.flureadium.FlutterNavigationConfig
 import dev.mulev.flureadium.ReadiumReaderWidget.Companion.NAVIGATOR_FRAGMENT_TAG
 import dev.mulev.flureadium.canScroll
 import dev.mulev.flureadium.fragments.EpubReaderFragment
@@ -376,6 +377,14 @@ class EpubNavigator : BaseNavigator, EpubReaderFragment.Listener {
         return withScope(mainScope) {
             navigator.evaluateJavascript(script)
         }
+    }
+
+    fun setNavigationConfig(config: FlutterNavigationConfig) {
+        epubNavigator?.setNavigationConfig(config)
+    }
+
+    fun setScrollMode(isScrollMode: Boolean) {
+        epubNavigator?.setScrollMode(isScrollMode)
     }
 
     fun goLeft(animated: Boolean) {

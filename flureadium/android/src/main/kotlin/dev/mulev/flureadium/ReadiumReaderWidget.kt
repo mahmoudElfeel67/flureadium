@@ -64,6 +64,8 @@ class ReadiumReaderWidget(
     private val isPdf: Boolean
         get() = ReadiumReader.currentPublication?.conformsTo(Publication.Profile.PDF) == true
 
+    private var storedNavigationConfig: FlutterNavigationConfig? = null
+
     override fun getView(): View {
         //Log.d(TAG, "::getView")
         return layout
@@ -612,11 +614,21 @@ class ReadiumReaderWidget(
                             ReadiumReader.pdfUpdatePreferences(pdfPrefs)
                         } else {
                             setPreferencesFromMap(prefsMap)
+                            val isScrollMode = prefsMap["verticalScroll"]?.toBoolean() == true
+                            ReadiumReader.epubSetScrollMode(isScrollMode)
                         }
                         result.success(null)
                     } catch (ex: Exception) {
                         result.error("Flureadium", "Failed to set preferences", ex.message)
                     }
+                }
+
+                "setNavigationConfig" -> {
+                    @Suppress("UNCHECKED_CAST")
+                    val args = call.arguments as? Map<*, *>
+                    val config = FlutterNavigationConfig.fromMap(args)
+                    applyNavigationConfig(config)
+                    result.success(null)
                 }
 
                 "go" -> {
@@ -776,6 +788,15 @@ class ReadiumReaderWidget(
         Log.d(TAG, "::go ${locator.href}")
         mainScope.launch {
             ReadiumReader.epubGoToLocator(locator, animated)
+        }
+    }
+
+    private fun applyNavigationConfig(config: FlutterNavigationConfig) {
+        storedNavigationConfig = config
+        if (isPdf) {
+            ReadiumReader.pdfSetNavigationConfig(config)
+        } else {
+            ReadiumReader.epubSetNavigationConfig(config)
         }
     }
 
