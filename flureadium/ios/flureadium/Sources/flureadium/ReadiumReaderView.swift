@@ -273,13 +273,14 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
   }
 
   /// Configure edge tap handlers based on scroll mode.
-  /// In scroll mode, edge taps are disabled since there are no pages to turn.
+  /// In scroll mode, all callbacks are nil — WKWebView handles native swipes.
   /// In paginated mode, edge taps trigger goLeft/goRight for page navigation.
   private func configureEdgeTapHandlers(isScrollMode: Bool) {
     guard let edgeTapView = _view as? EdgeTapInterceptView else { return }
 
     if isScrollMode {
-      // Disable edge tap and swipe navigation in scroll mode
+      // Scroll mode: all callbacks nil.
+      // Swipes are handled natively by WKWebView — no interception needed.
       edgeTapView.onLeftEdgeTap = nil
       edgeTapView.onRightEdgeTap = nil
       edgeTapView.onSwipeLeft = nil
@@ -652,6 +653,35 @@ func initUserScripts(registrar: FlutterPluginRegistrar) {
   })();
   """
   userScripts.append(WKUserScript(source: clickSynthesisScript, injectionTime: .atDocumentEnd, forMainFrameOnly: false))
+}
+
+func strippedHref(_ href: String) -> String {
+  href.components(separatedBy: "#").first?
+      .components(separatedBy: "?").first ?? href
+}
+
+func chapterLink(before currentHref: String, in readingOrder: [Link]) -> Link? {
+  let clean = strippedHref(currentHref)
+  guard let idx = readingOrder.firstIndex(where: { strippedHref($0.href) == clean }),
+        idx > 0 else { return nil }
+  return readingOrder[idx - 1]
+}
+
+func chapterLink(after currentHref: String, in readingOrder: [Link]) -> Link? {
+  let clean = strippedHref(currentHref)
+  guard let idx = readingOrder.firstIndex(where: { strippedHref($0.href) == clean }),
+        idx < readingOrder.count - 1 else { return nil }
+  return readingOrder[idx + 1]
+}
+
+func isBackwardNavigation(from oldHref: String, to newHref: String, in readingOrder: [Link]) -> Bool {
+  let cleanOld = strippedHref(oldHref)
+  let cleanNew = strippedHref(newHref)
+  guard let oldIdx = readingOrder.firstIndex(where: { strippedHref($0.href) == cleanOld }),
+        let newIdx = readingOrder.firstIndex(where: { strippedHref($0.href) == cleanNew }) else {
+    return false
+  }
+  return newIdx < oldIdx
 }
 
 private func canScroll(locations: Locator.Locations?) -> Bool {
