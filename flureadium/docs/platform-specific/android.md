@@ -150,6 +150,55 @@ await flureadium.setPDFPreferences(PDFPreferences(
 - `PdfReaderFragment.kt` - Android Fragment hosting the PDF view
 - `FlutterPdfPreferences.kt` - Maps Flutter preferences to Readium
 
+## Edge Tap and Swipe Navigation
+
+Android supports the same configurable gesture overlay as iOS via `setNavigationConfig()`.
+
+### Overview
+
+A transparent `EdgeTapInterceptView` overlay is placed on top of the Readium navigator
+(both EPUB and PDF). It intercepts touches in the left and right edge zones and fires
+navigation callbacks; center touches always pass through to the reader content.
+
+### setNavigationConfig
+
+```dart
+await flureadium.setNavigationConfig(NavigationConfig(
+  enableEdgeTapNavigation: true,   // tap left/right edges to turn pages
+  enableSwipeNavigation: true,     // horizontal fling to turn pages
+  edgeTapAreaPoints: 60,           // edge zone width in dp (44–120, clamped)
+));
+```
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `enableEdgeTapNavigation` | `bool?` | enabled | Tap in the edge zone → navigate |
+| `enableSwipeNavigation` | `bool?` | enabled | Horizontal fling → navigate |
+| `edgeTapAreaPoints` | `double?` | 44 dp | Edge zone width, clamped to 44–120 dp |
+
+`null` fields are treated as **enabled** (matching iOS semantics).
+
+### Scroll Mode (EPUB only)
+
+When the EPUB reader switches to vertical scroll mode (via `setPreferences` with
+`verticalScroll: true`), the overlay automatically disables all gesture interception
+so Readium's WebView can handle native scrolling. Gestures are re-enabled when
+scroll mode is turned off.
+
+PDF is always paginated; scroll mode does not apply.
+
+### Implementation
+
+| File | Role |
+|---|---|
+| `FlutterNavigationConfig.kt` | Data class mirroring the Flutter config map |
+| `EdgeTapInterceptView.kt` | Transparent FrameLayout overlay; intercepts edge touches |
+| `EpubReaderFragment.kt` | Creates and tears down the overlay per lifecycle; propagates scroll mode |
+| `PdfReaderFragment.kt` | Creates and tears down the overlay per lifecycle |
+| `EpubNavigator.kt` / `PdfNavigator.kt` | Delegates `setNavigationConfig` / `setScrollMode` to the fragment |
+| `ReadiumReader.kt` | Exposes `epubSetNavigationConfig`, `epubSetScrollMode`, `pdfSetNavigationConfig` |
+| `ReadiumReaderWidget.kt` | Handles `setNavigationConfig` method call; detects scroll mode from `setPreferences` |
+
 ## Troubleshooting
 
 ### "MainActivity cannot be cast to FragmentActivity"
