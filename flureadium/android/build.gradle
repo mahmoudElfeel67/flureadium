@@ -22,6 +22,7 @@ rootProject.allprojects {
     google()
     mavenCentral()
     maven { url 'https://jitpack.io' }
+    maven { url 'https://storage.googleapis.com/download.flutter.io' }
   }
 }
 
@@ -90,4 +91,13 @@ dependencies {
   implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2'
   implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0"
   implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
+
+  // Flutter embedding — compileOnly so it's available when building standalone
+  // (e.g. for running Android unit tests via ./gradlew testDebugUnitTest).
+  // The Flutter Gradle plugin provides this at runtime in the normal app build.
+  compileOnly 'io.flutter:flutter_embedding_debug:1.0.0-587c18f873b8ab57330422bce09047420d9c7f42'
+
+  testImplementation 'io.flutter:flutter_embedding_debug:1.0.0-587c18f873b8ab57330422bce09047420d9c7f42'
+  testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
+  testImplementation 'org.mockito:mockito-core:5.17.0'
 }
