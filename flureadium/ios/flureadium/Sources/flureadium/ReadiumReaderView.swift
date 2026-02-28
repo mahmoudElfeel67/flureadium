@@ -39,6 +39,12 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
   // Retain the navigation adapter to prevent ARC deallocation
   private var directionalNavigationAdapter: DirectionalNavigationAdapter?
 
+  // Scroll-mode position memory: remembers the last scroll position per spine item
+  // so swipe-back can restore where the user was in the previous chapter.
+  private var spineItemHistory: [String: Locator] = [:]
+  private var lastSpineItemLocator: Locator?
+  private var currentSpineItemHref: String?
+
   var publicationIdentifier: String?
 
   func view() -> UIView {
@@ -213,7 +219,31 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
   // override NavigatorDelegate::navigator:locationDidChange
   func navigator(_ navigator: Navigator, locationDidChange locator: Locator) {
     print(TAG, "onPageChanged: \(locator)")
-    if (!hasSentReady) {
+
+    let newHref = strippedHref(locator.href.string)
+
+    if isVerticalScroll, let oldHref = currentSpineItemHref, newHref != oldHref {
+      // Store last known position for the spine item we are leaving
+      if let outgoing = lastSpineItemLocator {
+        spineItemHistory[oldHref] = outgoing
+      }
+
+      // Restore position if swiping backward and we have a stored position
+      let readingOrder = readiumViewController.publication.readingOrder
+      if isBackwardNavigation(from: oldHref, to: newHref, in: readingOrder),
+         let stored = spineItemHistory[newHref] {
+        Task { @MainActor in
+          // emitOnPageChanged fires inside goToLocator — persistent save
+          // correctly updates to the restored position as a side effect.
+          await self.goToLocator(locator: stored, animated: false)
+        }
+      }
+    }
+
+    currentSpineItemHref = newHref
+    lastSpineItemLocator = locator
+
+    if !hasSentReady {
       self.readerStatusStreamHandler?.sendEvent(ReadiumReaderStatusReady)
       hasSentReady = true
     }
@@ -273,13 +303,14 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
   }
 
   /// Configure edge tap handlers based on scroll mode.
-  /// In scroll mode, edge taps are disabled since there are no pages to turn.
+  /// In scroll mode, all callbacks are nil — WKWebView handles native swipes.
   /// In paginated mode, edge taps trigger goLeft/goRight for page navigation.
   private func configureEdgeTapHandlers(isScrollMode: Bool) {
     guard let edgeTapView = _view as? EdgeTapInterceptView else { return }
 
     if isScrollMode {
-      // Disable edge tap and swipe navigation in scroll mode
+      // Scroll mode: all callbacks nil.
+      // Swipes are handled natively by WKWebView — no interception needed.
       edgeTapView.onLeftEdgeTap = nil
       edgeTapView.onRightEdgeTap = nil
       edgeTapView.onSwipeLeft = nil
@@ -381,6 +412,11 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
   }
 
   func goToLocator(locator: Locator, animated: Bool) async -> Void {
+    // Explicit navigation (TOC, skipToPrevious, etc.) must not trigger restoration.
+    // Clearing history for this target prevents a subsequent swipe-back from
+    // landing at a stale stored position rather than the TOC-specified location.
+    spineItemHistory.removeValue(forKey: strippedHref(locator.href.string))
+
     let locations = locator.locations
     let shouldScroll = canScroll(locations: locations)
     let shouldGo = readiumViewController.currentLocation?.href != locator.href
@@ -652,6 +688,35 @@ func initUserScripts(registrar: FlutterPluginRegistrar) {
   })();
   """
   userScripts.append(WKUserScript(source: clickSynthesisScript, injectionTime: .atDocumentEnd, forMainFrameOnly: false))
+}
+
+func strippedHref(_ href: String) -> String {
+  href.components(separatedBy: "#").first?
+      .components(separatedBy: "?").first ?? href
+}
+
+func chapterLink(before currentHref: String, in readingOrder: [Link]) -> Link? {
+  let clean = strippedHref(currentHref)
+  guard let idx = readingOrder.firstIndex(where: { strippedHref($0.href) == clean }),
+        idx > 0 else { return nil }
+  return readingOrder[idx - 1]
+}
+
+func chapterLink(after currentHref: String, in readingOrder: [Link]) -> Link? {
+  let clean = strippedHref(currentHref)
+  guard let idx = readingOrder.firstIndex(where: { strippedHref($0.href) == clean }),
+        idx < readingOrder.count - 1 else { return nil }
+  return readingOrder[idx + 1]
+}
+
+func isBackwardNavigation(from oldHref: String, to newHref: String, in readingOrder: [Link]) -> Bool {
+  let cleanOld = strippedHref(oldHref)
+  let cleanNew = strippedHref(newHref)
+  guard let oldIdx = readingOrder.firstIndex(where: { strippedHref($0.href) == cleanOld }),
+        let newIdx = readingOrder.firstIndex(where: { strippedHref($0.href) == cleanNew }) else {
+    return false
+  }
+  return newIdx < oldIdx
 }
 
 private func canScroll(locations: Locator.Locations?) -> Bool {

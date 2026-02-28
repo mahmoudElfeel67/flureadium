@@ -256,6 +256,35 @@ void showGoToPageDialog() {
 }
 ```
 
+## Scroll Mode Swipe Navigation
+
+In scroll mode (`verticalScroll: true`), horizontal swipes between spine items are
+handled natively by WKWebView. No gesture configuration is needed.
+
+### Position Restoration on Swipe-Back
+
+When the user swipes back to a previously visited spine item, flureadium automatically
+restores the last scroll position within that item. This is in-memory only — history
+is cleared when the app is relaunched.
+
+**How it works:**
+- Each time the reader leaves a spine item, its last position is stored in memory.
+- When a swipe-back is detected (new spine index < old spine index), the stored
+  position is restored via `goToLocator`.
+- Explicit navigation (TOC tap, `skipToPrevious`) clears the stored position for the
+  target spine item so restoration does not override the intentional jump.
+- `onLocatorChanged` fires after restoration — persistent position saving always
+  reflects the final restored position.
+
+**Known behaviour:**
+- On swipe-back, there is a brief double save: the navigator first lands at position 0
+  of the previous item (~50ms) before restoration fires. The final saved position is
+  always correct.
+- History is session-only and is not persisted across app launches.
+- Forward swipes always land at the start of the next spine item (unchanged).
+
+---
+
 ## Position Tracking
 
 ### Listen for Position Changes
