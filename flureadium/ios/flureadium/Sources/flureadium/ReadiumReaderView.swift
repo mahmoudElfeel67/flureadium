@@ -39,6 +39,12 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
   // Retain the navigation adapter to prevent ARC deallocation
   private var directionalNavigationAdapter: DirectionalNavigationAdapter?
 
+  // Scroll-mode position memory: remembers the last scroll position per spine item
+  // so swipe-back can restore where the user was in the previous chapter.
+  private var spineItemHistory: [String: Locator] = [:]
+  private var lastSpineItemLocator: Locator?
+  private var currentSpineItemHref: String?
+
   var publicationIdentifier: String?
 
   func view() -> UIView {
@@ -213,7 +219,31 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
   // override NavigatorDelegate::navigator:locationDidChange
   func navigator(_ navigator: Navigator, locationDidChange locator: Locator) {
     print(TAG, "onPageChanged: \(locator)")
-    if (!hasSentReady) {
+
+    let newHref = strippedHref(locator.href.string)
+
+    if isVerticalScroll, let oldHref = currentSpineItemHref, newHref != oldHref {
+      // Store last known position for the spine item we are leaving
+      if let outgoing = lastSpineItemLocator {
+        spineItemHistory[oldHref] = outgoing
+      }
+
+      // Restore position if swiping backward and we have a stored position
+      let readingOrder = readiumViewController.publication.readingOrder
+      if isBackwardNavigation(from: oldHref, to: newHref, in: readingOrder),
+         let stored = spineItemHistory[newHref] {
+        Task { @MainActor in
+          // emitOnPageChanged fires inside goToLocator — persistent save
+          // correctly updates to the restored position as a side effect.
+          await self.goToLocator(locator: stored, animated: false)
+        }
+      }
+    }
+
+    currentSpineItemHref = newHref
+    lastSpineItemLocator = locator
+
+    if !hasSentReady {
       self.readerStatusStreamHandler?.sendEvent(ReadiumReaderStatusReady)
       hasSentReady = true
     }
@@ -382,6 +412,11 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
   }
 
   func goToLocator(locator: Locator, animated: Bool) async -> Void {
+    // Explicit navigation (TOC, skipToPrevious, etc.) must not trigger restoration.
+    // Clearing history for this target prevents a subsequent swipe-back from
+    // landing at a stale stored position rather than the TOC-specified location.
+    spineItemHistory.removeValue(forKey: strippedHref(locator.href.string))
+
     let locations = locator.locations
     let shouldScroll = canScroll(locations: locations)
     let shouldGo = readiumViewController.currentLocation?.href != locator.href
