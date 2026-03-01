@@ -188,6 +188,18 @@ enum ReadiumReaderStatus {
 }
 ```
 
+### Platform Notes
+
+| Status | Android | iOS |
+|--------|---------|-----|
+| `loading` | Emitted from `ReadiumReaderWidget.init` | Emitted from `ReadiumReaderView.init` |
+| `ready` | Emitted from `onVisualReaderIsReady()` | Emitted from first `locationDidChange` |
+| `closed` | Emitted from `ReadiumReaderWidget.dispose()` | Emitted on publication close |
+| `error` | Not currently emitted natively | Emitted from `didFailToLoadResourceAt` |
+| `reachedEndOfPublication` | Not emitted natively (Dart-side only) | Not emitted natively (Dart-side only) |
+
+See [Android platform docs](../platform-specific/android.md#event-channels) for implementation details.
+
 ### Extension Methods
 
 ```dart
@@ -234,6 +246,10 @@ class ReadiumError implements Error {
   factory ReadiumError.fromJson(Map<String, dynamic> map);
 }
 ```
+
+### Platform Notes
+
+The `error` EventChannel handler is registered on both Android and iOS at activity/view attach time. Android does not currently emit error events automatically — the `sendError()` helper in `ReadiumReader` exists for future native failure paths (e.g. failed resource loads). Subscribe to this stream for forward compatibility.
 
 ### Error Handling Pattern
 
