@@ -1,25 +1,32 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
+import 'package:flureadium_example/main.dart';
 import 'package:flutter/material.dart';
-import 'package:flureadium_example/pages/bookshelf.page.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-void main() {
-  testWidgets('Verify Bookshelf page', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const BookshelfPage());
+void _mockEventChannel(String channelName) {
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMethodCallHandler(MethodChannel(channelName), (call) async {
+        return null;
+      });
+}
 
-    // Verify that platform version is retrieved.
-    expect(
-      find.byWidgetPredicate(
-        (Widget widget) => widget is Text && widget.data!.startsWith('Bookshelf'),
-      ),
-      findsOneWidget,
-    );
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() {
+    _mockEventChannel('dev.mulev.flureadium/reader-status');
+    _mockEventChannel('dev.mulev.flureadium/text-locator');
+    _mockEventChannel('dev.mulev.flureadium/error');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('dev.mulev.flureadium/main'),
+          (call) async => null,
+        );
+  });
+
+  testWidgets('app renders MaterialApp with ReaderPage', (tester) async {
+    await tester.pumpWidget(const ExampleApp());
+    expect(find.byType(MaterialApp), findsOneWidget);
+    expect(find.byType(ReaderPage), findsOneWidget);
   });
 }
