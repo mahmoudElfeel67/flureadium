@@ -1,15 +1,19 @@
 # Integration Tests
 
-Integration tests run the example app on a real device or simulator and assert API behavioral contracts — not just widget presence.
+Integration tests run the example app on a real device or simulator and assert widget state and UI contracts.
 
 ## Test Files
 
 | File | Platforms | What it asserts |
 |---|---|---|
 | `launch_test.dart` | All | App starts, MaterialApp renders |
-| `epub_test.dart` | All | `ready` status emitted, locator events fire, goToLocator succeeds, TTS sentence nav buttons appear |
-| `audiobook_test.dart` | Android, iOS (`@Tags(['native'])`) | Audio plays, timebased state emits, seek advances offset, pause/resume button labels cycle correctly |
+| `epub_test.dart` | All | EPUB auto-opens, navigation/prefs/highlight don't crash, TTS sentence nav buttons appear, close removes widget |
+| `audiobook_test.dart` | Android, iOS (`@Tags(['native'])`) | Audiobook opens, play changes button label, seek doesn't crash, pause/resume button labels cycle correctly |
 | `webpub_test.dart` | All | Remote WebPub manifest opens, `ReadiumReaderWidget` present |
+
+## Note on EventChannel streams
+
+The native plugin registers EventChannel stream handlers (`reader-status`, `text-locator`, `timebased-state`, etc.) lazily — only after `openPublication` is called. Because `initState` subscribes to these channels before any publication is opened, the subscriptions throw `MissingPluginException` at startup. Tests therefore use widget-based assertions (widget presence, button label changes) rather than direct stream subscriptions.
 
 ## Prerequisites
 
