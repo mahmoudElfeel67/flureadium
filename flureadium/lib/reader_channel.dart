@@ -116,7 +116,7 @@ class ReadiumReaderChannel extends MethodChannel {
   ) async {
     return await _invokeMethod(_ReaderChannelMethodInvoke.applyDecorations, [
       id,
-      decorations.map((d) => d.toJson()),
+      decorations.map((d) => d.toJson()).toList(),
     ]);
   }
 

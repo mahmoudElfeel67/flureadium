@@ -223,6 +223,43 @@ await flureadium.goRight();
    );
    ```
 
+### iOS: MissingPluginException on event streams
+
+**Symptom:**
+```
+MissingPluginException(No implementation found for method listen on channel dev.mulev.flureadium/text-locator)
+```
+Event streams silently stop delivering updates even after the exception is caught.
+
+**Cause:**
+On iOS, the `text-locator`, `reader-status`, and `error` EventChannels are registered lazily
+inside `ReadiumReaderView.init()`, which fires from `_onPlatformViewCreated`. Subscribing to
+these streams before the platform view is created causes `MissingPluginException`, which
+permanently closes `receiveBroadcastStream()`'s internal `StreamController`. All subsequent
+events on that channel are silently dropped for the lifetime of the stream.
+
+**Fix:**
+Subscribe to streams only after `_onPlatformViewCreated` has fired. Detect this via
+`FlureadiumPlatform.instance.currentReaderWidget != null`:
+
+```dart
+Future<void> _subscribeToChannels() async {
+  const pollInterval = Duration(milliseconds: 50);
+  const timeout = Duration(seconds: 5);
+  var elapsed = Duration.zero;
+  while (elapsed < timeout && mounted) {
+    if (FlureadiumPlatform.instance.currentReaderWidget != null) break;
+    await Future.delayed(pollInterval);
+    elapsed += pollInterval;
+  }
+  if (!mounted) return;
+  _sub = flureadium.onTextLocatorChanged.listen((l) { /* ... */ });
+}
+```
+
+Call `_subscribeToChannels()` **after** the `setState()` that introduces `ReadiumReaderWidget`
+into the widget tree — not before.
+
 ### iOS: Crash on App Close
 
 **Symptom:** App crashes when closing/terminating, with a stack trace through `EventStreamHandler.dispose()` → `FlutterBinaryMessengerRelay sendOnChannel` → `FlutterEngine destroyContext`.

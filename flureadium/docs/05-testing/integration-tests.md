@@ -16,12 +16,32 @@ Integration tests run the example app on a real device or simulator and assert w
 
 ## Note on EventChannel streams
 
-The native plugin registers `reader-status` and `error` EventChannel handlers in
-`ReadiumReader.attach()` (at activity attach time). `text-locator` and `timebased-state`
-are also registered at attach time. All channels are available before `openPublication` is
-called. Integration tests use widget-based assertions (widget presence, button label changes)
-because streams deliver events asynchronously; test timing does not guarantee stream delivery
-within `pump()` windows.
+### Android
+
+All four EventChannels (`reader-status`, `error`, `text-locator`, `timebased-state`) are
+registered eagerly in `ReadiumReader.attach()` at activity attach time — before
+`openPublication` is called.
+
+### iOS
+
+`reader-status`, `text-locator`, and `error` EventChannels are registered lazily inside
+`ReadiumReaderView.init()`, which is called from `_onPlatformViewCreated` in the Flutter
+widget layer. This means the native handlers do not exist until the platform view has been
+created and added to the widget tree.
+
+The example app subscribes to streams only after `_onPlatformViewCreated` has fired (detected
+via `FlureadiumPlatform.instance.currentReaderWidget != null` with a 50ms polling loop, 5s
+timeout). Subscribing before this point causes `MissingPluginException`, which permanently
+closes `receiveBroadcastStream()`'s internal `StreamController`, silently dropping all
+subsequent events on that channel.
+
+### Integration test implications
+
+Integration tests use widget-based assertions (widget presence, button label changes) because
+streams deliver events asynchronously. Test timing does not guarantee stream delivery within
+`pump()` windows. The decoration test specifically relies on `_locator` being populated within
+a 5-second `pumpAndSettle` window — this works because the subscription guard ensures the
+channel is active before the reader starts emitting locator events.
 
 ## Prerequisites
 
