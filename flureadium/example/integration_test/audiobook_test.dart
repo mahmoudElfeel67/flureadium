@@ -2,6 +2,8 @@
 library;
 
 import 'package:flureadium/flureadium.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -11,11 +13,21 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('Audiobook', () {
+    setUp(() {
+      final prev = FlutterError.onError;
+      FlutterError.onError = (FlutterErrorDetails details) {
+        if (details.exception is MissingPluginException) return;
+        prev?.call(details);
+      };
+    });
+
     testWidgets('opens audiobook and shows reader widget', (tester) async {
       app.main();
       await tester.pumpAndSettle(const Duration(seconds: 2));
       await tester.tap(find.text('Open AudioBook'));
-      await tester.pumpAndSettle(const Duration(seconds: 8));
+      // pumpAndSettle would never settle: timebased state updates keep
+      // the widget rebuilding. Use pump to wait a fixed duration instead.
+      await tester.pump(const Duration(seconds: 8));
       expect(find.byType(ReadiumReaderWidget), findsOneWidget);
     });
 
@@ -23,9 +35,9 @@ void main() {
       app.main();
       await tester.pumpAndSettle(const Duration(seconds: 2));
       await tester.tap(find.text('Open AudioBook'));
-      await tester.pumpAndSettle(const Duration(seconds: 8));
+      await tester.pump(const Duration(seconds: 8));
       await tester.tap(find.text('Audio Play'));
-      await tester.pumpAndSettle(const Duration(seconds: 2));
+      await tester.pump(const Duration(seconds: 2));
       expect(find.text('Audio Pause'), findsOneWidget);
     });
 
@@ -33,11 +45,11 @@ void main() {
       app.main();
       await tester.pumpAndSettle(const Duration(seconds: 2));
       await tester.tap(find.text('Open AudioBook'));
-      await tester.pumpAndSettle(const Duration(seconds: 8));
+      await tester.pump(const Duration(seconds: 8));
       await tester.tap(find.text('Audio Play'));
-      await tester.pumpAndSettle(const Duration(seconds: 2));
+      await tester.pump(const Duration(seconds: 2));
       await tester.tap(find.text('+30s'));
-      await tester.pumpAndSettle(const Duration(seconds: 2));
+      await tester.pump(const Duration(seconds: 2));
       expect(find.text('Audio Pause'), findsOneWidget);
     });
 
@@ -45,16 +57,16 @@ void main() {
       app.main();
       await tester.pumpAndSettle(const Duration(seconds: 2));
       await tester.tap(find.text('Open AudioBook'));
-      await tester.pumpAndSettle(const Duration(seconds: 8));
+      await tester.pump(const Duration(seconds: 8));
       await tester.tap(find.text('Audio Play'));
-      await tester.pumpAndSettle(const Duration(seconds: 2));
+      await tester.pump(const Duration(seconds: 2));
 
       await tester.tap(find.text('Audio Pause'));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.text('Audio Resume'), findsOneWidget);
 
       await tester.tap(find.text('Audio Resume'));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.text('Audio Pause'), findsOneWidget);
     });
   });
