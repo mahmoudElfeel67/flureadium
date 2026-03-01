@@ -13,7 +13,12 @@ Integration tests run the example app on a real device or simulator and assert w
 
 ## Note on EventChannel streams
 
-The native plugin registers EventChannel stream handlers (`reader-status`, `text-locator`, `timebased-state`, etc.) lazily — only after `openPublication` is called. Because `initState` subscribes to these channels before any publication is opened, the subscriptions throw `MissingPluginException` at startup. Tests therefore use widget-based assertions (widget presence, button label changes) rather than direct stream subscriptions.
+The native plugin registers `reader-status` and `error` EventChannel handlers in
+`ReadiumReader.attach()` (at activity attach time). `text-locator` and `timebased-state`
+are also registered at attach time. All channels are available before `openPublication` is
+called. Integration tests use widget-based assertions (widget presence, button label changes)
+because streams deliver events asynchronously; test timing does not guarantee stream delivery
+within `pump()` windows.
 
 ## Prerequisites
 
