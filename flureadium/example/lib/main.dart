@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -29,13 +30,19 @@ class _ReaderPageState extends State<ReaderPage> {
   final _flureadium = Flureadium();
   Publication? _publication;
   Locator? _locator;
+  Locator? _savedLocator;
+  ReadiumTimebasedState? _timebasedState;
   bool _controlsVisible = true;
   bool _ttsEnabled = false;
   bool _audioEnabled = false;
+  bool _audioPaused = false;
+  List<ReaderTTSVoice> _voices = [];
+  int _voiceIndex = 0;
 
   late final StreamSubscription<ReadiumReaderStatus> _statusSub;
   late final StreamSubscription<Locator> _locatorSub;
   late final StreamSubscription<ReadiumError> _errorSub;
+  late final StreamSubscription<ReadiumTimebasedState> _timebasedSub;
 
   @override
   void initState() {
@@ -44,10 +51,16 @@ class _ReaderPageState extends State<ReaderPage> {
       (s) => debugPrint('ReaderStatus: $s'),
     );
     _locatorSub = _flureadium.onTextLocatorChanged.listen(
-      (l) => setState(() => _locator = l),
+      (l) => setState(() {
+        _locator = l;
+        _savedLocator = l;
+      }),
     );
     _errorSub = _flureadium.onErrorEvent.listen(
       (e) => debugPrint('FlureadiumError: $e'),
+    );
+    _timebasedSub = _flureadium.onTimebasedPlayerStateChanged.listen(
+      (s) => setState(() => _timebasedState = s),
     );
     WidgetsBinding.instance.addPostFrameCallback((_) => _openEpub());
   }
@@ -57,6 +70,7 @@ class _ReaderPageState extends State<ReaderPage> {
     _statusSub.cancel();
     _locatorSub.cancel();
     _errorSub.cancel();
+    _timebasedSub.cancel();
     super.dispose();
   }
 
@@ -68,6 +82,9 @@ class _ReaderPageState extends State<ReaderPage> {
         _publication = pub;
         _ttsEnabled = false;
         _audioEnabled = false;
+        _audioPaused = false;
+        _voices = [];
+        _voiceIndex = 0;
       });
     } catch (e) {
       debugPrint('openEpub error: $e');
@@ -82,6 +99,9 @@ class _ReaderPageState extends State<ReaderPage> {
         _publication = pub;
         _ttsEnabled = false;
         _audioEnabled = false;
+        _audioPaused = false;
+        _voices = [];
+        _voiceIndex = 0;
       });
     } catch (e) {
       debugPrint('openAudiobook error: $e');
@@ -90,6 +110,7 @@ class _ReaderPageState extends State<ReaderPage> {
 
   Future<void> _openWebPub() async {
     try {
+      await _flureadium.setCustomHeaders({'X-Example': 'flureadium-demo'});
       const url =
           'https://readium.org/webpub-manifest/examples/MobyDick/manifest.json';
       final pub = await _flureadium.openPublication(url);
@@ -97,6 +118,9 @@ class _ReaderPageState extends State<ReaderPage> {
         _publication = pub;
         _ttsEnabled = false;
         _audioEnabled = false;
+        _audioPaused = false;
+        _voices = [];
+        _voiceIndex = 0;
       });
     } catch (e) {
       debugPrint('openWebPub error: $e');
@@ -120,6 +144,9 @@ class _ReaderPageState extends State<ReaderPage> {
       _publication = null;
       _ttsEnabled = false;
       _audioEnabled = false;
+      _audioPaused = false;
+      _voices = [];
+      _voiceIndex = 0;
     });
   }
 
@@ -139,22 +166,45 @@ class _ReaderPageState extends State<ReaderPage> {
   Future<void> _toggleTts() async {
     if (_ttsEnabled) {
       await _flureadium.stop();
-      setState(() => _ttsEnabled = false);
+      setState(() {
+        _ttsEnabled = false;
+        _voices = [];
+        _voiceIndex = 0;
+      });
     } else {
       await _flureadium.ttsEnable(null);
       await _flureadium.play(null);
-      setState(() => _ttsEnabled = true);
+      final voices = await _flureadium.ttsGetAvailableVoices();
+      setState(() {
+        _ttsEnabled = true;
+        _voices = voices;
+        _voiceIndex = 0;
+      });
     }
   }
 
+  Future<void> _nextVoice() async {
+    if (_voices.isEmpty) return;
+    final next = (_voiceIndex + 1) % _voices.length;
+    final voice = _voices[next];
+    await _flureadium.ttsSetVoice(voice.identifier, voice.language);
+    setState(() => _voiceIndex = next);
+  }
+
   Future<void> _toggleAudio() async {
-    if (_audioEnabled) {
+    if (_audioEnabled && !_audioPaused) {
       await _flureadium.pause();
-      setState(() => _audioEnabled = false);
+      setState(() => _audioPaused = true);
+    } else if (_audioEnabled && _audioPaused) {
+      await _flureadium.resume();
+      setState(() => _audioPaused = false);
     } else {
       await _flureadium.audioEnable();
       await _flureadium.play(null);
-      setState(() => _audioEnabled = true);
+      setState(() {
+        _audioEnabled = true;
+        _audioPaused = false;
+      });
     }
   }
 
@@ -171,6 +221,43 @@ class _ReaderPageState extends State<ReaderPage> {
         ),
       ),
     ]);
+  }
+
+  Future<void> _goToSaved() async {
+    final loc = _savedLocator;
+    if (loc == null) return;
+    await _flureadium.goToLocator(loc);
+  }
+
+  Future<void> _seekForward() =>
+      _flureadium.audioSeekBy(const Duration(seconds: 30));
+
+  Future<void> _goToFirstChapter() async {
+    final pub = _publication;
+    if (pub == null) return;
+    final link =
+        pub.tableOfContents.firstOrNull ?? pub.readingOrder.firstOrNull;
+    if (link == null) return;
+    await _flureadium.goByLink(link, pub);
+  }
+
+  Future<void> _loadOnly() async {
+    try {
+      final path = await _extractAsset('assets/pubs/moby_dick.epub');
+      final pub = await _flureadium.loadPublication(path);
+      debugPrint(
+        'Loaded: ${pub.metadata.title} (${pub.tableOfContents.length} chapters)',
+      );
+    } catch (e) {
+      debugPrint('loadOnly error: $e');
+    }
+  }
+
+  String _fmtDuration(Duration? d) {
+    if (d == null) return '--:--';
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$m:$s';
   }
 
   @override
@@ -194,52 +281,110 @@ class _ReaderPageState extends State<ReaderPage> {
               right: 0,
               child: Container(
                 color: Colors.black54,
-                child: Wrap(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextButton(
-                      onPressed: _openEpub,
-                      child: const Text('Open EPUB'),
-                    ),
-                    TextButton(
-                      onPressed: _openAudiobook,
-                      child: const Text('Open AudioBook'),
-                    ),
-                    TextButton(
-                      onPressed: _openWebPub,
-                      child: const Text('Open WebPub'),
-                    ),
-                    TextButton(onPressed: _close, child: const Text('Close')),
-                    TextButton(
-                      onPressed: _flureadium.goLeft,
-                      child: const Text('←'),
-                    ),
-                    TextButton(
-                      onPressed: _flureadium.goRight,
-                      child: const Text('→'),
-                    ),
-                    TextButton(
-                      onPressed: _flureadium.skipToPrevious,
-                      child: const Text('Skip Prev'),
-                    ),
-                    TextButton(
-                      onPressed: _flureadium.skipToNext,
-                      child: const Text('Skip Next'),
-                    ),
-                    TextButton(
-                      onPressed: _setNightPreferences,
-                      child: const Text('Night'),
-                    ),
-                    TextButton(
-                      onPressed: _toggleTts,
-                      child: Text(_ttsEnabled ? 'TTS Off' : 'TTS On'),
-                    ),
-                    TextButton(
-                      onPressed: _toggleAudio,
-                      child: Text(_audioEnabled ? 'Audio Pause' : 'Audio Play'),
-                    ),
-                    TextButton(
-                      onPressed: _addHighlight,
-                      child: const Text('Highlight'),
+                    if (_timebasedState case final s?)
+                      Text(
+                        '${_fmtDuration(s.currentOffset)} / ${_fmtDuration(s.currentDuration)}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                        ),
+                      ),
+                    Wrap(
+                      children: [
+                        TextButton(
+                          onPressed: _openEpub,
+                          child: const Text('Open EPUB'),
+                        ),
+                        TextButton(
+                          onPressed: _openAudiobook,
+                          child: const Text('Open AudioBook'),
+                        ),
+                        TextButton(
+                          onPressed: _openWebPub,
+                          child: const Text('Open WebPub'),
+                        ),
+                        TextButton(
+                          onPressed: _loadOnly,
+                          child: const Text('Load Only'),
+                        ),
+                        TextButton(
+                          onPressed: _close,
+                          child: const Text('Close'),
+                        ),
+                        TextButton(
+                          onPressed: _flureadium.goLeft,
+                          child: const Text('←'),
+                        ),
+                        TextButton(
+                          onPressed: _flureadium.goRight,
+                          child: const Text('→'),
+                        ),
+                        TextButton(
+                          onPressed: _flureadium.skipToPrevious,
+                          child: const Text('Skip Prev'),
+                        ),
+                        TextButton(
+                          onPressed: _flureadium.skipToNext,
+                          child: const Text('Skip Next'),
+                        ),
+                        if (pub != null)
+                          TextButton(
+                            onPressed: _goToSaved,
+                            child: const Text('Go To Saved'),
+                          ),
+                        if (pub != null)
+                          TextButton(
+                            onPressed: _goToFirstChapter,
+                            child: const Text('Ch.1'),
+                          ),
+                        TextButton(
+                          onPressed: _setNightPreferences,
+                          child: const Text('Night'),
+                        ),
+                        TextButton(
+                          onPressed: _addHighlight,
+                          child: const Text('Highlight'),
+                        ),
+                        TextButton(
+                          onPressed: _toggleTts,
+                          child: Text(_ttsEnabled ? 'TTS Off' : 'TTS On'),
+                        ),
+                        if (_ttsEnabled && _voices.isNotEmpty)
+                          TextButton(
+                            onPressed: _nextVoice,
+                            child: Text(
+                              'Voice ${_voiceIndex + 1}/${_voices.length}',
+                            ),
+                          ),
+                        if (_ttsEnabled) ...[
+                          TextButton(
+                            onPressed: _flureadium.previous,
+                            child: const Text('Prev Sentence'),
+                          ),
+                          TextButton(
+                            onPressed: _flureadium.next,
+                            child: const Text('Next Sentence'),
+                          ),
+                        ],
+                        TextButton(
+                          onPressed: _toggleAudio,
+                          child: Text(
+                            !_audioEnabled
+                                ? 'Audio Play'
+                                : _audioPaused
+                                ? 'Audio Resume'
+                                : 'Audio Pause',
+                          ),
+                        ),
+                        if (_audioEnabled)
+                          TextButton(
+                            onPressed: _seekForward,
+                            child: const Text('+30s'),
+                          ),
+                      ],
                     ),
                   ],
                 ),
