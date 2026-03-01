@@ -3,8 +3,12 @@ package dev.mulev.flureadium.fragments
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.lifecycleScope
+import dev.mulev.flureadium.EdgeTapInterceptView
+import dev.mulev.flureadium.FlutterNavigationConfig
 import dev.mulev.flureadium.R
 import dev.mulev.flureadium.ReadiumReader
 import dev.mulev.flureadium.models.PdfReaderViewModel
@@ -50,6 +54,9 @@ class PdfReaderFragment : VisualReaderFragment(), PdfNavigatorFragment.Listener,
 
     val started = MutableStateFlow(false)
 
+    private var edgeTapInterceptView: EdgeTapInterceptView? = null
+    private var storedNavigationConfig: FlutterNavigationConfig? = null
+
     private val instance = ++instanceNo
 
     private var pdfNavigator
@@ -79,6 +86,15 @@ class PdfReaderFragment : VisualReaderFragment(), PdfNavigatorFragment.Listener,
         // PDF preferences are set at navigator creation time
         // Readium's PdfNavigatorFragment doesn't support dynamic preference updates
         // like EpubNavigatorFragment does with submitPreferences()
+    }
+
+    /**
+     * Apply a navigation config received from Flutter. Stored so it can be
+     * re-applied when the overlay is re-created after a lifecycle pause/resume.
+     */
+    fun setNavigationConfig(config: FlutterNavigationConfig) {
+        storedNavigationConfig = config
+        edgeTapInterceptView?.applyConfig(config)
     }
 
     /**
@@ -199,6 +215,9 @@ class PdfReaderFragment : VisualReaderFragment(), PdfNavigatorFragment.Listener,
 
             attachingNavigatorFragment = false
 
+            edgeTapInterceptView?.let { (view as? FrameLayout)?.removeView(it) }
+            edgeTapInterceptView = null
+
             super.onPause()
         } finally {
             Log.d(TAG, "::onPause - $instance - ended")
@@ -257,6 +276,25 @@ class PdfReaderFragment : VisualReaderFragment(), PdfNavigatorFragment.Listener,
         Log.d(TAG, "::attachNavigator() - $instance - got navigator = $navigator")
 
         started.value = true
+
+        // Add edge tap overlay on top of the navigator (PDF is always paginated)
+        val rootView = view as? FrameLayout
+        if (rootView != null) {
+            val overlay = EdgeTapInterceptView(requireContext())
+            overlay.layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
+            overlay.wireCallbacks(
+                onLeft = { goLeft(animated = true) },
+                onRight = { goRight(animated = true) },
+                onSwipeLeft = { goRight(animated = true) },
+                onSwipeRight = { goLeft(animated = true) },
+            )
+            storedNavigationConfig?.let { overlay.applyConfig(it) }
+            rootView.addView(overlay)
+            edgeTapInterceptView = overlay
+        }
 
         // Notify that page is loaded after navigator is attached
         listener?.onPageLoaded()

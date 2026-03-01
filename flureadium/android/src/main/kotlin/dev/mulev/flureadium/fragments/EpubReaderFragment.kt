@@ -3,8 +3,12 @@ package dev.mulev.flureadium.fragments
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.lifecycleScope
+import dev.mulev.flureadium.EdgeTapInterceptView
+import dev.mulev.flureadium.FlutterNavigationConfig
 import dev.mulev.flureadium.R
 import dev.mulev.flureadium.ReadiumReader
 import dev.mulev.flureadium.models.EpubReaderViewModel
@@ -50,6 +54,9 @@ class EpubReaderFragment : VisualReaderFragment(), EpubNavigatorFragment.Listene
     var listener: Listener? = null
 
     val started = MutableStateFlow(false)
+
+    private var edgeTapInterceptView: EdgeTapInterceptView? = null
+    private var storedNavigationConfig: FlutterNavigationConfig? = null
 
     private val instance = ++instanceNo
 
@@ -130,6 +137,23 @@ class EpubReaderFragment : VisualReaderFragment(), EpubNavigatorFragment.Listene
     fun updatePreferences(preferences: EpubPreferences) {
         Log.d(TAG, "::updatePreferences")
         epubNavigator?.submitPreferences(preferences)
+    }
+
+    /**
+     * Apply a navigation config received from Flutter. Stored so it can be
+     * re-applied when the overlay is re-created after a lifecycle pause/resume.
+     */
+    fun setNavigationConfig(config: FlutterNavigationConfig) {
+        storedNavigationConfig = config
+        edgeTapInterceptView?.applyConfig(config)
+    }
+
+    /**
+     * Enable or disable all overlay gestures when the EPUB reader enters/exits
+     * vertical scroll mode. In scroll mode Readium's WebView handles scrolling.
+     */
+    fun setScrollMode(isScrollMode: Boolean) {
+        edgeTapInterceptView?.setScrollMode(isScrollMode)
     }
 
     /**
@@ -248,6 +272,9 @@ class EpubReaderFragment : VisualReaderFragment(), EpubNavigatorFragment.Listene
 
             attachingNavigatorFragment = false
 
+            edgeTapInterceptView?.let { (view as? FrameLayout)?.removeView(it) }
+            edgeTapInterceptView = null
+
             super.onPause()
         } finally {
             Log.d(TAG, "::onPause - $instance - ended")
@@ -315,6 +342,25 @@ class EpubReaderFragment : VisualReaderFragment(), EpubNavigatorFragment.Listene
         Log.d(TAG, "::attachNavigator() - $instance - got navigator = $navigator")
 
         started.value = true
+
+        // Add edge tap overlay on top of the navigator
+        val rootView = view as? FrameLayout
+        if (rootView != null) {
+            val overlay = EdgeTapInterceptView(requireContext())
+            overlay.layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
+            overlay.wireCallbacks(
+                onLeft = { goLeft(animated = true) },
+                onRight = { goRight(animated = true) },
+                onSwipeLeft = { goRight(animated = true) },
+                onSwipeRight = { goLeft(animated = true) },
+            )
+            storedNavigationConfig?.let { overlay.applyConfig(it) }
+            rootView.addView(overlay)
+            edgeTapInterceptView = overlay
+        }
     }
 
     companion object {

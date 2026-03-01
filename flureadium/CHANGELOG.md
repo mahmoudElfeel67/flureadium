@@ -1,3 +1,18 @@
+## 0.7.0
+
+### New Features
+
+- **Android / Edge tap & swipe navigation**: `setNavigationConfig()` now works on Android, matching iOS behaviour.
+  A transparent overlay is placed on top of the Readium navigator (EPUB and PDF) and intercepts touches in
+  the configurable left/right edge zones. Center touches always pass through to the reader content.
+  - `enableEdgeTapNavigation` — tap the left/right edge to turn pages (default: enabled)
+  - `enableSwipeNavigation` — horizontal fling to turn pages (default: enabled)
+  - `edgeTapAreaPoints` — edge zone width in dp, clamped to 44–120 (default: 44)
+  - In EPUB vertical scroll mode, all overlay gestures are automatically disabled so Readium's
+    WebView can handle native scrolling; gestures are re-enabled when scroll mode is turned off.
+
+---
+
 ## 0.6.0
 
 ### New Features

@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.ViewGroup
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commitNow
+import dev.mulev.flureadium.FlutterNavigationConfig
 import dev.mulev.flureadium.FlutterPdfPreferences
 import dev.mulev.flureadium.ReadiumReaderWidget.Companion.NAVIGATOR_FRAGMENT_TAG
 import dev.mulev.flureadium.fragments.PdfReaderFragment
@@ -273,6 +274,10 @@ class PdfNavigator : BaseNavigator, PdfReaderFragment.Listener {
         }
 
         state.clear()
+    }
+
+    fun setNavigationConfig(config: FlutterNavigationConfig) {
+        pdfNavigator?.setNavigationConfig(config)
     }
 
     fun goLeft(animated: Boolean) {
