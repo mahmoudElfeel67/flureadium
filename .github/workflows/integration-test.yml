@@ -64,19 +64,20 @@ jobs:
         run: cd ios && pod install --repo-update
 
       - name: Boot simulator
+        id: boot-sim
         run: |
           UDID=$(xcrun simctl create "TestDevice" \
             "com.apple.CoreSimulator.SimDeviceType.iPhone-15" \
             "com.apple.CoreSimulator.SimRuntime.iOS-17-0")
           xcrun simctl boot "$UDID"
-          echo "SIM_UDID=$UDID" >> $GITHUB_ENV
+          echo "udid=$UDID" >> $GITHUB_OUTPUT
 
       - name: Run integration tests
-        run: flutter test integration_test/all_tests.dart -d ${{ env.SIM_UDID }}
+        run: flutter test integration_test/all_tests.dart -d ${{ steps.boot-sim.outputs.udid }}
 
       - name: Shutdown simulator
         if: always()
-        run: xcrun simctl shutdown ${{ env.SIM_UDID }}
+        run: xcrun simctl shutdown ${{ steps.boot-sim.outputs.udid }}
 
   integration-web:
     name: Integration Tests (Web)
