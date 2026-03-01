@@ -166,6 +166,7 @@ class _ReaderPageState extends State<ReaderPage> {
   Future<void> _toggleTts() async {
     if (_ttsEnabled) {
       await _flureadium.stop();
+      if (!mounted) return;
       setState(() {
         _ttsEnabled = false;
         _voices = [];
@@ -175,6 +176,7 @@ class _ReaderPageState extends State<ReaderPage> {
       await _flureadium.ttsEnable(null);
       await _flureadium.play(null);
       final voices = await _flureadium.ttsGetAvailableVoices();
+      if (!mounted) return;
       setState(() {
         _ttsEnabled = true;
         _voices = voices;
