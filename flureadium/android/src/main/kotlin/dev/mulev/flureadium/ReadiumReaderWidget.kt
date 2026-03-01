@@ -73,6 +73,7 @@ class ReadiumReaderWidget(
 
     override fun dispose() {
         Log.d(TAG, "::dispose")
+        ReadiumReader.sendReaderStatus("closed")
         if (isPdf) {
             ReadiumReader.pdfClose()
         } else {
@@ -126,6 +127,7 @@ class ReadiumReaderWidget(
         channel.setMethodCallHandler(this)
 
         textLocatorEventChannel = TextLocatorEventChannel(messenger)
+        ReadiumReader.sendReaderStatus("loading")
 
         // By default reader contents are hidden from screen-readers, as not to trap them within it.
         // This can be toggled back on via the 'allowScreenReaderNavigation' creation param.
@@ -321,6 +323,7 @@ class ReadiumReaderWidget(
 
     override fun onVisualReaderIsReady() {
         Log.d(TAG, "::onVisualReaderIsReady")
+        ReadiumReader.sendReaderStatus("ready")
     }
 
     suspend fun getFirstVisibleLocator(): Locator? = withScope(mainScope) { ReadiumReader.getFirstVisibleLocator() }

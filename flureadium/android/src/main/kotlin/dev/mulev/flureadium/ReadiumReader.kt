@@ -10,6 +10,8 @@ import androidx.fragment.app.FragmentManager
 import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryOwner
 import dev.mulev.flureadium.events.EpubIsReadyEventChannel
+import dev.mulev.flureadium.events.ErrorEventChannel
+import dev.mulev.flureadium.events.ReaderStatusEventChannel
 import dev.mulev.flureadium.events.TimedBasedStateEventChannel
 import dev.mulev.flureadium.models.ReadiumTimebasedState
 import dev.mulev.flureadium.navigators.AudiobookNavigator
@@ -95,6 +97,8 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
     private var appRef: WeakReference<Application>? = null
 
     private var timedBasedStateEventChannel: TimedBasedStateEventChannel? = null
+    private var readerStatusEventChannel: ReaderStatusEventChannel? = null
+    private var errorEventChannel: ErrorEventChannel? = null
 
     private var readerViewRef: WeakReference<ReadiumReaderWidget>? = null
 
@@ -216,6 +220,12 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
 
         timedBasedStateEventChannel?.dispose()
         timedBasedStateEventChannel = TimedBasedStateEventChannel(messenger)
+
+        readerStatusEventChannel?.dispose()
+        readerStatusEventChannel = ReaderStatusEventChannel(messenger)
+
+        errorEventChannel?.dispose()
+        errorEventChannel = ErrorEventChannel(messenger)
 
         // store weak ref only
         (activity as? SavedStateRegistryOwner)?.savedStateRegistry?.let {
@@ -377,9 +387,25 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
         timedBasedStateEventChannel?.dispose()
         timedBasedStateEventChannel = null
 
+        readerStatusEventChannel?.dispose()
+        readerStatusEventChannel = null
+
+        errorEventChannel?.dispose()
+        errorEventChannel = null
+
         jobs.forEach { it.cancel() }
         jobs.clear()
         mainScope.coroutineContext.cancelChildren()
+    }
+
+    fun sendReaderStatus(status: String) {
+        readerStatusEventChannel?.sendEvent(status)
+    }
+
+    fun sendError(message: String, code: String? = null, data: Any? = null) {
+        errorEventChannel?.sendEvent(
+            mapOf("message" to message, "code" to code, "data" to data)
+        )
     }
 
     // Safe getter — returns applicationContext or throws if not available.
