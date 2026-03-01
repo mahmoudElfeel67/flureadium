@@ -57,9 +57,21 @@ class _ReaderPageState extends State<ReaderPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _openEpub());
   }
 
-  // Subscribe to channels that the plugin registers lazily after openPublication.
-  // Safe to call multiple times — cancels existing subscriptions first.
-  void _subscribeToChannels() {
+  // Subscribe to channels that iOS registers inside ReadiumReaderView.init(),
+  // which fires via _onPlatformViewCreated. Poll until currentReaderWidget is
+  // non-null (meaning _onPlatformViewCreated has fired and the EventStream-
+  // Handlers are registered) before calling listen() on those channels.
+  Future<void> _subscribeToChannels() async {
+    const pollInterval = Duration(milliseconds: 50);
+    const timeout = Duration(seconds: 5);
+    var elapsed = Duration.zero;
+    while (elapsed < timeout && mounted) {
+      if (FlureadiumPlatform.instance.currentReaderWidget != null) break;
+      await Future.delayed(pollInterval);
+      elapsed += pollInterval;
+    }
+    if (!mounted) return;
+
     _statusSub?.cancel();
     _locatorSub?.cancel();
     _errorSub?.cancel();
@@ -90,7 +102,6 @@ class _ReaderPageState extends State<ReaderPage> {
     try {
       final path = await _extractAsset('assets/pubs/moby_dick.epub');
       final pub = await _flureadium.openPublication(path);
-      _subscribeToChannels();
       setState(() {
         _publication = pub;
         _ttsEnabled = false;
@@ -99,6 +110,7 @@ class _ReaderPageState extends State<ReaderPage> {
         _voices = [];
         _voiceIndex = 0;
       });
+      _subscribeToChannels();
     } catch (e) {
       debugPrint('openEpub error: $e');
     }
@@ -108,7 +120,6 @@ class _ReaderPageState extends State<ReaderPage> {
     try {
       final path = await _extractAsset('assets/pubs/38533.audiobook');
       final pub = await _flureadium.openPublication(path);
-      _subscribeToChannels();
       setState(() {
         _publication = pub;
         _ttsEnabled = false;
@@ -117,6 +128,7 @@ class _ReaderPageState extends State<ReaderPage> {
         _voices = [];
         _voiceIndex = 0;
       });
+      _subscribeToChannels();
     } catch (e) {
       debugPrint('openAudiobook error: $e');
     }
@@ -128,7 +140,6 @@ class _ReaderPageState extends State<ReaderPage> {
       const url =
           'https://readium.org/webpub-manifest/examples/MobyDick/manifest.json';
       final pub = await _flureadium.openPublication(url);
-      _subscribeToChannels();
       setState(() {
         _publication = pub;
         _ttsEnabled = false;
@@ -137,6 +148,7 @@ class _ReaderPageState extends State<ReaderPage> {
         _voices = [];
         _voiceIndex = 0;
       });
+      _subscribeToChannels();
     } catch (e) {
       debugPrint('openWebPub error: $e');
     }
