@@ -270,7 +270,6 @@ class _ReaderPageState extends State<ReaderPage> {
             ReadiumReaderWidget(
               publication: pub,
               onTap: () => setState(() => _controlsVisible = !_controlsVisible),
-              onLocatorChanged: (l) => setState(() => _locator = l),
             )
           else
             const Center(child: CircularProgressIndicator()),
