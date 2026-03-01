@@ -6,10 +6,13 @@ Integration tests run the example app on a real device or simulator and assert w
 
 | File | Platforms | What it asserts |
 |---|---|---|
+| `all_tests.dart` | All | Combined runner — imports all four files below into a single compilation unit |
 | `launch_test.dart` | All | App starts, MaterialApp renders |
 | `epub_test.dart` | All | EPUB auto-opens, navigation/prefs/highlight don't crash, TTS sentence nav buttons appear, close removes widget |
 | `audiobook_test.dart` | Android, iOS (`@Tags(['native'])`) | Audiobook opens, play changes button label, seek doesn't crash, pause/resume button labels cycle correctly |
 | `webpub_test.dart` | All | Remote WebPub manifest opens, `ReadiumReaderWidget` present |
+
+> **Always use `all_tests.dart` when running the full suite.** Running `flutter test integration_test/` without specifying a file compiles and installs each test file as a separate APK batch. On mobile this reinstalls the app mid-run, killing in-progress tests and causing "did not complete" failures for any tests that were running when the new APK landed.
 
 ## Note on EventChannel streams
 
@@ -39,23 +42,23 @@ within `pump()` windows.
 ## Running Tests Locally
 
 ```bash
-# Android — connected device or running emulator
+# Android — full suite (one build, one install, no mid-run APK swap)
 cd flureadium/example
-flutter test integration_test/ -d <device-id>
+flutter test integration_test/all_tests.dart -d <device-id>
 
-# Android — exclude audiobook tests (web-incompatible)
-flutter test integration_test/ -d <device-id> --exclude-tags native
+# Android — exclude audiobook tests (native-only)
+flutter test integration_test/all_tests.dart -d <device-id> --exclude-tags native
 
-# iOS simulator
+# iOS simulator — full suite
 cd flureadium/example
-flutter test integration_test/ -d "iPhone 15"
+flutter test integration_test/all_tests.dart -d "iPhone 15"
 
 # Web (Chrome) — copy JS file first, then run excluding native-only tests
 cd flureadium/example
 dart run flureadium:copy_js_file web/
-flutter test integration_test/ -d chrome --exclude-tags native
+flutter test integration_test/all_tests.dart -d chrome --exclude-tags native
 
-# Run a single test file
+# Run a single test file (for focused debugging)
 flutter test integration_test/epub_test.dart -d <device-id>
 ```
 
@@ -63,4 +66,4 @@ flutter test integration_test/epub_test.dart -d <device-id>
 
 Integration tests run automatically on every merge to `main` via `.github/workflows/integration-test.yml`. Pull requests only run build verification and widget tests — integration tests are not triggered on PRs because emulator jobs are slow and expensive.
 
-The CI workflow runs three jobs in parallel: Android (emulator API 33), iOS (simulator), and Web (Chrome). The iOS job runs all tests including `@Tags(['native'])` audiobook tests. Android and Web jobs exclude native-only tests via `--exclude-tags native` — audiobook tests require ExoPlayer and MediaSession initialization which adds several minutes per test, making them impractical for automated CI. Run them manually against a connected device or emulator.
+The CI workflow runs three jobs in parallel: Android (emulator API 33), iOS (simulator), and Web (Chrome). All jobs use `integration_test/all_tests.dart` as the entry point. The iOS job runs all tests including `@Tags(['native'])` audiobook tests. Android and Web jobs exclude native-only tests via `--exclude-tags native` — audiobook tests require ExoPlayer and MediaSession initialization which adds several minutes per test, making them impractical for automated CI. Run them manually against a connected device or emulator.

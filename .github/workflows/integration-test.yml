@@ -41,7 +41,7 @@ jobs:
           arch: x86_64
           profile: Nexus 6
           working-directory: flureadium/example
-          script: flutter test integration_test/ --exclude-tags native
+          script: flutter test integration_test/all_tests.dart --exclude-tags native
 
   integration-ios:
     name: Integration Tests (iOS)
@@ -72,7 +72,7 @@ jobs:
           echo "SIM_UDID=$UDID" >> $GITHUB_ENV
 
       - name: Run integration tests
-        run: flutter test integration_test/ -d ${{ env.SIM_UDID }}
+        run: flutter test integration_test/all_tests.dart -d ${{ env.SIM_UDID }}
 
       - name: Shutdown simulator
         if: always()
