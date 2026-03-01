@@ -63,4 +63,4 @@ flutter test integration_test/epub_test.dart -d <device-id>
 
 Integration tests run automatically on every merge to `main` via `.github/workflows/integration-test.yml`. Pull requests only run build verification and widget tests — integration tests are not triggered on PRs because emulator jobs are slow and expensive.
 
-The CI workflow runs three jobs in parallel: Android (emulator API 33), iOS (simulator), and Web (Chrome). The iOS job runs all tests including `@Tags(['native'])` audiobook tests. Android and Web jobs exclude native-only tests via `--exclude-tags native`.
+The CI workflow runs three jobs in parallel: Android (emulator API 33), iOS (simulator), and Web (Chrome). The iOS job runs all tests including `@Tags(['native'])` audiobook tests. Android and Web jobs exclude native-only tests via `--exclude-tags native` — the Android emulator lacks audio hardware, so audiobook tests must be verified manually on a real device.
