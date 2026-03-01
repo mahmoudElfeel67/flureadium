@@ -99,6 +99,22 @@ android/src/main/kotlin/dev/mulev/flureadium/
     └── PdfNavigator.kt          # PDF navigation controller
 ```
 
+### Event Channels
+
+All four Flutter EventChannels are registered in `ReadiumReader.attach()`:
+
+| Channel | Kotlin class | Events |
+|---|---|---|
+| `dev.mulev.flureadium/reader-status` | `ReaderStatusEventChannel` | `"loading"`, `"ready"`, `"closed"` |
+| `dev.mulev.flureadium/error` | `ErrorEventChannel` | `{ message, code, data }` maps |
+| `dev.mulev.flureadium/text-locator` | `TextLocatorEventChannel` | Locator JSON strings |
+| `dev.mulev.flureadium/timebased-state` | `TimedBasedStateEventChannel` | Playback state maps |
+
+Reader status lifecycle:
+- `"loading"` — emitted from `ReadiumReaderWidget.init` when the native view is created
+- `"ready"` — emitted from `onVisualReaderIsReady()` when Readium signals the reader is ready
+- `"closed"` — emitted from `ReadiumReaderWidget.dispose()` before tearing down the navigator
+
 ### Platform View
 
 Uses `PlatformViewLink` with `AndroidViewSurface` for high-performance rendering:

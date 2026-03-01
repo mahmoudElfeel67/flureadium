@@ -32,14 +32,6 @@ void main() {
       expect(find.byType(ReadiumReaderWidget), findsOneWidget);
     });
 
-    testWidgets('Load Only does not crash', (tester) async {
-      app.main();
-      await tester.pumpAndSettle(const Duration(seconds: 2));
-      await tester.tap(find.text('Load Only'));
-      await tester.pumpAndSettle(const Duration(seconds: 5));
-      // no crash = pass
-    });
-
     testWidgets('apply night theme preferences', (tester) async {
       app.main();
       await tester.pumpAndSettle(const Duration(seconds: 5));
@@ -60,7 +52,10 @@ void main() {
       app.main();
       await tester.pumpAndSettle(const Duration(seconds: 5));
       await tester.tap(find.text('TTS On'));
-      await tester.pumpAndSettle(const Duration(seconds: 8));
+      // pumpAndSettle would never settle once TTS starts sending timebased state
+      // updates that rebuild the widget. Use pump with a fixed duration instead.
+      // Android TTS initialization is slow; 30s covers emulator timing.
+      await tester.pump(const Duration(seconds: 30));
       expect(find.text('Prev Sentence'), findsOneWidget);
       expect(find.text('Next Sentence'), findsOneWidget);
     });
@@ -73,6 +68,18 @@ void main() {
       // and CircularProgressIndicator keeps animating. Use pump instead.
       await tester.pump(const Duration(seconds: 2));
       expect(find.byType(ReadiumReaderWidget), findsNothing);
+    });
+
+    testWidgets('Load Only does not crash', (tester) async {
+      app.main();
+      // pump (not pumpAndSettle) to wait a fixed 10s for auto-open openPublication()
+      // to complete before calling loadPublication(). pumpAndSettle returns after the
+      // timeout regardless because CircularProgressIndicator never settles. At 10s the
+      // native Readium open is safely done (widget appears at ~8s on emulator API 28).
+      await tester.pump(const Duration(seconds: 10));
+      await tester.tap(find.text('Load Only'));
+      await tester.pumpAndSettle(const Duration(seconds: 5));
+      // no crash = pass
     });
   });
 }

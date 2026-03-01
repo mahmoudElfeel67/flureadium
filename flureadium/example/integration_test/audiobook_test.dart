@@ -27,7 +27,8 @@ void main() {
       await tester.tap(find.text('Open AudioBook'));
       await tester.pump(const Duration(seconds: 8));
       await tester.tap(find.text('Audio Play'));
-      await tester.pump(const Duration(seconds: 2));
+      // audioEnable() + play() + setState take ~5-7s on Android; 10s is safe.
+      await tester.pump(const Duration(seconds: 10));
       expect(find.text('Audio Pause'), findsOneWidget);
     });
 
@@ -37,7 +38,7 @@ void main() {
       await tester.tap(find.text('Open AudioBook'));
       await tester.pump(const Duration(seconds: 8));
       await tester.tap(find.text('Audio Play'));
-      await tester.pump(const Duration(seconds: 2));
+      await tester.pump(const Duration(seconds: 10));
       await tester.tap(find.text('+30s'));
       await tester.pump(const Duration(seconds: 2));
       expect(find.text('Audio Pause'), findsOneWidget);
@@ -49,7 +50,7 @@ void main() {
       await tester.tap(find.text('Open AudioBook'));
       await tester.pump(const Duration(seconds: 8));
       await tester.tap(find.text('Audio Play'));
-      await tester.pump(const Duration(seconds: 2));
+      await tester.pump(const Duration(seconds: 10));
 
       await tester.tap(find.text('Audio Pause'));
       await tester.pump(const Duration(seconds: 1));

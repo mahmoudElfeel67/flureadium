@@ -137,6 +137,37 @@ void main() {
         expect(voices, isA<List<ReaderTTSVoice>>());
       });
 
+      test(
+        'ttsGetAvailableVoices filters null entries from native response',
+        () async {
+          // iOS can return null when jsonString is nil for a voice; whereType<String>()
+          // must filter those out rather than throwing a cast error.
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMethodCallHandler(platform.methodChannel, (call) async {
+                methodCalls.add(call);
+                if (call.method == 'ttsGetAvailableVoices') {
+                  return [
+                    json.encode({
+                      'identifier': 'voice-1',
+                      'name': 'Samantha',
+                      'language': 'en-US',
+                      'networkRequired': false,
+                      'gender': 'female',
+                      'quality': 'high',
+                    }),
+                    null,
+                  ];
+                }
+                return _mockResponse(call);
+              });
+
+          final voices = await platform.ttsGetAvailableVoices();
+
+          expect(voices.length, equals(1));
+          expect(voices.first.identifier, equals('voice-1'));
+        },
+      );
+
       test('ttsSetVoice sends voice identifier and language', () async {
         await platform.ttsSetVoice('com.apple.voice.Samantha', 'en-US');
 
