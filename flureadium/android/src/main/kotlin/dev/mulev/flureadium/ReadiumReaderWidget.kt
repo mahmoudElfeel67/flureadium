@@ -11,7 +11,6 @@ import android.widget.LinearLayout
 import android.widget.LinearLayout.generateViewId
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commitNow
-import dev.mulev.flureadium.events.TextLocatorEventChannel
 import dev.mulev.flureadium.fragments.EpubReaderFragment
 import dev.mulev.flureadium.navigators.EpubNavigator
 import dev.mulev.flureadium.navigators.PdfNavigator
@@ -50,7 +49,6 @@ class ReadiumReaderWidget(
     EpubReaderFragment.Listener, EpubNavigator.VisualListener, PdfNavigator.VisualListener {
 
     private val channel: ReadiumReaderChannel
-    private var textLocatorEventChannel: TextLocatorEventChannel? = null
     private val layout: ViewGroup
 
     private val activity
@@ -79,8 +77,6 @@ class ReadiumReaderWidget(
         } else {
             ReadiumReader.epubClose()
         }
-        textLocatorEventChannel?.dispose()
-        textLocatorEventChannel = null
         channel.setMethodCallHandler(null)
 
         mainScope.coroutineContext.cancelChildren()
@@ -126,7 +122,6 @@ class ReadiumReaderWidget(
         channel = ReadiumReaderChannel(messenger, "$viewTypeChannelName:$id")
         channel.setMethodCallHandler(this)
 
-        textLocatorEventChannel = TextLocatorEventChannel(messenger)
         ReadiumReader.sendReaderStatus("loading")
 
         // By default reader contents are hidden from screen-readers, as not to trap them within it.
@@ -339,7 +334,7 @@ class ReadiumReaderWidget(
         try {
             if (isPdf) {
                 channel.onPageChanged(locator)
-                textLocatorEventChannel?.sendEvent(locator)
+                ReadiumReader.sendTextLocatorEvent(locator)
             } else {
                 val locatorWithFragments = ReadiumReader.getEpubLocatorFragments(locator)
                 val finalLocator = if (locatorWithFragments != null) {
@@ -349,7 +344,7 @@ class ReadiumReaderWidget(
                     normalizeEpubLocator(locator)
                 }
                 channel.onPageChanged(finalLocator)
-                textLocatorEventChannel?.sendEvent(finalLocator)
+                ReadiumReader.sendTextLocatorEvent(finalLocator)
             }
         } catch (e: Exception) {
             Log.e(TAG, "emitOnPageChanged: ${if (isPdf) "PDF" else "EPUB"} failed! $e")

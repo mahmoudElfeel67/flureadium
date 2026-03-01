@@ -77,7 +77,7 @@ class MethodChannelFlureadium extends FlureadiumPlatform {
     _onReaderStatusChanged ??= readerStatusChannel.receiveBroadcastStream().map(
       (dynamic event) {
         final newStatus = ReadiumReaderStatus.values.firstWhere(
-          (e) => e.name == json.decode(event) as String,
+          (e) => e.name == event as String,
         );
         return newStatus;
       },
@@ -90,7 +90,9 @@ class MethodChannelFlureadium extends FlureadiumPlatform {
     _onErrorEvent ??= errorEventChannel.receiveBroadcastStream().map((
       dynamic event,
     ) {
-      final errorEvent = json.decode(event) as ReadiumError;
+      final errorEvent = ReadiumError.fromJson(
+        (event as Map).cast<String, dynamic>(),
+      );
       return errorEvent;
     });
     return _onErrorEvent!;

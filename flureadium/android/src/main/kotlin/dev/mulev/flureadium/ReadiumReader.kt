@@ -12,6 +12,7 @@ import androidx.savedstate.SavedStateRegistryOwner
 import dev.mulev.flureadium.events.EpubIsReadyEventChannel
 import dev.mulev.flureadium.events.ErrorEventChannel
 import dev.mulev.flureadium.events.ReaderStatusEventChannel
+import dev.mulev.flureadium.events.TextLocatorEventChannel
 import dev.mulev.flureadium.events.TimedBasedStateEventChannel
 import dev.mulev.flureadium.models.ReadiumTimebasedState
 import dev.mulev.flureadium.navigators.AudiobookNavigator
@@ -99,6 +100,7 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
     private var timedBasedStateEventChannel: TimedBasedStateEventChannel? = null
     private var readerStatusEventChannel: ReaderStatusEventChannel? = null
     private var errorEventChannel: ErrorEventChannel? = null
+    private var textLocatorEventChannel: TextLocatorEventChannel? = null
 
     private var readerViewRef: WeakReference<ReadiumReaderWidget>? = null
 
@@ -226,6 +228,9 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
 
         errorEventChannel?.dispose()
         errorEventChannel = ErrorEventChannel(messenger)
+
+        textLocatorEventChannel?.dispose()
+        textLocatorEventChannel = TextLocatorEventChannel(messenger)
 
         // store weak ref only
         (activity as? SavedStateRegistryOwner)?.savedStateRegistry?.let {
@@ -393,6 +398,9 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
         errorEventChannel?.dispose()
         errorEventChannel = null
 
+        textLocatorEventChannel?.dispose()
+        textLocatorEventChannel = null
+
         jobs.forEach { it.cancel() }
         jobs.clear()
         mainScope.coroutineContext.cancelChildren()
@@ -406,6 +414,10 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
         errorEventChannel?.sendEvent(
             mapOf("message" to message, "code" to code, "data" to data)
         )
+    }
+
+    fun sendTextLocatorEvent(locator: Locator) {
+        textLocatorEventChannel?.sendEvent(locator)
     }
 
     // Safe getter — returns applicationContext or throws if not available.
