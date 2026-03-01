@@ -150,6 +150,43 @@ if (savedJson != null) {
 }
 ```
 
+## Button-to-API Reference
+
+| Button | API method | Notes |
+|---|---|---|
+| Open EPUB | `openPublication` | Extracts bundled asset to temp; auto-opens on launch |
+| Open AudioBook | `openPublication` | Bundled `.audiobook` file |
+| Open WebPub | `openPublication` + `setCustomHeaders` | Remote manifest; sets `X-Example` header first |
+| Load Only | `loadPublication` | Loads metadata without showing in reader; prints title to debug |
+| Close | `closePublication` | |
+| ← / → | `goLeft` / `goRight` | Page navigation |
+| Skip Prev / Skip Next | `skipToPrevious` / `skipToNext` | Chapter skip |
+| Go To Saved | `goToLocator` | Navigates to last auto-saved locator |
+| Ch.1 | `goByLink` | First TOC entry or first readingOrder link |
+| Night | `setEPUBPreferences` | Dark background, light text, Georgia font |
+| Highlight | `applyDecorations` | Yellow highlight at current locator |
+| TTS On / TTS Off | `ttsEnable` + `play` / `stop` + `ttsGetAvailableVoices` | Fetches voices on enable |
+| Voice N/Total | `ttsSetVoice` | Cycles available voices (visible when TTS active and voices available) |
+| Prev Sentence / Next Sentence | `previous` / `next` | Sentence-level TTS navigation (visible when TTS active) |
+| Audio Play / Audio Pause / Audio Resume | `audioEnable` + `play` / `pause` / `resume` | Three-state toggle |
+| +30s | `audioSeekBy` | Seek forward 30 s (visible when audio active) |
+| Position display | `onTimebasedPlayerStateChanged` | MM:SS / MM:SS shown during audio or TTS |
+
+### Intentionally Omitted Methods
+
+The following public API methods are not given dedicated buttons because they are configuration variants, PDF-specific, or would clutter the minimal UI without teaching anything new:
+
+| Method | Reason omitted |
+|---|---|
+| `setNavigationConfig` | Configuration variant; no behavioral difference visible in tests |
+| `ttsSetPreferences` | Configuration variant of `ttsEnable` |
+| `setDecorationStyle` | TTS highlight style config; covered conceptually by `applyDecorations` |
+| `audioSetPreferences` | Configuration variant of `audioEnable` |
+| `toPhysicalPageIndex` | Convenience wrapper around `goByLink`; same code path |
+| `setDefaultPreferences` | App-level config set before opening; not interactive |
+| `setDefaultPdfPreferences` | PDF-specific; no PDF asset bundled |
+| `renderFirstPage` | PDF-specific; no PDF asset bundled |
+
 ## Platform-Specific Setup
 
 See the main [README](../README.md) for platform setup instructions.

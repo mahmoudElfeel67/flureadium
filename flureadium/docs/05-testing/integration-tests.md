@@ -1,0 +1,57 @@
+# Integration Tests
+
+Integration tests run the example app on a real device or simulator and assert API behavioral contracts — not just widget presence.
+
+## Test Files
+
+| File | Platforms | What it asserts |
+|---|---|---|
+| `launch_test.dart` | All | App starts, MaterialApp renders |
+| `epub_test.dart` | All | `ready` status emitted, locator events fire, goToLocator succeeds, TTS sentence nav buttons appear |
+| `audiobook_test.dart` | Android, iOS (`@Tags(['native'])`) | Audio plays, timebased state emits, seek advances offset, pause/resume button labels cycle correctly |
+| `webpub_test.dart` | All | Remote WebPub manifest opens, `ReadiumReaderWidget` present |
+
+## Prerequisites
+
+### Android
+- Flutter SDK (stable channel)
+- Android SDK with a connected device or AVD at API level ≥ 29
+
+### iOS
+- Flutter SDK (stable channel)
+- Xcode ≥ 15
+- CocoaPods
+- A connected device or booted simulator (iOS ≥ 16)
+
+### Web
+- Flutter SDK (stable channel)
+- Chrome or Chromium installed
+
+## Running Tests Locally
+
+```bash
+# Android — connected device or running emulator
+cd flureadium/example
+flutter test integration_test/ -d <device-id>
+
+# Android — exclude audiobook tests (web-incompatible)
+flutter test integration_test/ -d <device-id> --exclude-tags native
+
+# iOS simulator
+cd flureadium/example
+flutter test integration_test/ -d "iPhone 15"
+
+# Web (Chrome) — copy JS file first, then run excluding native-only tests
+cd flureadium/example
+dart run flureadium:copy_js_file web/
+flutter test integration_test/ -d chrome --exclude-tags native
+
+# Run a single test file
+flutter test integration_test/epub_test.dart -d <device-id>
+```
+
+## CI
+
+Integration tests run automatically on every merge to `main` via `.github/workflows/integration-test.yml`. Pull requests only run build verification and widget tests — integration tests are not triggered on PRs because emulator jobs are slow and expensive.
+
+The CI workflow runs three jobs in parallel: Android (emulator API 33), iOS (simulator), and Web (Chrome). The iOS job runs all tests including `@Tags(['native'])` audiobook tests. Android and Web jobs exclude native-only tests via `--exclude-tags native`.
