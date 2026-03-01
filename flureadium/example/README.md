@@ -1,6 +1,22 @@
 # Flureadium Example
 
-This example demonstrates all major features of the Flureadium plugin.
+A minimal single-screen Flutter app that exercises all flureadium plugin capabilities. Suitable for build verification and integration tests on Android, iOS, and Web.
+
+## Structure
+
+```
+lib/
+└── main.dart           # Single file — ExampleApp + ReaderPage
+integration_test/
+├── launch_test.dart    # App launches without crash
+├── epub_test.dart      # Open EPUB, navigate, preferences, highlight, close
+├── audiobook_test.dart # Open audiobook, play/pause (native only)
+└── webpub_test.dart    # Open remote WebPub manifest
+test/
+└── widget_test.dart    # Widget smoke test
+```
+
+The app auto-opens `moby_dick.epub` on launch. A control panel at the bottom lets you switch publication types, navigate, adjust preferences, control TTS and audio, and add highlights. Tap the reader to toggle the panel.
 
 ## Running the Example
 
@@ -8,6 +24,18 @@ This example demonstrates all major features of the Flureadium plugin.
 cd flureadium/example
 flutter run
 ```
+
+## Running Integration Tests
+
+```bash
+# Android
+flutter test integration_test/ -d <android_device_id>
+
+# iOS
+flutter test integration_test/ -d <ios_device_id>
+```
+
+> **Note:** `audiobook_test.dart` is tagged `native` and should be skipped on Web.
 
 ## Features Demonstrated
 
@@ -121,15 +149,6 @@ if (savedJson != null) {
   await flureadium.goToLocator(locator);
 }
 ```
-
-## State Management
-
-The example uses BLoC pattern for state management. Key blocs:
-
-- `PublicationBloc`: Manages publication loading/closing
-- `PlayerControlsBloc`: Handles playback state
-- `TextSettingsBloc`: Manages visual preferences
-- `TTSSettingsBloc`: Manages TTS configuration
 
 ## Platform-Specific Setup
 
