@@ -39,14 +39,30 @@ class _ReaderPageState extends State<ReaderPage> {
   List<ReaderTTSVoice> _voices = [];
   int _voiceIndex = 0;
 
-  late final StreamSubscription<ReadiumReaderStatus> _statusSub;
-  late final StreamSubscription<Locator> _locatorSub;
-  late final StreamSubscription<ReadiumError> _errorSub;
-  late final StreamSubscription<ReadiumTimebasedState> _timebasedSub;
+  StreamSubscription<ReadiumReaderStatus>? _statusSub;
+  StreamSubscription<Locator>? _locatorSub;
+  StreamSubscription<ReadiumError>? _errorSub;
+  StreamSubscription<ReadiumTimebasedState>? _timebasedSub;
 
   @override
   void initState() {
     super.initState();
+    // timebased-state is registered eagerly by the plugin; subscribe here.
+    // reader-status, text-locator and error are registered lazily (only after
+    // openPublication), so we subscribe to those inside _subscribeToChannels()
+    // which is called once openPublication has returned.
+    _timebasedSub = _flureadium.onTimebasedPlayerStateChanged.listen(
+      (s) => setState(() => _timebasedState = s),
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openEpub());
+  }
+
+  // Subscribe to channels that the plugin registers lazily after openPublication.
+  // Safe to call multiple times — cancels existing subscriptions first.
+  void _subscribeToChannels() {
+    _statusSub?.cancel();
+    _locatorSub?.cancel();
+    _errorSub?.cancel();
     _statusSub = _flureadium.onReaderStatusChanged.listen(
       (s) => debugPrint('ReaderStatus: $s'),
     );
@@ -59,18 +75,14 @@ class _ReaderPageState extends State<ReaderPage> {
     _errorSub = _flureadium.onErrorEvent.listen(
       (e) => debugPrint('FlureadiumError: $e'),
     );
-    _timebasedSub = _flureadium.onTimebasedPlayerStateChanged.listen(
-      (s) => setState(() => _timebasedState = s),
-    );
-    WidgetsBinding.instance.addPostFrameCallback((_) => _openEpub());
   }
 
   @override
   void dispose() {
-    _statusSub.cancel();
-    _locatorSub.cancel();
-    _errorSub.cancel();
-    _timebasedSub.cancel();
+    _statusSub?.cancel();
+    _locatorSub?.cancel();
+    _errorSub?.cancel();
+    _timebasedSub?.cancel();
     super.dispose();
   }
 
@@ -78,6 +90,7 @@ class _ReaderPageState extends State<ReaderPage> {
     try {
       final path = await _extractAsset('assets/pubs/moby_dick.epub');
       final pub = await _flureadium.openPublication(path);
+      _subscribeToChannels();
       setState(() {
         _publication = pub;
         _ttsEnabled = false;
@@ -95,6 +108,7 @@ class _ReaderPageState extends State<ReaderPage> {
     try {
       final path = await _extractAsset('assets/pubs/38533.audiobook');
       final pub = await _flureadium.openPublication(path);
+      _subscribeToChannels();
       setState(() {
         _publication = pub;
         _ttsEnabled = false;
@@ -114,6 +128,7 @@ class _ReaderPageState extends State<ReaderPage> {
       const url =
           'https://readium.org/webpub-manifest/examples/MobyDick/manifest.json';
       final pub = await _flureadium.openPublication(url);
+      _subscribeToChannels();
       setState(() {
         _publication = pub;
         _ttsEnabled = false;

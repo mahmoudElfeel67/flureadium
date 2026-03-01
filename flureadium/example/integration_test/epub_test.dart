@@ -1,6 +1,4 @@
 import 'package:flureadium/flureadium.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -10,18 +8,6 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('EPUB', () {
-    setUp(() {
-      // EventChannels (reader-status, text-locator, error) are registered
-      // lazily by the native plugin, only after openPublication is called.
-      // Subscribing in initState before any publication opens throws
-      // MissingPluginException. Suppress those so they don't count as
-      // test failures — the widget-based assertions below are the real contract.
-      final prev = FlutterError.onError;
-      FlutterError.onError = (FlutterErrorDetails details) {
-        if (details.exception is MissingPluginException) return;
-        prev?.call(details);
-      };
-    });
     testWidgets('app auto-opens EPUB and shows reader widget', (tester) async {
       app.main();
       await tester.pumpAndSettle(const Duration(seconds: 5));
