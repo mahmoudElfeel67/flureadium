@@ -27,6 +27,7 @@ const ReadiumReaderWidget({
   VoidCallback? onSwipe,
   Function(String)? onExternalLinkActivated,
   void Function(Locator)? onLocatorChanged,
+  VoidCallback? onReady,
   Key? key,
 })
 ```
@@ -172,6 +173,42 @@ ReadiumReaderWidget(
     prefs.setString('lastPosition', locator.json);
   },
 )
+```
+
+### onReady
+
+**Type:** `VoidCallback?`
+
+Called once when the native platform view has been created and all EventChannel handlers are registered. This is the correct place to subscribe to `Flureadium.onReaderStatusChanged`, `Flureadium.onTextLocatorChanged`, and `Flureadium.onErrorEvent`.
+
+On iOS these channels are registered lazily inside `ReadiumReaderView.init()`, which runs just before `onReady` fires. Subscribing before `onReady` causes `MissingPluginException`, which permanently closes the stream's internal `StreamController` and silently drops all subsequent events. On Android and web the channels are always ready, but using `onReady` for consistency is recommended.
+
+```dart
+class _ReaderPageState extends State<ReaderPage> {
+  final _flureadium = Flureadium();
+  StreamSubscription<Locator>? _locatorSub;
+
+  void _subscribeToChannels() {
+    _locatorSub?.cancel();
+    _locatorSub = _flureadium.onTextLocatorChanged.listen(
+      (l) => setState(() => _locator = l),
+    );
+  }
+
+  @override
+  void dispose() {
+    _locatorSub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ReadiumReaderWidget(
+      publication: _publication!,
+      onReady: _subscribeToChannels,
+    );
+  }
+}
 ```
 
 ## Interface Methods

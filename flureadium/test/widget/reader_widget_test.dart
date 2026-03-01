@@ -138,6 +138,46 @@ void main() {
       });
     });
 
+    group('onReady callback', () {
+      test('onReady defaults to null', () {
+        final publication = createTestPublication();
+
+        final widget = ReadiumReaderWidget(publication: publication);
+
+        expect(widget.onReady, isNull);
+      });
+
+      test('onReady callback is stored', () {
+        var called = false;
+        final publication = createTestPublication();
+
+        final widget = ReadiumReaderWidget(
+          publication: publication,
+          onReady: () => called = true,
+        );
+
+        widget.onReady!();
+        expect(called, isTrue);
+      });
+
+      test('widget with onReady is accepted alongside other callbacks', () {
+        var readyCalled = false;
+        var tappedCalled = false;
+        final publication = createTestPublication();
+
+        final widget = ReadiumReaderWidget(
+          publication: publication,
+          onReady: () => readyCalled = true,
+          onTap: () => tappedCalled = true,
+        );
+
+        widget.onReady!();
+        widget.onTap!();
+        expect(readyCalled, isTrue);
+        expect(tappedCalled, isTrue);
+      });
+    });
+
     group('callbacks', () {
       test('onTap callback is stored', () {
         var tapped = false;

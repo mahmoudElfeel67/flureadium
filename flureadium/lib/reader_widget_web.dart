@@ -12,6 +12,7 @@ class ReadiumReaderWidget extends StatefulWidget {
     this.onGoLeft,
     this.onGoRight,
     this.onSwipe,
+    this.onReady,
     super.key,
   });
 
@@ -23,6 +24,10 @@ class ReadiumReaderWidget extends StatefulWidget {
   final VoidCallback? onGoRight;
   final VoidCallback? onSwipe;
 
+  /// Called once when the widget is ready to accept stream subscriptions.
+  /// On web, event channels are registered eagerly, so this fires from initState.
+  final VoidCallback? onReady;
+
   @override
   State<ReadiumReaderWidget> createState() => _ReadiumReaderWidgetState();
 }
@@ -33,6 +38,10 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
   void initState() {
     super.initState();
     R2Log.d('Widget initiated');
+    // Web event channels are registered eagerly; fire onReady immediately.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.onReady?.call();
+    });
   }
 
   @override

@@ -239,26 +239,25 @@ permanently closes `receiveBroadcastStream()`'s internal `StreamController`. All
 events on that channel are silently dropped for the lifetime of the stream.
 
 **Fix:**
-Subscribe to streams only after `_onPlatformViewCreated` has fired. Detect this via
-`FlureadiumPlatform.instance.currentReaderWidget != null`:
+Subscribe to streams inside a callback passed as `onReady` to `ReadiumReaderWidget`.
+`onReady` fires synchronously from `_onPlatformViewCreated` after all native EventChannel
+handlers are registered — no polling, no timers:
 
 ```dart
-Future<void> _subscribeToChannels() async {
-  const pollInterval = Duration(milliseconds: 50);
-  const timeout = Duration(seconds: 5);
-  var elapsed = Duration.zero;
-  while (elapsed < timeout && mounted) {
-    if (FlureadiumPlatform.instance.currentReaderWidget != null) break;
-    await Future.delayed(pollInterval);
-    elapsed += pollInterval;
-  }
-  if (!mounted) return;
-  _sub = flureadium.onTextLocatorChanged.listen((l) { /* ... */ });
+void _subscribeToChannels() {
+  _sub?.cancel();
+  _sub = _flureadium.onTextLocatorChanged.listen((l) { /* ... */ });
 }
+
+// In build():
+ReadiumReaderWidget(
+  publication: _publication!,
+  onReady: _subscribeToChannels,
+)
 ```
 
-Call `_subscribeToChannels()` **after** the `setState()` that introduces `ReadiumReaderWidget`
-into the widget tree — not before.
+Because `_subscribeToChannels` is synchronous (no `Future.delayed` timers), `pumpAndSettle`
+settles as soon as the reader is ready in integration tests.
 
 ### iOS: Crash on App Close
 

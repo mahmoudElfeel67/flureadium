@@ -29,19 +29,32 @@ registered eagerly in `ReadiumReader.attach()` at activity attach time — befor
 widget layer. This means the native handlers do not exist until the platform view has been
 created and added to the widget tree.
 
-The example app subscribes to streams only after `_onPlatformViewCreated` has fired (detected
-via `FlureadiumPlatform.instance.currentReaderWidget != null` with a 50ms polling loop, 5s
-timeout). Subscribing before this point causes `MissingPluginException`, which permanently
-closes `receiveBroadcastStream()`'s internal `StreamController`, silently dropping all
-subsequent events on that channel.
+Subscribing before this point causes `MissingPluginException`, which permanently closes
+`receiveBroadcastStream()`'s internal `StreamController`, silently dropping all subsequent
+events on that channel.
+
+### Safe subscription via onReady
+
+The example app subscribes to streams inside `_subscribeToChannels()`, which is passed as
+`onReady` to `ReadiumReaderWidget`. `onReady` fires synchronously from `_onPlatformViewCreated`
+on iOS and Android (after `setCurrentWidgetInterface(this)`) and via `addPostFrameCallback` on
+web. Because no `Future.delayed` timers are involved, `pumpAndSettle` settles as soon as
+the reader is ready — no polling, no fixed waits.
+
+```dart
+ReadiumReaderWidget(
+  publication: pub,
+  onReady: _subscribeToChannels,
+)
+```
 
 ### Integration test implications
 
 Integration tests use widget-based assertions (widget presence, button label changes) because
 streams deliver events asynchronously. Test timing does not guarantee stream delivery within
 `pump()` windows. The decoration test specifically relies on `_locator` being populated within
-a 5-second `pumpAndSettle` window — this works because the subscription guard ensures the
-channel is active before the reader starts emitting locator events.
+a 5-second `pumpAndSettle` window — this works because `onReady` ensures the channel is
+active before the reader starts emitting locator events.
 
 ## Prerequisites
 

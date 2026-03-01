@@ -48,30 +48,22 @@ class _ReaderPageState extends State<ReaderPage> {
   void initState() {
     super.initState();
     // timebased-state is registered eagerly by the plugin; subscribe here.
-    // reader-status, text-locator and error are registered lazily (only after
-    // openPublication), so we subscribe to those inside _subscribeToChannels()
-    // which is called once openPublication has returned.
+    // reader-status, text-locator and error are registered lazily on iOS
+    // (inside ReadiumReaderView.init(), which fires from _onPlatformViewCreated).
+    // Those channels are subscribed via ReadiumReaderWidget.onReady, which is
+    // called from _onPlatformViewCreated after all native handlers are set up.
     _timebasedSub = _flureadium.onTimebasedPlayerStateChanged.listen(
       (s) => setState(() => _timebasedState = s),
     );
     WidgetsBinding.instance.addPostFrameCallback((_) => _openEpub());
   }
 
-  // Subscribe to channels that iOS registers inside ReadiumReaderView.init(),
-  // which fires via _onPlatformViewCreated. Poll until currentReaderWidget is
-  // non-null (meaning _onPlatformViewCreated has fired and the EventStream-
-  // Handlers are registered) before calling listen() on those channels.
-  Future<void> _subscribeToChannels() async {
-    const pollInterval = Duration(milliseconds: 50);
-    const timeout = Duration(seconds: 5);
-    var elapsed = Duration.zero;
-    while (elapsed < timeout && mounted) {
-      if (FlureadiumPlatform.instance.currentReaderWidget != null) break;
-      await Future.delayed(pollInterval);
-      elapsed += pollInterval;
-    }
-    if (!mounted) return;
-
+  // Called by ReadiumReaderWidget.onReady, which fires from _onPlatformViewCreated
+  // after the native platform view (and all EventChannel handlers) are ready.
+  // Safe to call on all platforms: Android registers channels eagerly; iOS
+  // registers them lazily in ReadiumReaderView.init() which runs just before
+  // onReady fires. No polling, no timers — pumpAndSettle works correctly.
+  void _subscribeToChannels() {
     _statusSub?.cancel();
     _locatorSub?.cancel();
     _errorSub?.cancel();
@@ -110,7 +102,6 @@ class _ReaderPageState extends State<ReaderPage> {
         _voices = [];
         _voiceIndex = 0;
       });
-      _subscribeToChannels();
     } catch (e) {
       debugPrint('openEpub error: $e');
     }
@@ -128,7 +119,6 @@ class _ReaderPageState extends State<ReaderPage> {
         _voices = [];
         _voiceIndex = 0;
       });
-      _subscribeToChannels();
     } catch (e) {
       debugPrint('openAudiobook error: $e');
     }
@@ -148,7 +138,6 @@ class _ReaderPageState extends State<ReaderPage> {
         _voices = [];
         _voiceIndex = 0;
       });
-      _subscribeToChannels();
     } catch (e) {
       debugPrint('openWebPub error: $e');
     }
@@ -167,6 +156,7 @@ class _ReaderPageState extends State<ReaderPage> {
 
   Future<void> _close() async {
     await _flureadium.closePublication();
+    if (!mounted) return;
     setState(() {
       _publication = null;
       _ttsEnabled = false;
@@ -299,6 +289,7 @@ class _ReaderPageState extends State<ReaderPage> {
             ReadiumReaderWidget(
               publication: pub,
               onTap: () => setState(() => _controlsVisible = !_controlsVisible),
+              onReady: _subscribeToChannels,
             )
           else
             const Center(child: CircularProgressIndicator()),

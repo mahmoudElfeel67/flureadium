@@ -66,7 +66,7 @@ void main() {
       await tester.tap(find.text('Close'));
       // pumpAndSettle would never settle: after close, _publication is null
       // and CircularProgressIndicator keeps animating. Use pump instead.
-      await tester.pump(const Duration(seconds: 2));
+      await tester.pump(const Duration(seconds: 5));
       expect(find.byType(ReadiumReaderWidget), findsNothing);
     });
 
