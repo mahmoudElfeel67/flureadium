@@ -96,11 +96,9 @@ dependencies {
   implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0"
   implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
 
-  // Flutter embedding — compileOnly so it's available when building standalone
-  // (e.g. for running Android unit tests via ./gradlew testDebugUnitTest).
-  // The Flutter Gradle plugin provides this at runtime in the normal app build.
-  compileOnly 'io.flutter:flutter_embedding_debug:1.0.0-587c18f873b8ab57330422bce09047420d9c7f42'
-
+  // Flutter embedding — provided by the Flutter Gradle plugin at compile and runtime.
+  // testImplementation makes Flutter classes available when compiling main sources
+  // during standalone ./gradlew testDebugUnitTest runs.
   testImplementation 'io.flutter:flutter_embedding_debug:1.0.0-587c18f873b8ab57330422bce09047420d9c7f42'
   testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
   testImplementation 'org.mockito:mockito-core:5.17.0'
