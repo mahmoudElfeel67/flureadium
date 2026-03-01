@@ -207,7 +207,7 @@ class MethodChannelFlureadium extends FlureadiumPlatform {
     );
     final voices =
         voicesStr
-            ?.cast<String>()
+            ?.whereType<String>()
             .map<Map<String, dynamic>>(
               (str) => json.decode(str) as Map<String, dynamic>,
             )

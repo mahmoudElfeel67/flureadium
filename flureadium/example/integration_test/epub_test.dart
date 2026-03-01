@@ -60,7 +60,10 @@ void main() {
       app.main();
       await tester.pumpAndSettle(const Duration(seconds: 5));
       await tester.tap(find.text('TTS On'));
-      await tester.pumpAndSettle(const Duration(seconds: 8));
+      // pumpAndSettle would never settle once TTS starts sending timebased state
+      // updates that rebuild the widget. Use pump with a fixed duration instead.
+      // Android TTS initialization is slow; 30s covers emulator timing.
+      await tester.pump(const Duration(seconds: 30));
       expect(find.text('Prev Sentence'), findsOneWidget);
       expect(find.text('Next Sentence'), findsOneWidget);
     });

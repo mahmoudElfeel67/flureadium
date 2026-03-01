@@ -204,7 +204,7 @@ public class FlureadiumPlugin: NSObject, FlutterPlugin, ReadiumShared.WarningLog
           details: nil))
       }
       let availableVoices = ttsNavigator.ttsGetAvailableVoices()
-      result(availableVoices.map { $0.jsonString } )
+      result(availableVoices.compactMap { $0.jsonString })
     case "ttsSetVoice":
       let args = call.arguments as! [Any?]
       let voiceIdentifier = args[0] as! String
