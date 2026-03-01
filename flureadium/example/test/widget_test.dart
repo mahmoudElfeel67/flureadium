@@ -17,6 +17,7 @@ void main() {
     _mockEventChannel('dev.mulev.flureadium/reader-status');
     _mockEventChannel('dev.mulev.flureadium/text-locator');
     _mockEventChannel('dev.mulev.flureadium/error');
+    _mockEventChannel('dev.mulev.flureadium/timebased-state');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
           const MethodChannel('dev.mulev.flureadium/main'),
