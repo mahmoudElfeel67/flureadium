@@ -1,5 +1,7 @@
 # Web Platform
 
+> **Work in Progress** — Web support is functional at the infrastructure level (`ReadiumReaderWidget` renders, JS interop bridges are in place) but publication loading has known limitations. EPUB files served via HTTP URL are not reliably opened by the Readium JS navigator. WebPub loading from remote URLs is under active investigation. Integration test coverage on web is limited to the app-launch smoke test. Expect rough edges and API gaps compared to Android and iOS.
+
 Web-specific setup and implementation details.
 
 ## Requirements
@@ -110,38 +112,50 @@ For advanced CSS options, see [Readium CSS Types](https://github.com/readium/ts-
 
 ## Limitations
 
-### Features Not Available on Web
+### Known Issues (Work in Progress)
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| TTS | Limited | Uses Web Speech API (browser-dependent) |
-| Audiobook | Limited | Basic HTML5 audio |
+| EPUB from assets | Broken | Packed EPUB served via HTTP URL is not properly opened by the Readium JS navigator |
+| WebPub from remote URL | Broken | `loadPublication` / `getPublication` call fails before `ReadiumWebView` container is mounted |
+| TTS | Not implemented | Throws `UnimplementedError` |
+| Audiobook playback | Not implemented | Throws `UnimplementedError` |
+| Custom HTTP headers | No-op | `setCustomHeaders` logs a warning and does nothing on web |
 | Background Audio | No | Browser limitation |
 | Lock Screen | No | Browser limitation |
-| File System | Limited | Must use URLs or fetch |
+
+### Features Available on Web
+
+| Feature | Status |
+|---------|--------|
+| Widget renders | Yes — `ReadiumReaderWidget` mounts and displays via `HtmlElementView` |
+| Navigation (goLeft/goRight) | Yes |
+| EPUB preferences (font/color) | Yes |
+| Decorations/highlights | No-op (logs warning) |
 
 ### Browser Compatibility
 
-| Browser | Support |
-|---------|---------|
-| Chrome | Full |
-| Firefox | Full |
-| Safari | Full |
-| Edge | Full |
-| IE11 | Not supported |
+Tested on Chrome. Other browsers may work but are untested.
 
 ## Loading Publications
 
-### From URL
+Publication loading on web is work in progress. The current implementation calls
+`ReadiumReader.getPublication(url)` via JS interop, which requires the Readium JS navigator
+to be ready. This works only after `ReadiumWebView` is mounted — creating a chicken-and-egg
+dependency that is not yet resolved.
+
+### From URL (currently broken)
 
 ```dart
+// This silently fails on web — _publication stays null
 final pub = await flureadium.openPublication('https://example.com/book.epub');
 ```
 
-### From Assets
+### From Assets (currently broken)
 
-Serve from web server:
 ```dart
+// Assets are resolved to absolute HTTP URLs, but the Readium JS navigator
+// cannot open packed EPUB files served via HTTP on web
 final pub = await flureadium.openPublication('/assets/books/sample.epub');
 ```
 

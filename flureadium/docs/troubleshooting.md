@@ -223,6 +223,42 @@ await flureadium.goRight();
    );
    ```
 
+### iOS: MissingPluginException on event streams
+
+**Symptom:**
+```
+MissingPluginException(No implementation found for method listen on channel dev.mulev.flureadium/text-locator)
+```
+Event streams silently stop delivering updates even after the exception is caught.
+
+**Cause:**
+On iOS, the `text-locator`, `reader-status`, and `error` EventChannels are registered lazily
+inside `ReadiumReaderView.init()`, which fires from `_onPlatformViewCreated`. Subscribing to
+these streams before the platform view is created causes `MissingPluginException`, which
+permanently closes `receiveBroadcastStream()`'s internal `StreamController`. All subsequent
+events on that channel are silently dropped for the lifetime of the stream.
+
+**Fix:**
+Subscribe to streams inside a callback passed as `onReady` to `ReadiumReaderWidget`.
+`onReady` fires synchronously from `_onPlatformViewCreated` after all native EventChannel
+handlers are registered — no polling, no timers:
+
+```dart
+void _subscribeToChannels() {
+  _sub?.cancel();
+  _sub = _flureadium.onTextLocatorChanged.listen((l) { /* ... */ });
+}
+
+// In build():
+ReadiumReaderWidget(
+  publication: _publication!,
+  onReady: _subscribeToChannels,
+)
+```
+
+Because `_subscribeToChannels` is synchronous (no `Future.delayed` timers), `pumpAndSettle`
+settles as soon as the reader is ready in integration tests.
+
 ### iOS: Crash on App Close
 
 **Symptom:** App crashes when closing/terminating, with a stack trace through `EventStreamHandler.dispose()` → `FlutterBinaryMessengerRelay sendOnChannel` → `FlutterEngine destroyContext`.

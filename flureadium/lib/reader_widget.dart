@@ -30,6 +30,7 @@ class ReadiumReaderWidget extends StatefulWidget {
     this.onSwipe,
     this.onExternalLinkActivated,
     this.onLocatorChanged,
+    this.onReady,
     super.key,
   });
 
@@ -42,6 +43,12 @@ class ReadiumReaderWidget extends StatefulWidget {
   final VoidCallback? onSwipe;
   final Function(String)? onExternalLinkActivated;
   final void Function(Locator)? onLocatorChanged;
+
+  /// Called once when the native platform view has been created and all
+  /// EventChannel handlers are registered. Safe to subscribe to
+  /// [Flureadium.onReaderStatusChanged], [Flureadium.onTextLocatorChanged],
+  /// and [Flureadium.onErrorEvent] from within this callback on all platforms.
+  final VoidCallback? onReady;
 
   @override
   State<StatefulWidget> createState() => _ReadiumReaderWidgetState();
@@ -417,6 +424,11 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
     // This ensures waitForCurrentReaderWidget() callers receive a widget
     // whose channel is ready, so method calls aren't silently dropped.
     setCurrentWidgetInterface(this);
+
+    // Notify the host widget that the platform view (and all native
+    // EventChannel handlers) are ready. Safe to call listen() on
+    // onReaderStatusChanged / onTextLocatorChanged / onErrorEvent from here.
+    widget.onReady?.call();
 
     R2Log.d('New widget is: ${_channel?.name}');
 

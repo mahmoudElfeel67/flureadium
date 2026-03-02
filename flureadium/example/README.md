@@ -1,6 +1,22 @@
 # Flureadium Example
 
-This example demonstrates all major features of the Flureadium plugin.
+A minimal single-screen Flutter app that exercises all flureadium plugin capabilities. Suitable for build verification and integration tests on Android, iOS, and Web.
+
+## Structure
+
+```
+lib/
+└── main.dart           # Single file — ExampleApp + ReaderPage
+integration_test/
+├── launch_test.dart    # App launches without crash
+├── epub_test.dart      # Open EPUB, navigate, preferences, highlight, close
+├── audiobook_test.dart # Open audiobook, play/pause (native only)
+└── webpub_test.dart    # Open remote WebPub manifest
+test/
+└── widget_test.dart    # Widget smoke test
+```
+
+The app auto-opens `moby_dick.epub` on launch. A control panel at the bottom lets you switch publication types, navigate, adjust preferences, control TTS and audio, and add highlights. Tap the reader to toggle the panel.
 
 ## Running the Example
 
@@ -8,6 +24,18 @@ This example demonstrates all major features of the Flureadium plugin.
 cd flureadium/example
 flutter run
 ```
+
+## Running Integration Tests
+
+```bash
+# Android
+flutter test integration_test/ -d <android_device_id>
+
+# iOS
+flutter test integration_test/ -d <ios_device_id>
+```
+
+> **Note:** `audiobook_test.dart` is tagged `native` and should be skipped on Web.
 
 ## Features Demonstrated
 
@@ -122,14 +150,42 @@ if (savedJson != null) {
 }
 ```
 
-## State Management
+## Button-to-API Reference
 
-The example uses BLoC pattern for state management. Key blocs:
+| Button | API method | Notes |
+|---|---|---|
+| Open EPUB | `openPublication` | Extracts bundled asset to temp; auto-opens on launch |
+| Open AudioBook | `openPublication` | Bundled `.audiobook` file |
+| Open WebPub | `openPublication` + `setCustomHeaders` | Remote manifest; sets `X-Example` header first |
+| Load Only | `loadPublication` | Loads metadata without showing in reader; prints title to debug |
+| Close | `closePublication` | |
+| ← / → | `goLeft` / `goRight` | Page navigation |
+| Skip Prev / Skip Next | `skipToPrevious` / `skipToNext` | Chapter skip |
+| Go To Saved | `goToLocator` | Navigates to last auto-saved locator |
+| Ch.1 | `goByLink` | First TOC entry or first readingOrder link |
+| Night | `setEPUBPreferences` | Dark background, light text, Georgia font |
+| Highlight | `applyDecorations` | Yellow highlight at current locator |
+| TTS On / TTS Off | `ttsEnable` + `play` / `stop` + `ttsGetAvailableVoices` | Fetches voices on enable |
+| Voice N/Total | `ttsSetVoice` | Cycles available voices (visible when TTS active and voices available) |
+| Prev Sentence / Next Sentence | `previous` / `next` | Sentence-level TTS navigation (visible when TTS active) |
+| Audio Play / Audio Pause / Audio Resume | `audioEnable` + `play` / `pause` / `resume` | Three-state toggle |
+| +30s | `audioSeekBy` | Seek forward 30 s (visible when audio active) |
+| Position display | `onTimebasedPlayerStateChanged` | MM:SS / MM:SS shown during audio or TTS |
 
-- `PublicationBloc`: Manages publication loading/closing
-- `PlayerControlsBloc`: Handles playback state
-- `TextSettingsBloc`: Manages visual preferences
-- `TTSSettingsBloc`: Manages TTS configuration
+### Intentionally Omitted Methods
+
+The following public API methods are not given dedicated buttons because they are configuration variants, PDF-specific, or would clutter the minimal UI without teaching anything new:
+
+| Method | Reason omitted |
+|---|---|
+| `setNavigationConfig` | Configuration variant; no behavioral difference visible in tests |
+| `ttsSetPreferences` | Configuration variant of `ttsEnable` |
+| `setDecorationStyle` | TTS highlight style config; covered conceptually by `applyDecorations` |
+| `audioSetPreferences` | Configuration variant of `audioEnable` |
+| `toPhysicalPageIndex` | Convenience wrapper around `goByLink`; same code path |
+| `setDefaultPreferences` | App-level config set before opening; not interactive |
+| `setDefaultPdfPreferences` | PDF-specific; no PDF asset bundled |
+| `renderFirstPage` | PDF-specific; no PDF asset bundled |
 
 ## Platform-Specific Setup
 

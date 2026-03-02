@@ -24,6 +24,9 @@ jobs:
       - name: Check format - main package
         run: dart format --set-exit-if-changed flureadium/lib
 
+      - name: Check format - example
+        run: dart format --set-exit-if-changed flureadium/example/lib
+
   analyze:
     name: Static Analysis
     runs-on: ubuntu-latest

@@ -1,6 +1,6 @@
 name: flureadium_example
-description: 'Demonstrates how to use the flureadium plugin.'
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+description: 'Minimal example demonstrating the flureadium plugin.'
+publish_to: 'none'
 
 environment:
   sdk: ">=3.8.0 <4.0.0"
@@ -8,24 +8,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
-  cupertino_icons: ^1.0.8
-  # file_picker: # Removed temporarily since it does not compile with latest Kotlin version.
-  flutter_bloc:
-  hydrated_bloc:
-  collection: ^1.19.1
   flureadium:
-    # When depending on this package from a real application you should use:
-    #   flureadium: ^x.y.z
-    # See https://dart.dev/tools/pub/dependencies#version-constraints
-    # The example app is bundled with the plugin so we use a path dependency on
-    # the parent directory to use the current plugin's version.
     path: ../
-  package_info_plus:
-  path:
-  path_provider:
-  pointer_interceptor:
-  rxdart: ^0.28.0
+  collection: ^1.19.1
 
 dev_dependencies:
   integration_test:

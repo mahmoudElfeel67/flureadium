@@ -251,12 +251,11 @@ ReadiumReaderWidget(
 
 ## Complete Example
 
-See the [example app](../../example/) for a full implementation with:
-- State management (BLoC pattern)
-- TTS support
-- Audiobook playback
-- Highlighting
-- Settings UI
+See the [example app](../../example/) for a minimal single-file implementation covering:
+- EPUB, audiobook, and remote WebPub opening
+- TTS and audio playback
+- Navigation and chapter skipping
+- EPUB preferences and highlighting
 
 ## Next Steps
 

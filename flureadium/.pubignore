@@ -27,3 +27,7 @@ package-lock.json
 
 # Example test publications (very large audiobook/epub files)
 example/assets/pubs/
+
+# Integration test runner and logs
+scripts/
+test_logs/

@@ -12,6 +12,7 @@ class ReadiumReaderWidget extends StatelessWidget {
     this.onSwipe,
     this.onExternalLinkActivated,
     this.onLocatorChanged,
+    this.onReady,
     super.key,
   });
 
@@ -24,6 +25,9 @@ class ReadiumReaderWidget extends StatelessWidget {
   final VoidCallback? onSwipe;
   final Function(String)? onExternalLinkActivated;
   final void Function(Locator)? onLocatorChanged;
+
+  /// Not invoked on unsupported platforms.
+  final VoidCallback? onReady;
 
   @override
   Widget build(final BuildContext context) =>
