@@ -34,3 +34,6 @@ build/
 
 **/node_modules/*
 **/ios/.symlinks
+
+# Integration test logs
+test_logs/

@@ -1,3 +1,27 @@
+## 0.7.1
+
+### Bug Fixes
+
+- **Example app**: Fix `setState() called after dispose()` in `_ReaderPageState` — all async
+  methods (`_openEpub`, `_openAudiobook`, `_openWebPub`, `_toggleAudio`, `_nextVoice`) now check
+  `mounted` before calling `setState` after an `await`.
+
+### Developer Tools
+
+- Add `scripts/run_integration_tests.sh` — runs integration tests for Android, iOS, and Web
+  sequentially from a single command. Scans `flutter devices` once, auto-selects when only one
+  device is found per platform, manages ChromeDriver automatically (npx version-matched first,
+  system binary fallback), and writes per-platform logs to a gitignored `test_logs/` directory.
+
+### Documentation
+
+- `docs/05-testing/integration-tests.md`: Document the new test runner script; correct CI section
+  (CI runs build verification only — integration tests are run locally with the script).
+- `docs/platform-specific/web.md`: Mark web publication loading as work in progress with an
+  accurate known issues table.
+
+---
+
 ## 0.7.0
 
 ### New Features

@@ -94,6 +94,7 @@ class _ReaderPageState extends State<ReaderPage> {
     try {
       final path = await _extractAsset('assets/pubs/moby_dick.epub');
       final pub = await _flureadium.openPublication(path);
+      if (!mounted) return;
       setState(() {
         _publication = pub;
         _ttsEnabled = false;
@@ -111,6 +112,7 @@ class _ReaderPageState extends State<ReaderPage> {
     try {
       final path = await _extractAsset('assets/pubs/38533.audiobook');
       final pub = await _flureadium.openPublication(path);
+      if (!mounted) return;
       setState(() {
         _publication = pub;
         _ttsEnabled = false;
@@ -130,6 +132,7 @@ class _ReaderPageState extends State<ReaderPage> {
       const url =
           'https://readium.org/webpub-manifest/examples/MobyDick/manifest.json';
       final pub = await _flureadium.openPublication(url);
+      if (!mounted) return;
       setState(() {
         _publication = pub;
         _ttsEnabled = false;
@@ -145,7 +148,7 @@ class _ReaderPageState extends State<ReaderPage> {
 
   Future<String> _extractAsset(String assetPath) async {
     if (kIsWeb) {
-      return assetPath;
+      return Uri.base.resolve(assetPath).toString();
     }
     final bytes = await rootBundle.load(assetPath);
     final filename = assetPath.split('/').last;
@@ -207,19 +210,23 @@ class _ReaderPageState extends State<ReaderPage> {
     final next = (_voiceIndex + 1) % _voices.length;
     final voice = _voices[next];
     await _flureadium.ttsSetVoice(voice.identifier, voice.language);
+    if (!mounted) return;
     setState(() => _voiceIndex = next);
   }
 
   Future<void> _toggleAudio() async {
     if (_audioEnabled && !_audioPaused) {
       await _flureadium.pause();
+      if (!mounted) return;
       setState(() => _audioPaused = true);
     } else if (_audioEnabled && _audioPaused) {
       await _flureadium.resume();
+      if (!mounted) return;
       setState(() => _audioPaused = false);
     } else {
       await _flureadium.audioEnable();
       await _flureadium.play(null);
+      if (!mounted) return;
       setState(() {
         _audioEnabled = true;
         _audioPaused = false;

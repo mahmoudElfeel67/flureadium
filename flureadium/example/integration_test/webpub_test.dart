@@ -11,9 +11,13 @@ void main() {
     tester,
   ) async {
     app.main();
-    await tester.pumpAndSettle(const Duration(seconds: 2));
+    // pumpAndSettle would never settle: CircularProgressIndicator keeps
+    // animating while the EPUB auto-open runs (and fails on web). Use pump
+    // with a fixed duration instead.
+    await tester.pump(const Duration(seconds: 2));
     await tester.tap(find.text('Open WebPub'));
-    await tester.pumpAndSettle(const Duration(seconds: 10));
+    // Wait for the async JS fetch of the remote WebPub manifest to complete.
+    await tester.pump(const Duration(seconds: 10));
     expect(find.byType(ReadiumReaderWidget), findsOneWidget);
   });
 }

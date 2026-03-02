@@ -13,7 +13,7 @@ A comprehensive Flutter plugin for reading EPUB ebooks, audiobooks, and comics u
 - **Text-to-Speech**: Platform TTS with voice selection and rate control
 - **Synchronized Audio**: Media overlay support for read-along experiences
 - **Highlighting**: Decoration API for bookmarks, highlights, and annotations
-- **Cross-Platform**: Android, iOS, macOS, and Web support
+- **Cross-Platform**: Android, iOS, macOS, and Web (web support is work in progress — see [Web Platform](docs/platform-specific/web.md))
 
 ## Quick Start
 

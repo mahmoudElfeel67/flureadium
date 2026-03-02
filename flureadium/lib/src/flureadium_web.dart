@@ -39,10 +39,9 @@ class FlureadiumWebPlugin extends FlureadiumPlatform {
   }
 
   @override
-  Future<void> setCustomHeaders(Map<String, String> headers) =>
-      throw UnimplementedError(
-        'setCustomHeaders is not implemented on web platform',
-      );
+  Future<void> setCustomHeaders(Map<String, String> headers) async {
+    R2Log.d('setCustomHeaders is not implemented on web platform');
+  }
 
   @override
   void setDefaultPreferences(EPUBPreferences preferences) {
