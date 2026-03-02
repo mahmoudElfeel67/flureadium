@@ -64,34 +64,25 @@ jobs:
         run: cd ios && pod install --repo-update
 
       - name: Boot simulator
-        id: boot-sim
         run: |
-          RUNTIME=$(xcrun simctl list runtimes --json | python3 -c "
-          import json, sys
-          rts = json.load(sys.stdin)['runtimes']
-          ios = [r for r in rts if r.get('isAvailable') and 'iOS' in r.get('name', '')]
-          print(sorted(ios, key=lambda r: r.get('version', '0'))[-1]['identifier'])
-          ")
-          DEVICE_TYPE=$(xcrun simctl list devicetypes --json | python3 -c "
-          import json, sys
-          dts = json.load(sys.stdin)['devicetypes']
-          phones = [d for d in dts if 'iPhone' in d.get('name', '') and not any(x in d.get('name', '') for x in ['Plus', 'Max', 'mini'])]
-          print(phones[-1]['identifier'])
-          ")
-          UDID=$(xcrun simctl create "TestDevice" "$DEVICE_TYPE" "$RUNTIME")
-          xcrun simctl boot "$UDID"
-          echo "udid=$UDID" >> $GITHUB_OUTPUT
+          UDID=$(xcrun simctl list devices available | grep "iPhone" | head -1 | grep -oE '\([A-F0-9-]+\)' | tr -d '()')
+          if [ -z "$UDID" ]; then
+            echo "No available iPhone simulator found"
+            xcrun simctl list devices
+            exit 1
+          fi
+          echo "Booting simulator: $UDID"
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID"
 
       - name: Run integration tests
-        run: flutter test integration_test/all_tests.dart -d ${{ steps.boot-sim.outputs.udid }}
+        run: |
+          UDID=$(xcrun simctl list devices booted | grep "iPhone" | grep -oE '\([A-F0-9-]+\)' | tr -d '()' | head -1)
+          flutter test integration_test/all_tests.dart -d "$UDID"
 
       - name: Shutdown simulator
         if: always()
-        run: |
-          UDID="${{ steps.boot-sim.outputs.udid }}"
-          if [ -n "$UDID" ]; then
-            xcrun simctl shutdown "$UDID" || true
-          fi
+        run: xcrun simctl shutdown all || true
 
   integration-web:
     name: Integration Tests (Web)
@@ -112,6 +103,11 @@ jobs:
 
       - name: Copy JS file
         run: dart run flureadium:copy_js_file web/
+
+      - name: Start Xvfb virtual display
+        run: |
+          Xvfb :99 -screen 0 1280x720x24 &
+          echo "DISPLAY=:99" >> $GITHUB_ENV
 
       - name: Start ChromeDriver
         run: chromedriver --port=4444 &
