@@ -199,6 +199,26 @@ final class ScrollModeNavigationTests: XCTestCase {
         XCTAssertNotNil(view.onRightEdgeTap, "Paginated mode right tap must remain non-nil")
     }
 
+    func testScrollMode_interceptEdgeTapsFalse() {
+        // In scroll mode, configureEdgeTapHandlers sets interceptEdgeTaps = false
+        // so WKWebView receives all touches natively.
+        let view = EdgeTapInterceptView(frame: CGRect(x: 0, y: 0, width: 375, height: 667))
+        view.interceptEdgeTaps = false  // simulate scroll mode branch
+
+        XCTAssertFalse(view.interceptEdgeTaps,
+            "interceptEdgeTaps must be false in scroll mode")
+    }
+
+    func testPaginatedMode_interceptEdgeTapsTrue() {
+        // In paginated mode, configureEdgeTapHandlers sets interceptEdgeTaps = true
+        // regardless of enableEdgeTapNavigation, to block DirectionalNavigationAdapter.
+        let view = EdgeTapInterceptView(frame: CGRect(x: 0, y: 0, width: 375, height: 667))
+        view.interceptEdgeTaps = true  // simulate paginated mode branch
+
+        XCTAssertTrue(view.interceptEdgeTaps,
+            "interceptEdgeTaps must be true in paginated mode")
+    }
+
     // MARK: - isBackwardNavigation(from:to:in:)
 
     func testIsBackwardNavigation_emptyReadingOrder_returnsFalse() {

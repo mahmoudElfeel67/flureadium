@@ -308,6 +308,11 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
   private func configureEdgeTapHandlers(isScrollMode: Bool) {
     guard let edgeTapView = _view as? EdgeTapInterceptView else { return }
 
+    // In scroll mode, let WKWebView handle swipes natively — don't intercept.
+    // In paginated mode, always intercept edge zones so DirectionalNavigationAdapter
+    // cannot handle them, regardless of whether edge tap callbacks are set.
+    edgeTapView.interceptEdgeTaps = !isScrollMode
+
     if isScrollMode {
       // Scroll mode: all callbacks nil.
       // Swipes are handled natively by WKWebView — no interception needed.

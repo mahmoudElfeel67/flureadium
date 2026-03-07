@@ -229,6 +229,10 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
   private func configureEdgeTapHandlers() {
     guard let edgeTapView = _view as? EdgeTapInterceptView else { return }
 
+    // Intercept edge zones only when edge tap navigation is active.
+    // PDF reader has no scroll mode on this view path.
+    edgeTapView.interceptEdgeTaps = enableEdgeTapNavigation
+
     if enableEdgeTapNavigation {
       if let points = edgeTapAreaPoints {
         edgeTapView.edgeThresholdPoints = points
