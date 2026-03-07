@@ -155,6 +155,18 @@ await flureadium.setNavigationConfig(
 
 Both default to enabled (`true`) when not set. The `edgeTapAreaPoints` value is in absolute iOS points (44–120, clamped automatically) and defaults to 44pt (iOS HIG minimum tap target).
 
+**iOS 26 touch routing — `interceptEdgeTaps`:**
+
+On iOS 26+, Flutter changed how platform view touches are routed. Edge-zone touches now fall through `EdgeTapInterceptView` to the underlying WKWebView when there are no intercept callbacks set, which lets Readium's `DirectionalNavigationAdapter` see those touches — even when edge tap navigation is turned off.
+
+To fix this, `EdgeTapInterceptView` has an `interceptEdgeTaps: Bool` property (default `false`) that is independent of callback presence:
+
+- **EPUB paginated mode** — `interceptEdgeTaps = true` always. The view absorbs all edge-zone touches regardless of whether callbacks are configured. `DirectionalNavigationAdapter` never sees them.
+- **EPUB scroll mode** — `interceptEdgeTaps = false`. WKWebView receives all touches natively for scrolling.
+- **PDF reader** — `interceptEdgeTaps = enableEdgeTapNavigation`. PDF has no scroll mode on this path, so the view only intercepts when the feature is on.
+
+This is a native iOS layer change only. No Dart or Flutter changes are required.
+
 **Files:**
 - `EdgeTapInterceptView.swift` - Shared edge tap and swipe detection view
 - `ReadiumReaderView.swift` - EPUB reader using EdgeTapInterceptView
