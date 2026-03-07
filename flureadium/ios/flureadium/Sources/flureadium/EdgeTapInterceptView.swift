@@ -22,6 +22,11 @@ class EdgeTapInterceptView: UIView {
     var onSwipeRight: (() -> Void)?
     /// Edge threshold in absolute points (default 44pt, iOS HIG minimum tap target)
     var edgeThresholdPoints: CGFloat = 44.0
+    /// When true, hitTest returns self for any touch in an edge zone,
+    /// preventing downstream gesture recognizers (e.g. DirectionalNavigationAdapter)
+    /// from seeing those touches. Set to true in paginated mode regardless of
+    /// whether edge tap callbacks are configured.
+    var interceptEdgeTaps: Bool = false
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -84,9 +89,7 @@ class EdgeTapInterceptView: UIView {
         let isLeftEdge = point.x < edgeSize
         let isRightEdge = point.x > bounds.width - edgeSize
 
-        // If we have edge tap callbacks and the touch is in an edge zone,
-        // return self so our gesture recognizer receives the tap
-        if (isLeftEdge && onLeftEdgeTap != nil) || (isRightEdge && onRightEdgeTap != nil) {
+        if interceptEdgeTaps && (isLeftEdge || isRightEdge) {
             return self
         }
 

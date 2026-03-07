@@ -1,3 +1,30 @@
+## 0.7.2
+
+### Bug fixes
+
+- **iOS / Edge tap interception (iOS 26+)**: iOS 26 changed how Flutter routes touches on
+  platform views. With `enableEdgeTapNavigation = false`, no tap callbacks were set on
+  `EdgeTapInterceptView`, so edge-zone touches fell through to WKWebView. Readium's
+  `DirectionalNavigationAdapter` picked them up and turned the page anyway.
+
+  Root cause: `hitTest` was gated on `onLeftEdgeTap != nil`, not on whether interception
+  was wanted.
+
+  Fix: `EdgeTapInterceptView` now has an `interceptEdgeTaps: Bool` property. `hitTest`
+  checks the flag, not callbacks. `ReadiumReaderView` sets it `true` in paginated mode
+  (regardless of `enableEdgeTapNavigation`) and `false` in scroll mode. `PdfReaderView`
+  sets it equal to `enableEdgeTapNavigation`. When `true`, edge-zone touches never reach
+  `DirectionalNavigationAdapter`; with no callbacks set, the touch does nothing. No Dart
+  changes. Behaviour on iOS 13-18 is unchanged.
+
+### Documentation
+
+- `docs/platform-specific/ios.md`: Added the iOS 26 `interceptEdgeTaps` fix and per-mode
+  behaviour (paginated always intercepts, scroll never, PDF follows
+  `enableEdgeTapNavigation`).
+
+---
+
 ## 0.7.1
 
 ### Bug Fixes
