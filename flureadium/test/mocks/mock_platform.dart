@@ -229,6 +229,17 @@ class MockFlureadiumPlatform
   }
 
   @override
+  Future<bool> ttsCanSpeak() async {
+    calls.add(MockMethodCall('ttsCanSpeak'));
+    return true;
+  }
+
+  @override
+  Future<void> ttsRequestInstallVoice() async {
+    calls.add(MockMethodCall('ttsRequestInstallVoice'));
+  }
+
+  @override
   Future<List<ReaderTTSVoice>> ttsGetAvailableVoices() async {
     calls.add(MockMethodCall('ttsGetAvailableVoices'));
     return mockVoices;

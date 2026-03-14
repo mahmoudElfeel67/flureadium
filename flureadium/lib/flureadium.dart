@@ -213,6 +213,12 @@ class Flureadium {
   Future<void> ttsEnable(TTSPreferences? preferences) =>
       _platform.ttsEnable(preferences);
 
+  /// Checks whether TTS can speak the current publication's language.
+  Future<bool> ttsCanSpeak() => _platform.ttsCanSpeak();
+
+  /// Requests the system to install missing TTS voice data.
+  Future<void> ttsRequestInstallVoice() => _platform.ttsRequestInstallVoice();
+
   /// Updates TTS preferences while TTS is enabled.
   Future<void> ttsSetPreferences(TTSPreferences preferences) =>
       _platform.ttsSetPreferences(preferences);

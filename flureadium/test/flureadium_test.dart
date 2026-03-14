@@ -276,6 +276,19 @@ void main() {
         expect(mockPlatform.wasCalled('ttsSetPreferences'), isTrue);
       });
 
+      test('ttsCanSpeak delegates to platform', () async {
+        final result = await flureadium.ttsCanSpeak();
+
+        expect(mockPlatform.wasCalled('ttsCanSpeak'), isTrue);
+        expect(result, isA<bool>());
+      });
+
+      test('ttsRequestInstallVoice delegates to platform', () async {
+        await flureadium.ttsRequestInstallVoice();
+
+        expect(mockPlatform.wasCalled('ttsRequestInstallVoice'), isTrue);
+      });
+
       test('setDecorationStyle calls platform method', () async {
         final style = ReaderDecorationStyle(
           style: DecorationStyle.underline,
