@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "flureadium",
+  "project_id": "9d72fa12-ceb0-4086-8e84-b49ba81bdf0c"
+}
