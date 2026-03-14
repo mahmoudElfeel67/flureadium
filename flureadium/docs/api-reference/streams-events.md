@@ -94,8 +94,24 @@ class ReadiumTimebasedState {
   Duration? currentBuffered;    // Buffered position
   Duration? currentDuration;    // Total duration
   Locator? currentLocator;      // Current locator position
+  TtsErrorType? ttsErrorType;   // TTS-specific error detail (see below)
 }
 ```
+
+#### ttsErrorType
+
+**Type:** `TtsErrorType?`
+
+Present only when `state == TimebasedState.failure` and the failure originated from TTS. Allows the app to distinguish between different TTS failure modes and respond accordingly (for example, prompting the user to install voice data when the value is `languageMissingData`).
+
+```dart
+enum TtsErrorType {
+  languageMissingData,  // Required voice data not installed
+  unknown,              // Unclassified TTS error
+}
+```
+
+Platform-specific values are documented in Phase 2 (Android), where the native TTS engine provides granular error codes.
 
 ### TimebasedState Enum
 

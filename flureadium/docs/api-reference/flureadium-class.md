@@ -295,6 +295,44 @@ await flureadium.ttsEnable(TTSPreferences(
 ));
 ```
 
+### ttsCanSpeak
+
+Checks whether the platform's TTS engine can speak the current publication's language.
+
+```dart
+Future<bool> ttsCanSpeak()
+```
+
+**Returns:** `true` if TTS can handle the publication's language, `false` otherwise
+
+Call this after opening a publication and before enabling TTS to verify language support. Platform-specific behavior is documented in Phase 1 (iOS), Phase 2 (Android), and Phase 3 (Web).
+
+**Example:**
+```dart
+final canSpeak = await flureadium.ttsCanSpeak();
+if (!canSpeak) {
+  // Offer to install voice data or show a warning
+  await flureadium.ttsRequestInstallVoice();
+}
+```
+
+### ttsRequestInstallVoice
+
+Requests the system to install missing TTS voice data for the current publication's language.
+
+```dart
+Future<void> ttsRequestInstallVoice()
+```
+
+On Android, this opens the system TTS voice data installation dialog. On iOS, this is a no-op since voice downloads are managed through system settings. Platform-specific behavior is documented in Phase 2 (Android).
+
+**Example:**
+```dart
+if (!await flureadium.ttsCanSpeak()) {
+  await flureadium.ttsRequestInstallVoice();
+}
+```
+
 ### ttsSetPreferences
 
 Updates TTS preferences while TTS is enabled.
