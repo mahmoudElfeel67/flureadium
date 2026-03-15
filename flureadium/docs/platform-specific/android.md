@@ -274,6 +274,33 @@ This error occurred when the native platform sent `onPageChanged` method calls a
 
 Both issues are now fixed: `onPageChanged` checks `mounted` before calling `setState()`, and the debug stream subscription is stored and cancelled in `dispose()`. If you see this error in older versions, update the plugin.
 
+### Integration test cascade failures
+
+When integration tests share a process (the default for `flutter test`), a
+failed test can leave native resources (ExoPlayer sessions, TTS engines,
+navigator fragments) in a dirty state that causes every subsequent test to fail.
+
+**Prevention:** Add `tearDown` blocks to every test group that uses audio or TTS:
+
+```dart
+group('Audiobook', () {
+  tearDown(() async {
+    final flureadium = Flureadium();
+    await flureadium.stop();
+    await flureadium.closePublication();
+  });
+
+  testWidgets('plays audio', (tester) async { ... });
+});
+```
+
+`stop()` releases the TTS engine or ExoPlayer session. `closePublication()`
+calls `release()` on all active navigators, which awaits cleanup inline instead
+of firing and forgetting. Together they ensure each test starts with a clean
+native state.
+
+For EPUB-only tests (no TTS or audio), `closePublication()` alone is enough.
+
 ### WebView rendering issues
 
 Enable hardware acceleration:
