@@ -2,6 +2,58 @@
 
 This guide covers integrating text-to-speech (TTS) into your reading app.
 
+## Before Enabling TTS
+
+Always check whether the current publication supports TTS before calling `ttsEnable()`. This prevents crashes on unsupported formats (e.g. PDF) and lets you show a user-friendly message instead.
+
+```dart
+final canSpeak = await flureadium.ttsCanSpeak();
+if (!canSpeak) {
+  // Show a message — this publication doesn't support TTS
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('TTS is not supported for this publication')),
+  );
+  return;
+}
+
+// Safe to enable TTS
+await flureadium.ttsEnable(null);
+await flureadium.play(null);
+```
+
+Platform behavior:
+- **iOS** — calls `PublicationSpeechSynthesizer.canSpeak(publication:)` to check content service availability.
+- **Android** — probes `TtsNavigatorFactory` to see if the publication can be spoken.
+- **Web** — returns `true` when the browser has `window.speechSynthesis` and a navigator is loaded.
+
+`ttsCanSpeak()` is safe to call before `ttsEnable()` and has no side effects.
+
+## Handling Android Language Errors
+
+On Android, TTS can fail when the device lacks voice data for the publication's language. You can detect this through the `ttsErrorType` field on `ReadiumTimebasedState` and prompt the user to install the missing voice.
+
+```dart
+flureadium.onTimebasedPlayerStateChanged.listen((state) {
+  if (state.ttsErrorType == TtsErrorType.languageMissingData) {
+    // Android is missing voice data for this language.
+    // Show a button or dialog prompting the user to install it.
+    showInstallVoiceDialog();
+  }
+});
+
+Future<void> showInstallVoiceDialog() async {
+  // Opens the system voice data installer on Android.
+  // No-op on iOS and web.
+  await flureadium.ttsRequestInstallVoice();
+}
+```
+
+`TtsErrorType` values:
+- `languageMissingData` — Android only. The TTS engine doesn't have voice data for the requested language.
+- `unknown` — a generic TTS engine failure.
+
+This field is always `null` on iOS and web, which don't discriminate TTS error types.
+
 ## Enabling TTS
 
 ### Basic Setup
@@ -567,21 +619,30 @@ class _TTSReaderScreenState extends State<TTSReaderScreen> {
 
 ### iOS
 
-- Uses AVSpeechSynthesizer
-- Rich voice selection
-- System voices available
+- Uses AVSpeechSynthesizer through Readium's `PublicationSpeechSynthesizer`
+- Voices are managed by the OS — `ttsRequestInstallVoice()` is a no-op
+- `ttsCanSpeak()` checks content service availability via Readium
+- Voices are returned sorted alphabetically
+- Word-level highlighting through `AVSpeechSynthesizerDelegate`
 
 ### Android
 
-- Uses TextToSpeech engine
-- Voice quality varies by device
-- May require downloading voices
+- Uses Readium's `TtsNavigator` backed by `AndroidTtsEngine`
+- `ttsCanSpeak()` probes `TtsNavigatorFactory` to check publication support
+- `ttsRequestInstallVoice()` opens the system voice data installer
+- `TtsErrorType.languageMissingData` fires when voice data is missing for the publication's language
+- Voice quality and availability vary by device and installed language packs
 
 ### Web
 
-- Uses Web Speech API
-- Browser-dependent voice availability
-- Limited customization
+- Uses the Web Speech API (`window.speechSynthesis`)
+- `ttsCanSpeak()` checks browser support and navigator readiness
+- `ttsRequestInstallVoice()` is a no-op — browsers manage voices through the OS
+- No background playback — the browser tab must stay active
+- Word-level highlighting is Chrome-only (via `SpeechSynthesisUtterance.onboundary`); sentence-level works cross-browser
+- `setDecorationStyle()` is a no-op on web — the Web Speech API operates on extracted text, not the live EPUB DOM
+- Voice enumeration may require user interaction in some browsers before voices load
+- Position updates are resource-level only (no CFI precision from Web Speech API)
 
 ## See Also
 
