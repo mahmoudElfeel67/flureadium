@@ -147,8 +147,8 @@ select_device() {
 }
 
 # ── Test runner ───────────────────────────────────────────────────────────────
-# Runs the given command, captures output to <logfile>, and returns the exit code.
-# On failure (or --verbose), prints the captured output.
+# --verbose: streams output live to the terminal (via tee) as well as the log file.
+# default:   captures silently; prints on failure.
 run_test() {
   local label="$1"
   local logfile="$2"
@@ -158,10 +158,12 @@ run_test() {
   log "${BLUE}▶  $label${NC}"
 
   local exit_code=0
-  "$@" > "$logfile" 2>&1 || exit_code=$?
-
   if [ "$VERBOSE" = true ]; then
-    cat "$logfile" | tee -a "$SUMMARY_LOG"
+    "$@" 2>&1 | tee "$logfile"
+    exit_code=${PIPESTATUS[0]}
+    cat "$logfile" >> "$SUMMARY_LOG"
+  else
+    "$@" > "$logfile" 2>&1 || exit_code=$?
   fi
 
   if [ $exit_code -eq 0 ]; then
