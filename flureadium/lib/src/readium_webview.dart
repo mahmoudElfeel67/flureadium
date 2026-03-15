@@ -57,9 +57,22 @@ class ReadiumWebViewState extends State<ReadiumWebView> {
     }
   }
 
+  @js_interop.JSExport()
+  void onTtsStateChanged(final String stateJson) {
+    R2Log.d('TTS state changed: $stateJson');
+    try {
+      final map = jsonDecode(stateJson) as Map<String, dynamic>;
+      final state = ReadiumTimebasedState.fromJsonMap(map);
+      FlureadiumWebPlugin.addTimeBasedStateUpdate(state);
+    } catch (e) {
+      R2Log.w('Failed to parse TTS state: $e');
+    }
+  }
+
   void registerJSExports() {
     updateTextLocator = onTextLocatorUpdate.toJS;
     updateReaderStatus = onReaderStatusChanged.toJS;
+    updateTtsState = onTtsStateChanged.toJS;
   }
 
   void createPlatformView(int id, web.HTMLDivElement htmlElement) async {

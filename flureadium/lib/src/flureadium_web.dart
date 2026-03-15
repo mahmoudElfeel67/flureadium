@@ -163,28 +163,37 @@ class FlureadiumWebPlugin extends FlureadiumPlatform {
 
   // COMMON PLAYBACK API - BEGIN
   @override
-  Future<void> play(Locator? fromLocator) =>
-      throw UnimplementedError('play is not implemented on web platform');
+  Future<void> play(Locator? fromLocator) async {
+    final locatorJson = fromLocator != null
+        ? json.encode(fromLocator.toJson())
+        : null;
+    JsPublicationChannel.ttsPlay(locatorJson);
+  }
 
   @override
-  Future<void> stop() =>
-      throw UnimplementedError('stop is not implemented on web platform');
+  Future<void> stop() async {
+    JsPublicationChannel.ttsStop();
+  }
 
   @override
-  Future<void> pause() =>
-      throw UnimplementedError('pause is not implemented on web platform');
+  Future<void> pause() async {
+    JsPublicationChannel.ttsPause();
+  }
 
   @override
-  Future<void> resume() =>
-      throw UnimplementedError('resume is not implemented on web platform');
+  Future<void> resume() async {
+    JsPublicationChannel.ttsResume();
+  }
 
   @override
-  Future<void> next() =>
-      throw UnimplementedError('next is not implemented on web platform');
+  Future<void> next() async {
+    JsPublicationChannel.ttsNext();
+  }
 
   @override
-  Future<void> previous() =>
-      throw UnimplementedError('previous is not implemented on web platform');
+  Future<void> previous() async {
+    JsPublicationChannel.ttsPrevious();
+  }
 
   @override
   Future<bool> goToLocator(final Locator locator) async {
@@ -206,18 +215,35 @@ class FlureadiumWebPlugin extends FlureadiumPlatform {
   // TTS API - BEGIN
   @override
   Future<void> ttsEnable(TTSPreferences? preferences) async {
-    R2Log.d('ttsEnable is not implemented on web platform');
+    final prefsJson = preferences != null
+        ? json.encode(preferences.toMap())
+        : null;
+    JsPublicationChannel.ttsEnable(prefsJson);
+  }
+
+  @override
+  Future<bool> ttsCanSpeak() async {
+    return JsPublicationChannel.ttsCanSpeak();
+  }
+
+  @override
+  Future<void> ttsRequestInstallVoice() async {
+    // No-op on web: the browser manages voice installation.
+    R2Log.d('ttsRequestInstallVoice is a no-op on web platform');
   }
 
   @override
   Future<List<ReaderTTSVoice>> ttsGetAvailableVoices() async {
-    R2Log.d('ttsGetAvailableVoices is not implemented on web platform');
-    return [];
+    final voicesJson = JsPublicationChannel.ttsGetAvailableVoices();
+    final voicesList = json.decode(voicesJson) as List;
+    return voicesList
+        .map((v) => ReaderTTSVoice.fromJsonMap(v as Map<String, dynamic>))
+        .toList();
   }
 
   @override
   Future<void> ttsSetVoice(String voiceIdentifier, String? forLanguage) async {
-    R2Log.d('ttsSetVoice is not implemented on web platform');
+    JsPublicationChannel.ttsSetVoice(voiceIdentifier, forLanguage);
   }
 
   @override
@@ -225,12 +251,13 @@ class FlureadiumWebPlugin extends FlureadiumPlatform {
     ReaderDecorationStyle? utteranceDecoration,
     ReaderDecorationStyle? rangeDecoration,
   ) async {
-    R2Log.d('setDecorationStyle is not implemented on web platform');
+    // No-op on web: decoration styles are handled by CSS in the browser.
+    R2Log.d('setDecorationStyle is a no-op on web platform');
   }
 
   @override
   Future<void> ttsSetPreferences(TTSPreferences preferences) async {
-    R2Log.d('ttsSetPreferences is not implemented on web platform');
+    JsPublicationChannel.ttsSetPreferences(json.encode(preferences.toMap()));
   }
   // TTS API - END
 

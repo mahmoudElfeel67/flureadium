@@ -19,6 +19,19 @@ extension type ReadiumReader._(JSObject _) implements JSObject {
   external JSPromise getResource(JSString linkString, JSBoolean? asBytes);
   external void setEPUBPreferences(JSString newPreferencesString);
   external JSBoolean get isNavigatorReady;
+
+  // TTS API
+  external void ttsEnable(JSString? prefsJson);
+  external void ttsPlay(JSString? fromLocatorJson);
+  external void ttsPause();
+  external void ttsResume();
+  external void ttsStop();
+  external void ttsNext();
+  external void ttsPrevious();
+  external JSString ttsGetAvailableVoices();
+  external void ttsSetVoice(JSString voiceId, JSString? language);
+  external void ttsSetPreferences(JSString prefsJson);
+  external JSBoolean ttsCanSpeak();
 }
 
 @JS()
@@ -26,6 +39,9 @@ external set updateTextLocator(JSFunction f);
 
 @JS()
 external set updateReaderStatus(JSFunction f);
+
+@JS()
+external set updateTtsState(JSFunction f);
 
 class JsPublicationChannel {
   static final ReadiumReader _readiumReader = ReadiumReader();
@@ -154,6 +170,51 @@ class JsPublicationChannel {
         stacktrace: stackTrace.toString(),
       );
     }
+  }
+
+  // TTS API
+  static void ttsEnable(String? prefsJson) {
+    _readiumReader.ttsEnable(prefsJson?.toJS);
+  }
+
+  static void ttsPlay(String? fromLocatorJson) {
+    _readiumReader.ttsPlay(fromLocatorJson?.toJS);
+  }
+
+  static void ttsPause() {
+    _readiumReader.ttsPause();
+  }
+
+  static void ttsResume() {
+    _readiumReader.ttsResume();
+  }
+
+  static void ttsStop() {
+    _readiumReader.ttsStop();
+  }
+
+  static void ttsNext() {
+    _readiumReader.ttsNext();
+  }
+
+  static void ttsPrevious() {
+    _readiumReader.ttsPrevious();
+  }
+
+  static String ttsGetAvailableVoices() {
+    return _readiumReader.ttsGetAvailableVoices().toDart;
+  }
+
+  static void ttsSetVoice(String voiceId, String? language) {
+    _readiumReader.ttsSetVoice(voiceId.toJS, language?.toJS);
+  }
+
+  static void ttsSetPreferences(String prefsJson) {
+    _readiumReader.ttsSetPreferences(prefsJson.toJS);
+  }
+
+  static bool ttsCanSpeak() {
+    return _readiumReader.ttsCanSpeak().toDart;
   }
 
   Future<void> setEPUBPreferences(String newPreferencesString) async {
