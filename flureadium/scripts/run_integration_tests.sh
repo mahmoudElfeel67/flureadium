@@ -88,7 +88,11 @@ SUMMARY_LOG="$LOG_DIR/summary.log"
 # ── Cleanup ───────────────────────────────────────────────────────────────────
 cleanup() {
   if [ -n "$CHROMEDRIVER_PID" ]; then
+    # Kill Chrome instances spawned by ChromeDriver (child processes) first,
+    # then kill ChromeDriver itself. Without this, Chrome stays orphaned.
+    pkill -P "$CHROMEDRIVER_PID" 2>/dev/null || true
     kill "$CHROMEDRIVER_PID" 2>/dev/null || true
+    wait "$CHROMEDRIVER_PID" 2>/dev/null || true
   fi
 }
 trap cleanup EXIT
@@ -366,7 +370,8 @@ if [ "$SKIP_WEB" = false ]; then
       flutter drive \
         --driver=test_driver/integration_test.dart \
         --target=integration_test/all_tests_web.dart \
-        -d chrome \
+        -d web-server \
+        --browser-name=chrome \
         --profile "${FLUTTER_VERBOSE[@]}"; then
     OVERALL_EXIT=1
   fi
