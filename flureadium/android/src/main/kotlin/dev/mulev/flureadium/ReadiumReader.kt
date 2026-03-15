@@ -557,7 +557,22 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
     ): Try<Publication, PublicationError> {
         val pub = loadPublication(pubUrl).getOrElse { e -> return failure(e) }
 
-        // Close previously opened publication to avoid links.
+        // Release all active navigators before switching publications.
+        // Awaits ExoPlayer/TTS/MediaSession cleanup to prevent resource contention.
+        ttsNavigator?.release()
+        ttsNavigator = null
+        audiobookNavigator?.release()
+        audiobookNavigator = null
+        syncAudiobookNavigator?.release()
+        syncAudiobookNavigator = null
+        pdfNavigator?.release()
+        pdfNavigator = null
+        epubNavigator?.release()
+        epubNavigator = null
+
+        isReadyEventChannel?.dispose()
+        isReadyEventChannel = null
+
         _currentPublication?.close()
         _currentPublication = pub
         currentPublicationUrl = pubUrl.toString()
