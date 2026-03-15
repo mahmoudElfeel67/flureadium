@@ -10,6 +10,7 @@ import { ReadiumReaderStatus } from "./enums";
 import { ReadiumPublication } from "./extensions/ReadiumPublication";
 import { initializeEpubNavigatorAndPeripherals } from "./Epub/epubNavigator";
 import { initializeWebPubNavigatorAndPeripherals } from "./WebPub/webpubNavigator";
+import { TtsEngine } from "./Tts/ttsEngine";
 
 class _ReadiumReader {
   public constructor() {
@@ -18,6 +19,7 @@ class _ReadiumReader {
 
   private _publication: ReadiumPublication | undefined;
   private _nav: EpubNavigator | WebPubNavigator | undefined;
+  private _tts: TtsEngine | null = null;
 
   public get isNavigatorReady(): boolean {
     return !!this._nav;
@@ -148,7 +150,61 @@ class _ReadiumReader {
     setPreferencesFromString(newPreferencesString, this._nav);
   }
 
+  // TTS API - BEGIN
+  public ttsEnable(prefsJson: string | null) {
+    this._tts = new TtsEngine();
+    this._tts.enable(prefsJson, this._nav);
+  }
+
+  public ttsPlay(fromLocatorJson: string | null) {
+    this._tts?.play();
+  }
+
+  public ttsPause() {
+    this._tts?.pause();
+  }
+
+  public ttsResume() {
+    this._tts?.resume();
+  }
+
+  public ttsStop() {
+    this._tts?.stop();
+    this._tts = null;
+  }
+
+  public ttsNext() {
+    this._tts?.next();
+  }
+
+  public ttsPrevious() {
+    this._tts?.previous();
+  }
+
+  public ttsGetAvailableVoices(): string {
+    return TtsEngine.getSystemVoices();
+  }
+
+  public ttsSetVoice(voiceId: string, language: string | null) {
+    this._tts?.setVoice(voiceId, language);
+  }
+
+  public ttsSetPreferences(prefsJson: string) {
+    this._tts?.setPreferences(prefsJson);
+  }
+
+  public ttsCanSpeak(): boolean {
+    return "speechSynthesis" in window && this.isNavigatorReady;
+  }
+  // TTS API - END
+
   public closePublication(error?: any) {
+    // Stop TTS if active
+    if (this._tts) {
+      this._tts.stop();
+      this._tts = null;
+    }
+
     this._publication = undefined;
     this._nav?.destroy(); // Clean up the navigator instance
     const container = document.getElementById("container");
@@ -163,6 +219,7 @@ class _ReadiumReader {
 
     delete (window as any).updateTextLocator;
     delete (window as any).updateReaderStatus;
+    delete (window as any).updateTtsState;
   }
 
   public async getResource(linkString: String, asBytes: boolean = false) {
