@@ -171,24 +171,27 @@ public class FlureadiumPlugin: NSObject, FlutterPlugin, ReadiumShared.WarningLog
         do {
           let args = call.arguments as? Dictionary<String, Any>,
               ttsPrefs = (try? TTSPreferences(fromMap: args ?? [:])) ?? TTSPreferences()
-          //try await self.ttsEnable(withPreferences: ttsPrefs)
 
           guard let publication = getCurrentPublication() else {
             throw ReadiumError.notFound("No publication opened")
           }
 
-          Task { @MainActor in
-            // Start TTS from the reader's current location
+          let navigator = await MainActor.run { () -> FlutterTTSNavigator in
             let currentLocation = currentReaderView?.getCurrentLocation()
-            self.timebasedNavigator = FlutterTTSNavigator(publication: publication, preferences: ttsPrefs, initialLocator: currentLocation)
-            self.timebasedNavigator?.listener = self
-            Task {
-              await self.timebasedNavigator?.initNavigator()
-            }
+            let nav = FlutterTTSNavigator(publication: publication, preferences: ttsPrefs, initialLocator: currentLocation)
+            nav.listener = self
+            self.timebasedNavigator = nav
+            return nav
+          }
+
+          try await navigator.initNavigator()
+
+          await MainActor.run {
             result(nil)
           }
         } catch {
-          Task { @MainActor in
+          await MainActor.run {
+            self.timebasedNavigator = nil
             result(FlutterError.init(
               code: "TTSError",
               message: "Failed to enable TTS: \(error.localizedDescription)",
@@ -205,6 +208,14 @@ public class FlureadiumPlugin: NSObject, FlutterPlugin, ReadiumShared.WarningLog
       }
       let availableVoices = ttsNavigator.ttsGetAvailableVoices()
       result(availableVoices.compactMap { $0.jsonString })
+    case "ttsCanSpeak":
+      guard let publication = currentPublication else {
+        result(false)
+        return
+      }
+      result(PublicationSpeechSynthesizer.canSpeak(publication: publication))
+    case "ttsRequestInstallVoice":
+      result(nil) // No-op on iOS — voices managed by OS
     case "ttsSetVoice":
       let args = call.arguments as! [Any?]
       let voiceIdentifier = args[0] as! String
@@ -376,7 +387,7 @@ public class FlureadiumPlugin: NSObject, FlutterPlugin, ReadiumShared.WarningLog
         }
 
         self.timebasedNavigator?.listener = self
-        await self.timebasedNavigator?.initNavigator()
+        try await self.timebasedNavigator?.initNavigator()
 
         await MainActor.run {
           result(nil)

@@ -44,22 +44,25 @@ public class FlutterTTSNavigator: FlutterTimebasedNavigator, PublicationSpeechSy
     self.nowPlayingUpdater = .init(withPublication: publication)
   }
 
-  public func initNavigator() -> Void {
+  public func initNavigator() async throws -> Void {
     self.engine = AVTTSEngine()
-    self.synthesizer = PublicationSpeechSynthesizer(
+    guard let eng = self.engine else {
+      throw NSError(domain: "Flureadium", code: -2, userInfo: [NSLocalizedDescriptionKey: "TTS engine failed to initialize"])
+    }
+    guard let synth = PublicationSpeechSynthesizer(
       publication: publication,
       config: PublicationSpeechSynthesizer.Configuration(
         defaultLanguage: preferences.overrideLanguage,
-        voiceIdentifier: preferences.voiceIdentifier,
+        voiceIdentifier: preferences.voiceIdentifier
       ),
-      engineFactory: {
-        return self.engine!
-      }
-    )!
-    engine?.delegate = self
-    self.synthesizer?.delegate = self
+      engineFactory: { return eng }
+    ) else {
+      throw NSError(domain: "Flureadium", code: -1, userInfo: [NSLocalizedDescriptionKey: "Publication does not support TTS"])
+    }
+    self.synthesizer = synth
+    eng.delegate = self
+    synth.delegate = self
 
-    // TODO: Why is this public, if always called from itself?
     self.setupNavigatorListeners()
   }
 
@@ -172,7 +175,7 @@ public class FlutterTTSNavigator: FlutterTimebasedNavigator, PublicationSpeechSy
   }
 
   func ttsGetAvailableVoices() -> [TTSVoice] {
-    return self.synthesizer?.availableVoices ?? []
+    return (self.synthesizer?.availableVoices ?? []).sorted()
   }
 
   func ttsSetVoice(voiceIdentifier: String) throws {
