@@ -268,6 +268,12 @@ If edge taps appear in Flutter's `Listener` logs but no navigation occurs:
 3. In EPUB scroll mode, all overlay gestures are intentionally disabled; check that
    `setScrollMode(false)` was called when leaving scroll mode.
 
+### "setState() called after dispose()" in test logs
+
+This error occurred when the native platform sent `onPageChanged` method calls after the Dart `ReadiumReaderWidget` had already been disposed. The `onPageChanged` callback called `setState()` without checking `mounted`, and the `onTextLocatorChanged` stream subscription was never cancelled.
+
+Both issues are now fixed: `onPageChanged` checks `mounted` before calling `setState()`, and the debug stream subscription is stored and cancelled in `dispose()`. If you see this error in older versions, update the plugin.
+
 ### WebView rendering issues
 
 Enable hardware acceleration:
