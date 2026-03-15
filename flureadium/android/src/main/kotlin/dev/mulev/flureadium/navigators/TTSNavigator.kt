@@ -371,31 +371,40 @@ class TTSNavigator(
 
     override fun onPlaybackStateChanged(pb: TtsNavigator.Playback) {
         when (pb.state) {
-            // Handle TTS-specific failure state
             is TtsNavigator.State.Failure -> {
                 val ttsState = pb.state as TtsNavigator.State.Failure
                 val error = ttsState.error
 
-                // TODO: Handle TTS-specific errors?
                 Log.e(
                     TAG,
                     ": onPlaybackStateChanged - TTS error: Message=${error.message} cause=${error.cause}"
+                )
+
+                ReadiumReader.ttsErrorType = classifyTtsErrorType(
+                    error as? AndroidTtsEngine.Error
                 )
 
                 timebaseListener.onTimebasedPlaybackStateChanged(TimebasedState.Failure)
                 timebaseListener.onTimebasedPlaybackFailure(
                     PublicationError.invoke(error)
                 )
-
             }
 
             else -> {
+                ReadiumReader.ttsErrorType = null
                 super.onPlaybackStateChanged(pb)
             }
         }
     }
 
     companion object {
+        fun classifyTtsErrorType(error: AndroidTtsEngine.Error?): String {
+            return when (error) {
+                is AndroidTtsEngine.Error.LanguageMissingData -> "languageMissingData"
+                else -> "unknown"
+            }
+        }
+
         fun restoreState(
             publication: Publication,
             listener: TimebasedListener,

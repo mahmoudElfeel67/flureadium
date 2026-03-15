@@ -121,6 +121,8 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
 
     private var defaultHttpHeaders = mutableMapOf<String, String>()
 
+    var ttsErrorType: String? = null
+
     var decorationStyle: FlutterDecorationPreferences
         get() = state[decorationStyleKey] as? FlutterDecorationPreferences ?: FlutterDecorationPreferences()
         set(value) {
@@ -139,7 +141,10 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
                 return@combine null
             }
 
-            ReadiumTimebasedState(locator, state, offset, buffer, duration ?: 0.0)
+            ReadiumTimebasedState(
+                locator, state, offset, buffer, duration ?: 0.0,
+                ttsErrorType = ttsErrorType
+            )
         }.throttleLatest(100.milliseconds).distinctUntilChanged()
     }
 
@@ -852,6 +857,16 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
         ttsNavigator?.setPreferredVoice(voiceId, language)
     }
 
+    fun ttsCanSpeak(): Boolean {
+        val pub = currentPublication ?: return false
+        return pub.conformsTo(Publication.Profile.EPUB) || pub.readingOrder.allAreHtml
+    }
+
+    fun ttsRequestInstallVoice() {
+        val app = appRef?.get() ?: return
+        AndroidTtsEngine.requestInstallVoice(app)
+    }
+
     suspend fun play(locator: Locator?) {
         var fromLocator = locator
 
@@ -897,6 +912,7 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
             dispose()
 
             ttsNavigator = null
+            ttsErrorType = null
         }
     }
 

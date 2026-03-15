@@ -119,6 +119,15 @@ internal class PublicationMethodCallHandler() :
                 return setDecorationStyle(decorationPreferences)
             }
 
+            "ttsCanSpeak" -> {
+                return Try.success(ReadiumReader.ttsCanSpeak())
+            }
+
+            "ttsRequestInstallVoice" -> {
+                ReadiumReader.ttsRequestInstallVoice()
+                return Try.success(null)
+            }
+
             "ttsGetAvailableVoices" -> {
                 return Try.success(ttsGetAvailableVoices())
             }
