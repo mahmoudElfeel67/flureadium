@@ -20,7 +20,9 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import org.json.JSONObject
 import org.readium.r2.navigator.Decoration
@@ -355,7 +357,9 @@ class EpubNavigator : BaseNavigator, EpubReaderFragment.Listener {
         super.dispose()
 
         epubNavigator?.let { fragment ->
-            fragment.parentFragmentManager.commitNow { remove(fragment) }
+            withContext(Dispatchers.Main) {
+                fragment.parentFragmentManager.commitNow { remove(fragment) }
+            }
         }
         epubNavigator = null
         state.clear()
