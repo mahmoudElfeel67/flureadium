@@ -10,12 +10,21 @@ void _mockEventChannel(String channelName) {
       });
 }
 
-void _mockMainChannel({bool ttsCanSpeak = true}) {
+void _mockMainChannel({
+  bool ttsCanSpeak = true,
+  bool audioEnableThrows = false,
+}) {
   TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
       .setMockMethodCallHandler(
         const MethodChannel('dev.mulev.flureadium/main'),
         (call) async {
           if (call.method == 'ttsCanSpeak') return ttsCanSpeak;
+          if (call.method == 'audioEnable' && audioEnableThrows) {
+            throw PlatformException(
+              code: 'AUDIO_ERROR',
+              message: 'Couldn\'t create AudioNavigatorFactory',
+            );
+          }
           return null;
         },
       );
@@ -62,5 +71,14 @@ void main() {
     await tester.pumpWidget(const ExampleApp());
     await tester.pump();
     expect(find.text('Pause TTS'), findsNothing);
+  });
+
+  testWidgets('audio_enable_error_shows_snackbar', (tester) async {
+    _mockMainChannel(audioEnableThrows: true);
+    await tester.pumpWidget(const ExampleApp());
+    await tester.pump();
+    await tester.tap(find.text('Audio Play'));
+    await tester.pump();
+    expect(find.textContaining('Audio playback unavailable'), findsOneWidget);
   });
 }

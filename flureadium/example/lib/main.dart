@@ -250,13 +250,22 @@ class _ReaderPageState extends State<ReaderPage> {
       if (!mounted) return;
       setState(() => _audioPaused = false);
     } else {
-      await _flureadium.audioEnable();
-      await _flureadium.play(null);
-      if (!mounted) return;
-      setState(() {
-        _audioEnabled = true;
-        _audioPaused = false;
-      });
+      try {
+        await _flureadium.audioEnable();
+        await _flureadium.play(null);
+        if (!mounted) return;
+        setState(() {
+          _audioEnabled = true;
+          _audioPaused = false;
+        });
+      } catch (e) {
+        debugPrint('audioEnable error: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Audio playback unavailable: $e')),
+          );
+        }
+      }
     }
   }
 
