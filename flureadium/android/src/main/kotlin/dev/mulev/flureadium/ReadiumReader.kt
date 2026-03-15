@@ -614,17 +614,17 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
 
     suspend fun closePublication() {
         mainScope.async {
+            ttsNavigator?.release()
+            ttsNavigator = null
+            audiobookNavigator?.release()
+            audiobookNavigator = null
+            syncAudiobookNavigator?.release()
+            syncAudiobookNavigator = null
+            pdfNavigator?.release()
+            pdfNavigator = null
+
             _currentPublication?.close()
             _currentPublication = null
-
-            ttsNavigator?.dispose()
-            ttsNavigator = null
-            audiobookNavigator?.dispose()
-            audiobookNavigator = null
-            syncAudiobookNavigator?.dispose()
-            syncAudiobookNavigator = null
-            pdfNavigator?.dispose()
-            pdfNavigator = null
 
             _audioPreferences = FlutterAudioPreferences()
             _pdfPreferences = FlutterPdfPreferences()
@@ -895,22 +895,19 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
     suspend fun stop() {
         audiobookNavigator?.apply {
             pause()
-            dispose()
-
+            release()
             audiobookNavigator = null
         }
 
         syncAudiobookNavigator?.apply {
             pause()
-            dispose()
-
-            audiobookNavigator = null
+            release()
+            syncAudiobookNavigator = null
         }
 
         ttsNavigator?.apply {
             pause()
-            dispose()
-
+            release()
             ttsNavigator = null
             ttsErrorType = null
         }
@@ -957,9 +954,9 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
             // Handle karaoke books - by creating a pseudo audio publication from the media overlays.
             val (ap, overlays) = publication.makeSyncAudiobook()
 
-            audiobookNavigator?.dispose()
-            syncAudiobookNavigator?.dispose()
+            audiobookNavigator?.release()
             audiobookNavigator = null
+            syncAudiobookNavigator?.release()
             syncAudiobookNavigator = null
 
             if (overlays == null) {
