@@ -9,6 +9,7 @@ import dev.mulev.flureadium.PublicationError
 import dev.mulev.flureadium.ReadiumReader
 import dev.mulev.flureadium.letIfBothNotNull
 import dev.mulev.flureadium.throttleLatest
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import org.readium.navigator.media.tts.TtsNavigator
 import org.readium.navigator.media.tts.TtsNavigator.Listener
@@ -361,7 +363,12 @@ class TTSNavigator(
 
         mediaServiceFacade?.closeSession()
         ReadiumReader.applyDecorations(emptyList(), decorationGroup)
-        ttsNavigator?.close()
+        // TtsNavigator.close() interacts with Android TTS engine which
+        // may require the main thread. release() can be called from
+        // Dispatchers.IO (via PublicationChannel), so we switch explicitly.
+        withContext(Dispatchers.Main.immediate) {
+            ttsNavigator?.close()
+        }
         ttsNavigator = null
     }
 

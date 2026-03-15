@@ -8,6 +8,7 @@ import dev.mulev.flureadium.PluginMediaServiceFacade
 import dev.mulev.flureadium.PublicationError
 import dev.mulev.flureadium.ReadiumReader
 import dev.mulev.flureadium.throttleLatest
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import org.readium.adapter.exoplayer.audio.ExoPlayerEngineProvider
 import org.readium.adapter.exoplayer.audio.ExoPlayerNavigatorFactory
@@ -267,7 +269,12 @@ open class AudiobookNavigator(
         super.dispose()
 
         mediaServiceFacade?.closeSession()
-        audioNavigator?.close()
+        // ExoPlayer enforces thread affinity — release() must run on the
+        // main thread. release() can be called from Dispatchers.IO (via
+        // PublicationChannel), so we switch explicitly.
+        withContext(Dispatchers.Main.immediate) {
+            audioNavigator?.close()
+        }
         audioNavigator = null
     }
 
