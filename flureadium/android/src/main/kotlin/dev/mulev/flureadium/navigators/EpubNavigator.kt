@@ -351,6 +351,16 @@ class EpubNavigator : BaseNavigator, EpubReaderFragment.Listener {
         visualListener.onVisualCurrentLocationChanged(locator)
     }
 
+    override suspend fun release() {
+        super.dispose()
+
+        epubNavigator?.let { fragment ->
+            fragment.parentFragmentManager.commitNow { remove(fragment) }
+        }
+        epubNavigator = null
+        state.clear()
+    }
+
     override fun dispose() {
         super.dispose()
 

@@ -263,6 +263,14 @@ open class AudiobookNavigator(
         }
     }
 
+    override suspend fun release() {
+        super.dispose()
+
+        mediaServiceFacade?.closeSession()
+        audioNavigator?.close()
+        audioNavigator = null
+    }
+
     override fun dispose() {
         super.dispose()
 

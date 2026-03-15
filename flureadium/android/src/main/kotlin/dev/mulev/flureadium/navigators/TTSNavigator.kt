@@ -356,6 +356,15 @@ class TTSNavigator(
         }
     }
 
+    override suspend fun release() {
+        super.dispose()
+
+        mediaServiceFacade?.closeSession()
+        ReadiumReader.applyDecorations(emptyList(), decorationGroup)
+        ttsNavigator?.close()
+        ttsNavigator = null
+    }
+
     override fun dispose() {
         super.dispose()
 

@@ -261,6 +261,16 @@ class PdfNavigator : BaseNavigator, PdfReaderFragment.Listener {
         visualListener.onVisualCurrentLocationChanged(locator)
     }
 
+    override suspend fun release() {
+        super.dispose()
+
+        pdfNavigator?.let { fragment ->
+            fragment.parentFragmentManager.commitNow { remove(fragment) }
+        }
+        pdfNavigator = null
+        state.clear()
+    }
+
     override fun dispose() {
         super.dispose()
 
