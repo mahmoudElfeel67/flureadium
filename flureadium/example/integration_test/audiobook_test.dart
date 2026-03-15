@@ -11,6 +11,12 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('Audiobook', () {
+    tearDown(() async {
+      final flureadium = Flureadium();
+      await flureadium.stop();
+      await flureadium.closePublication();
+    });
+
     testWidgets('opens audiobook and shows reader widget', (tester) async {
       app.main();
       await tester.pumpAndSettle(const Duration(seconds: 2));

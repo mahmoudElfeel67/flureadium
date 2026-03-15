@@ -8,6 +8,11 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('EPUB', () {
+    tearDown(() async {
+      final flureadium = Flureadium();
+      await flureadium.closePublication();
+    });
+
     testWidgets('app auto-opens EPUB and shows reader widget', (tester) async {
       app.main();
       await tester.pumpAndSettle(const Duration(seconds: 5));
