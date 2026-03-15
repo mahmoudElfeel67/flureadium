@@ -273,6 +273,16 @@ Follows Flutter plugin platform interface pattern:
 - Platform implementations can be swapped
 - Testable with mocks
 
+### Navigator Disposal: `release()` vs `dispose()`
+
+Android navigators (`AudiobookNavigator`, `TTSNavigator`, `EpubNavigator`, `PdfNavigator`) have two disposal methods:
+
+- **`dispose()`** — fire-and-forget. Launches cleanup in a detached coroutine and returns immediately. Safe for places where the caller doesn't need to wait for resources to be freed (e.g., widget teardown where the UI is already gone).
+
+- **`release()`** — awaitable. Suspends until all resources (ExoPlayer sessions, MediaSessions, fragments) are fully released. Callers that need to create a new navigator afterwards *must* use `release()` instead of `dispose()`, otherwise the new navigator may fail to acquire resources still held by the previous one.
+
+`ReadiumReader.closePublication()`, `audioEnable()`, and `stop()` all use `release()` to prevent race conditions between test runs and publication switches on emulators with limited audio HAL resources.
+
 ### Readium Integration
 
 Wraps Readium toolkits rather than reimplementing:
