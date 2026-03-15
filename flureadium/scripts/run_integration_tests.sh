@@ -319,6 +319,12 @@ log ""
 cd "$EXAMPLE_DIR"
 OVERALL_EXIT=0
 
+# Build flutter verbosity flag once — spliced into every flutter command below.
+FLUTTER_VERBOSE=()
+if [ "$VERBOSE" = true ]; then
+  FLUTTER_VERBOSE=(--verbose)
+fi
+
 # ── Android ───────────────────────────────────────────────────────────────────
 log "${CYAN}── Android ──────────────────────────────────────────────────────────${NC}"
 if [ "$SKIP_ANDROID" = false ]; then
@@ -326,7 +332,7 @@ if [ "$SKIP_ANDROID" = false ]; then
       "Android — flutter test integration_test/all_tests.dart" \
       "$LOG_DIR/android.log" \
       flutter test integration_test/all_tests.dart \
-        -d "$ANDROID_DEVICE"; then
+        -d "$ANDROID_DEVICE" "${FLUTTER_VERBOSE[@]}"; then
     OVERALL_EXIT=1
   fi
 else
@@ -341,7 +347,7 @@ if [ "$SKIP_IOS" = false ]; then
       "iOS — flutter test integration_test/all_tests.dart (includes @native audiobook)" \
       "$LOG_DIR/ios.log" \
       flutter test integration_test/all_tests.dart \
-        -d "$IOS_DEVICE"; then
+        -d "$IOS_DEVICE" "${FLUTTER_VERBOSE[@]}"; then
     OVERALL_EXIT=1
   fi
 else
@@ -359,7 +365,7 @@ if [ "$SKIP_WEB" = false ]; then
         --driver=test_driver/integration_test.dart \
         --target=integration_test/all_tests_web.dart \
         -d chrome \
-        --profile; then
+        --profile "${FLUTTER_VERBOSE[@]}"; then
     OVERALL_EXIT=1
   fi
 else
