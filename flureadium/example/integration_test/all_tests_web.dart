@@ -1,17 +1,18 @@
 import 'package:integration_test/integration_test.dart';
 
-import 'epub_tts_web_test.dart' as epub_tts_web;
 import 'launch_test.dart' as launch;
 
-// webpub_test and epub_test are excluded from the web suite:
-// - epub_test: packed EPUB files cannot be served via HTTP URL (web limitation)
-// - webpub_test: ReadiumReader.getPublication() requires container div
-//   initialization that only happens inside ReadiumWebView. Web reader support
-//   is work in progress.
+// Web reader support is work in progress — many widget and platform methods
+// are stubs. Only the launch smoke test runs on web for now.
+//
+// Excluded:
+// - epub_test: packed EPUB files cannot be served via HTTP URL
+// - webpub_test: requires container div init inside ReadiumWebView
+// - epub_tts_web_test: TTS depends on navigator init which relies on
+//   unfinished web reader plumbing (onErrorEvent, applyDecorations, etc.)
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   launch.main();
-  epub_tts_web.main();
 }
