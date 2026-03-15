@@ -1,5 +1,6 @@
 import 'package:integration_test/integration_test.dart';
 
+import 'epub_tts_web_test.dart' as epub_tts_web;
 import 'launch_test.dart' as launch;
 
 // webpub_test and epub_test are excluded from the web suite:
@@ -12,4 +13,5 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   launch.main();
+  epub_tts_web.main();
 }
