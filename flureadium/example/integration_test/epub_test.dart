@@ -65,11 +65,12 @@ void main() {
 
     testWidgets('Load Only does not crash', (tester) async {
       app.main();
-      // pump (not pumpAndSettle) to wait a fixed 10s for auto-open openPublication()
-      // to complete before calling loadPublication(). pumpAndSettle returns after the
-      // timeout regardless because CircularProgressIndicator never settles. At 10s the
-      // native Readium open is safely done (widget appears at ~8s on emulator API 28).
-      await tester.pump(const Duration(seconds: 10));
+      // Poll for the reader widget to appear — indicates openPublication() completed.
+      // Ceiling 15s (was 10s fixed) for slow emulators.
+      for (var i = 0; i < 15; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        if (find.byType(ReadiumReaderWidget).evaluate().isNotEmpty) break;
+      }
       await tester.tap(find.text('Load Only'));
       await tester.pumpAndSettle(const Duration(seconds: 5));
       // no crash = pass
