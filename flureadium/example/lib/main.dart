@@ -215,11 +215,17 @@ class _ReaderPageState extends State<ReaderPage> {
       return;
     }
     await _flureadium.ttsEnable(TTSPreferences(speed: _ttsSpeed));
+    if (!mounted) return;
+    // Set _ttsEnabled before play() so that the onTimebasedPlayerStateChanged
+    // callback (which guards on _ttsEnabled) correctly captures the 'playing'
+    // state when the native engine reports it.
+    setState(() {
+      _ttsEnabled = true;
+    });
     await _flureadium.play(null);
     final voices = await _flureadium.ttsGetAvailableVoices();
     if (!mounted) return;
     setState(() {
-      _ttsEnabled = true;
       _voices = voices;
       _voiceIndex = 0;
     });

@@ -56,12 +56,24 @@ void main() {
         if (find.byType(ReadiumReaderWidget).evaluate().isNotEmpty) break;
       }
       await tester.tap(find.text('TTS On'));
-      await tester.pump(const Duration(seconds: 60));
+      // Poll for 'Pause TTS' — requires _ttsPlaybackState == playing, which
+      // arrives via the onTimebasedPlayerStateChanged stream after play().
+      for (var i = 0; i < 60; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        if (find.text('Pause TTS').evaluate().isNotEmpty) break;
+      }
+      expect(find.text('Pause TTS'), findsOneWidget);
       await tester.tap(find.text('Pause TTS'));
-      await tester.pump(const Duration(seconds: 2));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        if (find.text('Resume TTS').evaluate().isNotEmpty) break;
+      }
       expect(find.text('Resume TTS'), findsOneWidget);
       await tester.tap(find.text('Resume TTS'));
-      await tester.pump(const Duration(seconds: 2));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        if (find.text('Pause TTS').evaluate().isNotEmpty) break;
+      }
       expect(find.text('Pause TTS'), findsOneWidget);
     });
 
