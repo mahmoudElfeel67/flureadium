@@ -19,7 +19,12 @@ void main() {
 
     testWidgets('TTS enable makes sentence nav buttons appear', (tester) async {
       app.main();
-      await tester.pumpAndSettle(const Duration(seconds: 5));
+      // pumpAndSettle can hang when a PlatformView (WebView) keeps scheduling
+      // frames. Poll for the reader widget with bounded pump loops instead.
+      for (var i = 0; i < 15; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        if (find.byType(ReadiumReaderWidget).evaluate().isNotEmpty) break;
+      }
       await tester.tap(find.text('TTS On'));
       // Poll every second — iOS TTS starts in ~5s; Android emulator can take ~30s.
       // Ceiling kept at 60s to match the original safe upper bound.
@@ -35,7 +40,10 @@ void main() {
       tester,
     ) async {
       app.main();
-      await tester.pumpAndSettle(const Duration(seconds: 5));
+      for (var i = 0; i < 15; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        if (find.byType(ReadiumReaderWidget).evaluate().isNotEmpty) break;
+      }
       await tester.tap(find.text('TTS On'));
       await tester.pump(const Duration(seconds: 60));
       expect(find.text('TTS Off'), findsOneWidget);
@@ -43,7 +51,10 @@ void main() {
 
     testWidgets('tts pause then resume restores playing state', (tester) async {
       app.main();
-      await tester.pumpAndSettle(const Duration(seconds: 5));
+      for (var i = 0; i < 15; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        if (find.byType(ReadiumReaderWidget).evaluate().isNotEmpty) break;
+      }
       await tester.tap(find.text('TTS On'));
       await tester.pump(const Duration(seconds: 60));
       await tester.tap(find.text('Pause TTS'));
@@ -56,7 +67,10 @@ void main() {
 
     testWidgets('tts next sentence does not crash', (tester) async {
       app.main();
-      await tester.pumpAndSettle(const Duration(seconds: 5));
+      for (var i = 0; i < 15; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        if (find.byType(ReadiumReaderWidget).evaluate().isNotEmpty) break;
+      }
       await tester.tap(find.text('TTS On'));
       await tester.pump(const Duration(seconds: 60));
       await tester.tap(find.text('Next Sentence'));
@@ -66,7 +80,10 @@ void main() {
 
     testWidgets('tts previous sentence does not crash', (tester) async {
       app.main();
-      await tester.pumpAndSettle(const Duration(seconds: 5));
+      for (var i = 0; i < 15; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        if (find.byType(ReadiumReaderWidget).evaluate().isNotEmpty) break;
+      }
       await tester.tap(find.text('TTS On'));
       await tester.pump(const Duration(seconds: 60));
       await tester.tap(find.text('Prev Sentence'));
@@ -76,7 +93,10 @@ void main() {
 
     testWidgets('tts voice cycling does not crash', (tester) async {
       app.main();
-      await tester.pumpAndSettle(const Duration(seconds: 5));
+      for (var i = 0; i < 15; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        if (find.byType(ReadiumReaderWidget).evaluate().isNotEmpty) break;
+      }
       await tester.tap(find.text('TTS On'));
       await tester.pump(const Duration(seconds: 60));
       final voiceButton = find.textContaining('Voice');
@@ -88,7 +108,10 @@ void main() {
 
     testWidgets('tts off hides sentence nav buttons', (tester) async {
       app.main();
-      await tester.pumpAndSettle(const Duration(seconds: 5));
+      for (var i = 0; i < 15; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        if (find.byType(ReadiumReaderWidget).evaluate().isNotEmpty) break;
+      }
       await tester.tap(find.text('TTS On'));
       await tester.pump(const Duration(seconds: 60));
       expect(find.text('Prev Sentence'), findsOneWidget);

@@ -26,10 +26,13 @@ void main() {
         if (find.byType(ReadiumReaderWidget).evaluate().isNotEmpty) break;
       }
       await tester.tap(find.text('Open AudioBook'));
-      // Fixed wait for the publication switch — the ReadiumReaderWidget is
-      // already visible from the EPUB so there is no widget-level signal to
-      // poll for. 10s covers asset extraction + native openPublication().
-      await tester.pump(const Duration(seconds: 10));
+      // Pump in short intervals so platform channel events get processed
+      // during the audiobook switch. A single pump(10s) only processes events
+      // once; frequent pumps catch native callbacks as they arrive. 15s
+      // ceiling adds headroom for parallel test runs where CPU is shared.
+      for (var i = 0; i < 15; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
       expect(find.byType(ReadiumReaderWidget), findsOneWidget);
     });
 
@@ -40,7 +43,9 @@ void main() {
         if (find.byType(ReadiumReaderWidget).evaluate().isNotEmpty) break;
       }
       await tester.tap(find.text('Open AudioBook'));
-      await tester.pump(const Duration(seconds: 10));
+      for (var i = 0; i < 15; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
       await tester.tap(find.text('Audio Play'));
       // audioEnable() + play() + setState; poll for the button (max 15s).
       for (var i = 0; i < 15; i++) {
@@ -57,7 +62,9 @@ void main() {
         if (find.byType(ReadiumReaderWidget).evaluate().isNotEmpty) break;
       }
       await tester.tap(find.text('Open AudioBook'));
-      await tester.pump(const Duration(seconds: 10));
+      for (var i = 0; i < 15; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
       await tester.tap(find.text('Audio Play'));
       for (var i = 0; i < 15; i++) {
         await tester.pump(const Duration(seconds: 1));
@@ -75,7 +82,9 @@ void main() {
         if (find.byType(ReadiumReaderWidget).evaluate().isNotEmpty) break;
       }
       await tester.tap(find.text('Open AudioBook'));
-      await tester.pump(const Duration(seconds: 10));
+      for (var i = 0; i < 15; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
       await tester.tap(find.text('Audio Play'));
       for (var i = 0; i < 15; i++) {
         await tester.pump(const Duration(seconds: 1));
