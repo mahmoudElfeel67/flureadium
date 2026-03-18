@@ -34,6 +34,8 @@ void main() {
       }
       expect(find.text('Prev Sentence'), findsOneWidget);
       expect(find.text('Next Sentence'), findsOneWidget);
+      // Let in-flight native play() settle before tearDown cancels the coroutine.
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('ttsCanSpeak returns true — TTS On enables without snackbar', (
@@ -75,6 +77,8 @@ void main() {
         if (find.text('Pause TTS').evaluate().isNotEmpty) break;
       }
       expect(find.text('Pause TTS'), findsOneWidget);
+      // Let in-flight native resume/play() settle before tearDown cancels the coroutine.
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('tts next sentence does not crash', (tester) async {
