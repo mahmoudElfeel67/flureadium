@@ -267,6 +267,19 @@ settles as soon as the reader is ready in integration tests.
 
 **Fix:** Ensure all stream handler `.dispose()` calls happen in the platform view's `"dispose"` method call handler (called from Dart while the engine is alive), not in `deinit`. The `deinit` should only nil out references without sending any messages. See [iOS Platform - Stream and View Lifecycle](platform-specific/ios.md#stream-and-view-lifecycle).
 
+### iOS: "No publication open" After Switching Publications
+
+**Error:**
+```
+PlatformException(InvalidArgument, No publication open)
+```
+
+**Cause:**
+This happened when `closePublication()` in `FlureadiumPlugin.swift` used a fire-and-forget `Task { @MainActor in }` for cleanup. When `openPublication` called `closePublication()` internally before loading a new publication, the cleanup task ran *after* the new publication was already stored — nullifying `currentPublication`. Any subsequent call (`audioEnable`, `play`, etc.) would fail because the publication reference was gone.
+
+**Fix (applied):**
+`closePublication()` is now `async` and uses `await MainActor.run { }` so callers wait for cleanup to complete before proceeding. The `openPublication`, `closePublication`, `dispose`, and `stop` method channel handlers all await cleanup before returning `result(nil)` to Dart.
+
 ## Platform-Specific Issues
 
 ### iOS: Localhost Connection Failed

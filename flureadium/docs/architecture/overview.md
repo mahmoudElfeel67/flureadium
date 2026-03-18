@@ -283,6 +283,16 @@ Android navigators (`AudiobookNavigator`, `TTSNavigator`, `EpubNavigator`, `PdfN
 
 `ReadiumReader.closePublication()`, `audioEnable()`, and `stop()` all use `release()` to prevent race conditions between test runs and publication switches on emulators with limited audio HAL resources.
 
+### iOS Publication Cleanup: `await MainActor.run` vs fire-and-forget `Task`
+
+iOS method channel handlers run on a background thread. Publication cleanup (nullifying navigators, closing the publication) must happen on `@MainActor` because UIKit state is involved. Two patterns exist:
+
+- **`Task { @MainActor in ... }`** — fire-and-forget. Creates an unstructured task; the caller returns immediately. Safe only when the caller doesn't need cleanup to finish first (e.g., `pause`, `resume`).
+
+- **`await MainActor.run { ... }`** — awaitable. Suspends the calling task until the block completes on the main actor. Required whenever the caller proceeds to use or replace the publication state (e.g., `closePublication`, `stop`, `dispose`, and the internal close-before-open in `openPublication`).
+
+This mirrors the Android pattern where `closePublication()` uses `mainScope.async { ... }.await()` instead of `launch { ... }`.
+
 ### Readium Integration
 
 Wraps Readium toolkits rather than reimplementing:
