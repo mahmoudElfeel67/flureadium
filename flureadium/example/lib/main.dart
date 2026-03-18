@@ -159,7 +159,9 @@ class _ReaderPageState extends State<ReaderPage> {
     }
     final bytes = await rootBundle.load(assetPath);
     final filename = assetPath.split('/').last;
-    final tmp = File('${Directory.systemTemp.path}/${DateTime.now().millisecondsSinceEpoch}_$filename');
+    final tmp = File(
+      '${Directory.systemTemp.path}/${DateTime.now().millisecondsSinceEpoch}_$filename',
+    );
     await tmp.writeAsBytes(bytes.buffer.asUint8List());
     return tmp.path;
   }
