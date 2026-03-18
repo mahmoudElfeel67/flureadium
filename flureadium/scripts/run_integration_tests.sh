@@ -26,6 +26,8 @@
 #   Runs the full suite including @native audiobook tests.
 #   CI excludes @native via --exclude-tags native because GitHub-hosted
 #   emulators have unreliable audio; local runs include them.
+#   Native logcat is captured to android_native.log alongside flutter output
+#   to diagnose hangs and native-side issues that don't surface in Dart logs.
 #
 # iOS note:
 #   Audiobook tests (tagged @native) are included in the iOS suite.
@@ -44,6 +46,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 EXAMPLE_DIR="$PLUGIN_DIR/example"
 LOG_BASE="$PLUGIN_DIR/test_logs"
+ADB="$(command -v adb 2>/dev/null || echo "${ANDROID_HOME:-$HOME/Library/Android/sdk}/platform-tools/adb")"
 
 # ── Defaults ──────────────────────────────────────────────────────────────────
 VERBOSE=false
@@ -54,6 +57,7 @@ ANDROID_DEVICE=""
 IOS_DEVICE=""
 SELECTED_DEVICE=""      # written by select_device()
 CHROMEDRIVER_PID=""     # set when this script starts ChromeDriver
+LOGCAT_PID=""          # set when capturing Android native logs
 ALL_DEVICES_STRIPPED="" # set once by the device scan; reused by both select_device calls
 
 # ── Argument parsing ──────────────────────────────────────────────────────────
@@ -87,6 +91,10 @@ SUMMARY_LOG="$LOG_DIR/summary.log"
 
 # ── Cleanup ───────────────────────────────────────────────────────────────────
 cleanup() {
+  if [ -n "$LOGCAT_PID" ]; then
+    kill "$LOGCAT_PID" 2>/dev/null || true
+    wait "$LOGCAT_PID" 2>/dev/null || true
+  fi
   if [ -n "$CHROMEDRIVER_PID" ]; then
     # Kill Chrome instances spawned by ChromeDriver (child processes) first,
     # then kill ChromeDriver itself. Without this, Chrome stays orphaned.
@@ -334,6 +342,13 @@ fi
 # ── Android ───────────────────────────────────────────────────────────────────
 log "${CYAN}── Android ──────────────────────────────────────────────────────────${NC}"
 if [ "$SKIP_ANDROID" = false ]; then
+  # Capture native logcat alongside flutter output so we can diagnose hangs.
+  # Clear the buffer first so only this run's output is captured.
+  "$ADB" -s "$ANDROID_DEVICE" logcat -c 2>/dev/null || true
+  "$ADB" -s "$ANDROID_DEVICE" logcat -v threadtime \
+    > "$LOG_DIR/android_native.log" 2>&1 &
+  LOGCAT_PID=$!
+
   if ! run_test \
       "Android — flutter test integration_test/all_tests.dart" \
       "$LOG_DIR/android.log" \
@@ -341,6 +356,11 @@ if [ "$SKIP_ANDROID" = false ]; then
         -d "$ANDROID_DEVICE" "${FLUTTER_VERBOSE[@]}"; then
     OVERALL_EXIT=1
   fi
+
+  kill "$LOGCAT_PID" 2>/dev/null || true
+  wait "$LOGCAT_PID" 2>/dev/null || true
+  LOGCAT_PID=""
+  log "  Native logs: $LOG_DIR/android_native.log"
 else
   log "  Skipped (${ANDROID_SKIP_REASON:-explicitly skipped})"
 fi
