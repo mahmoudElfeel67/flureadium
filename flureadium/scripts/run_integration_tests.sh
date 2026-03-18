@@ -89,7 +89,10 @@ LOG_DIR="$LOG_BASE/run_$TIMESTAMP"
 mkdir -p "$LOG_DIR"
 SUMMARY_LOG="$LOG_DIR/summary.log"
 
-# ── Cleanup ───────────────────────────────────────────────────────────────────
+# ── Process cleanup ───────────────────────────────────────────────────────────
+# Kill stale chromedriver/Chrome from previous interrupted runs.
+pkill -f chromedriver 2>/dev/null || true
+
 cleanup() {
   if [ -n "$LOGCAT_PID" ]; then
     kill "$LOGCAT_PID" 2>/dev/null || true
@@ -104,6 +107,7 @@ cleanup() {
   fi
 }
 trap cleanup EXIT
+trap 'exit 2' INT TERM
 
 # ── Logging helpers ───────────────────────────────────────────────────────────
 log() {
@@ -121,6 +125,7 @@ select_device() {
   local -a lines=()
   while IFS= read -r line; do
     [[ -z "$line" ]] && continue
+    echo "$line" | grep -q '(wireless)' && continue
     if echo "$line" | grep -qE "$pattern"; then
       lines+=("$line")
     fi
@@ -159,8 +164,9 @@ select_device() {
 }
 
 # ── Test runner ───────────────────────────────────────────────────────────────
-# --verbose: streams output live to the terminal (via tee) as well as the log file.
-# default:   captures silently; prints on failure.
+# --verbose: streams all output live to the terminal via tee.
+# default:   uses --reporter expanded for clean per-test output; native logs
+#            are filtered out. Full output is always in the log file.
 run_test() {
   local label="$1"
   local logfile="$2"
@@ -175,7 +181,9 @@ run_test() {
     exit_code=${PIPESTATUS[0]}
     cat "$logfile" >> "$SUMMARY_LOG"
   else
-    "$@" > "$logfile" 2>&1 || exit_code=$?
+    "$@" 2>&1 | tee "$logfile" | grep --line-buffered -v -E \
+      '^\[\[|^ReaderStatus:|^onPageChanged:|^creationParams='
+    exit_code=${PIPESTATUS[0]}
   fi
 
   if [ $exit_code -eq 0 ]; then
@@ -185,7 +193,7 @@ run_test() {
     log "${RED}   FAILED${NC}"
     if [ "$VERBOSE" = false ]; then
       log "   Output (${logfile}):"
-      cat "$logfile" | tee -a "$SUMMARY_LOG"
+      grep -v -E '^\[\[|^ReaderStatus:|^onPageChanged:|^creationParams=' "$logfile" | tee -a "$SUMMARY_LOG"
     fi
     return 1
   fi
@@ -333,10 +341,13 @@ log ""
 cd "$EXAMPLE_DIR"
 OVERALL_EXIT=0
 
-# Build flutter verbosity flag once — spliced into every flutter command below.
+# Build flutter flags once — spliced into every flutter command below.
 FLUTTER_VERBOSE=()
+FLUTTER_REPORTER=()
 if [ "$VERBOSE" = true ]; then
   FLUTTER_VERBOSE=(--verbose)
+else
+  FLUTTER_REPORTER=(--reporter expanded)
 fi
 
 # ── Android ───────────────────────────────────────────────────────────────────
@@ -353,7 +364,7 @@ if [ "$SKIP_ANDROID" = false ]; then
       "Android — flutter test integration_test/all_tests.dart" \
       "$LOG_DIR/android.log" \
       flutter test integration_test/all_tests.dart \
-        -d "$ANDROID_DEVICE" "${FLUTTER_VERBOSE[@]}"; then
+        -d "$ANDROID_DEVICE" "${FLUTTER_VERBOSE[@]}" "${FLUTTER_REPORTER[@]}"; then
     OVERALL_EXIT=1
   fi
 
@@ -373,7 +384,7 @@ if [ "$SKIP_IOS" = false ]; then
       "iOS — flutter test integration_test/all_tests.dart (includes @native audiobook)" \
       "$LOG_DIR/ios.log" \
       flutter test integration_test/all_tests.dart \
-        -d "$IOS_DEVICE" "${FLUTTER_VERBOSE[@]}"; then
+        -d "$IOS_DEVICE" "${FLUTTER_VERBOSE[@]}" "${FLUTTER_REPORTER[@]}"; then
     OVERALL_EXIT=1
   fi
 else
