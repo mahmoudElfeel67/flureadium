@@ -77,13 +77,19 @@ public class FlureadiumPlugin: NSObject, FlutterPlugin, ReadiumShared.WarningLog
       sharedReadium.setAdditionalHeaders(httpHeaders)
       result(nil)
     case "dispose":
-      closePublication()
-      self.timebasedPlayerStateStreamHandler?.dispose()
-      self.timebasedPlayerStateStreamHandler = nil
-      result(nil)
+      Task.detached(priority: .high) {
+        await self.closePublication()
+        await MainActor.run {
+          self.timebasedPlayerStateStreamHandler?.dispose()
+          self.timebasedPlayerStateStreamHandler = nil
+          result(nil)
+        }
+      }
     case "closePublication":
-      self.closePublication()
-      result(nil)
+      Task.detached(priority: .high) {
+        await self.closePublication()
+        await MainActor.run { result(nil) }
+      }
     case "openPublication":
       let args = call.arguments as! [Any?]
       let pubUrlStr = args[0] as! String
@@ -91,7 +97,7 @@ public class FlureadiumPlugin: NSObject, FlutterPlugin, ReadiumShared.WarningLog
       Task.detached(priority: .high) {
         do {
           if (currentPublication != nil) {
-            self.closePublication()
+            await self.closePublication()
           }
           let pub: Publication = try await self.loadPublication(fromUrlStr: pubUrlStr).get()
           currentPublication = pub
@@ -285,12 +291,14 @@ public class FlureadiumPlugin: NSObject, FlutterPlugin, ReadiumShared.WarningLog
         }
       }
     case "stop":
-      Task { @MainActor in
-        self.timebasedNavigator?.dispose()
-        self.timebasedNavigator = nil
-        self.updateReaderViewTimebasedDecorations([])
+      Task.detached(priority: .high) {
+        await MainActor.run {
+          self.timebasedNavigator?.dispose()
+          self.timebasedNavigator = nil
+          self.updateReaderViewTimebasedDecorations([])
+        }
+        await MainActor.run { result(nil) }
       }
-      result(nil)
     case "pause":
       Task { @MainActor in
         await self.timebasedNavigator?.pause()
@@ -548,9 +556,9 @@ extension FlureadiumPlugin {
     }
   }
 
-  private func closePublication() {
+  private func closePublication() async {
     // Clean-up any resources associated with the publication.
-    Task { @MainActor in
+    await MainActor.run {
       self.timebasedNavigator?.dispose()
       self.timebasedNavigator = nil
       currentPublication?.close()
