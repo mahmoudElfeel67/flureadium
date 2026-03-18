@@ -255,7 +255,7 @@ public class FlureadiumPlugin: NSObject, FlutterPlugin, ReadiumShared.WarningLog
       }
       result(nil)
     case "ttsSetPreferences":
-      let args = call.arguments as! Dictionary<String, String>
+      let args = call.arguments as? Dictionary<String, Any> ?? [:]
       guard let ttsNavigator = self.timebasedNavigator as? FlutterTTSNavigator else {
         return result(FlutterError.init(
           code: "TTSError",
