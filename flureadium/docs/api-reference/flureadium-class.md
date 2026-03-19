@@ -346,7 +346,7 @@ Future<void> ttsSetPreferences(TTSPreferences preferences)
 
 ### ttsGetAvailableVoices
 
-Gets the list of available TTS voices.
+Gets the list of available TTS voices. Requires `ttsEnable()` to have been called first.
 
 ```dart
 Future<List<ReaderTTSVoice>> ttsGetAvailableVoices()
@@ -360,6 +360,23 @@ final voices = await flureadium.ttsGetAvailableVoices();
 for (final voice in voices) {
   print('${voice.name} (${voice.language})');
 }
+```
+
+### ttsGetSystemVoices
+
+Gets available TTS voices from the OS without requiring TTS to be enabled. Unlike `ttsGetAvailableVoices()`, this does not need a TTS navigator — call it anytime to populate a voice picker before the user starts reading aloud.
+
+```dart
+Future<List<ReaderTTSVoice>> ttsGetSystemVoices()
+```
+
+**Returns:** List of available platform voices (same `ReaderTTSVoice` model as `ttsGetAvailableVoices`)
+
+**Example:**
+```dart
+// Works before ttsEnable()
+final voices = await flureadium.ttsGetSystemVoices();
+final englishVoices = voices.where((v) => v.language.startsWith('en')).toList();
 ```
 
 ### ttsSetVoice
