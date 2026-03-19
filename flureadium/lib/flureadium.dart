@@ -238,6 +238,12 @@ class Flureadium {
   Future<List<ReaderTTSVoice>> ttsGetAvailableVoices() =>
       _platform.ttsGetAvailableVoices();
 
+  /// Gets available TTS voices from the OS without requiring TTS to be
+  /// enabled. Unlike [ttsGetAvailableVoices], this does not need a TTS
+  /// navigator.
+  Future<List<ReaderTTSVoice>> ttsGetSystemVoices() =>
+      _platform.ttsGetSystemVoices();
+
   /// Sets the TTS voice to use.
   ///
   /// [voiceIdentifier] is the platform-specific voice ID.

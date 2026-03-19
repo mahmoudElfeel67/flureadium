@@ -246,6 +246,12 @@ class MockFlureadiumPlatform
   }
 
   @override
+  Future<List<ReaderTTSVoice>> ttsGetSystemVoices() async {
+    calls.add(MockMethodCall('ttsGetSystemVoices'));
+    return mockVoices;
+  }
+
+  @override
   Future<void> ttsSetVoice(String voiceIdentifier, String? forLanguage) async {
     calls.add(
       MockMethodCall('ttsSetVoice', {

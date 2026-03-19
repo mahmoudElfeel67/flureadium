@@ -17,6 +17,22 @@ void main() {
       await flureadium.closePublication();
     });
 
+    testWidgets('ttsGetSystemVoices returns voices before TTS is enabled', (
+      tester,
+    ) async {
+      app.main();
+      for (var i = 0; i < 15; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        if (find.byType(ReadiumReaderWidget).evaluate().isNotEmpty) break;
+      }
+      // Call ttsGetSystemVoices before enabling TTS — should work without a navigator.
+      final flureadium = Flureadium();
+      final voices = await flureadium.ttsGetSystemVoices();
+      expect(voices, isNotEmpty);
+      expect(voices.first.identifier, isNotEmpty);
+      expect(voices.first.language, isNotEmpty);
+    });
+
     testWidgets('TTS enable makes sentence nav buttons appear', (tester) async {
       app.main();
       // pumpAndSettle can hang when a PlatformView (WebView) keeps scheduling

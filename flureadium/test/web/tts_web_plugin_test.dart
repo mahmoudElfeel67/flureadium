@@ -173,6 +173,36 @@ void main() {
     });
   });
 
+  group('TTS web plugin — system voice JSON parsing', () {
+    test('ttsGetSystemVoices_parsesVoiceJsonCorrectly', () {
+      final voiceJson = json.encode([
+        {
+          'identifier': 'com.apple.voice.compact.en-US.Samantha',
+          'name': 'Samantha',
+          'language': 'en-US',
+          'networkRequired': false,
+          'gender': 'unspecified',
+          'quality': 'normal',
+        },
+      ]);
+
+      final voiceList = (json.decode(voiceJson) as List)
+          .map((v) => ReaderTTSVoice.fromJsonMap(v as Map<String, dynamic>))
+          .toList();
+
+      expect(voiceList, hasLength(1));
+      expect(
+        voiceList[0].identifier,
+        equals('com.apple.voice.compact.en-US.Samantha'),
+      );
+      expect(voiceList[0].name, equals('Samantha'));
+      expect(voiceList[0].language, equals('en-US'));
+      expect(voiceList[0].networkRequired, isFalse);
+      expect(voiceList[0].gender, equals(TTSVoiceGender.unspecified));
+      expect(voiceList[0].quality, equals(TTSVoiceQuality.normal));
+    });
+  });
+
   group('TTS web plugin — TTSPreferences serialization', () {
     test('ttsSetPreferences_serializesSpeedAndPitch', () {
       final prefs = TTSPreferences(speed: 1.5, pitch: 0.8);

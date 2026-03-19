@@ -239,6 +239,14 @@ class _ReaderPageState extends State<ReaderPage> {
 
   Future<void> _installVoice() async => _flureadium.ttsRequestInstallVoice();
 
+  Future<void> _showSystemVoices() async {
+    final voices = await _flureadium.ttsGetSystemVoices();
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('System voices: ${voices.length}')));
+  }
+
   Future<void> _nextVoice() async {
     if (_voices.isEmpty) return;
     final next = (_voiceIndex + 1) % _voices.length;
@@ -416,6 +424,10 @@ class _ReaderPageState extends State<ReaderPage> {
                         TextButton(
                           onPressed: _addHighlight,
                           child: const Text('Highlight'),
+                        ),
+                        TextButton(
+                          onPressed: _showSystemVoices,
+                          child: const Text('OS TTS'),
                         ),
                         TextButton(
                           onPressed: _toggleTts,

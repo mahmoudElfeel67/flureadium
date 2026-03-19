@@ -242,6 +242,15 @@ class FlureadiumWebPlugin extends FlureadiumPlatform {
   }
 
   @override
+  Future<List<ReaderTTSVoice>> ttsGetSystemVoices() async {
+    final voicesJson = JsPublicationChannel.ttsGetSystemVoices();
+    final voicesList = json.decode(voicesJson) as List;
+    return voicesList
+        .map((v) => ReaderTTSVoice.fromJsonMap(v as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
   Future<void> ttsSetVoice(String voiceIdentifier, String? forLanguage) async {
     JsPublicationChannel.ttsSetVoice(voiceIdentifier, forLanguage);
   }

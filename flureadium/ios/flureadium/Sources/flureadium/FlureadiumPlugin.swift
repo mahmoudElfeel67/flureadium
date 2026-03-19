@@ -2,6 +2,7 @@ import Flutter
 import Combine
 import UIKit
 import MediaPlayer
+import AVFoundation
 import ReadiumNavigator
 import ReadiumShared
 
@@ -214,6 +215,22 @@ public class FlureadiumPlugin: NSObject, FlutterPlugin, ReadiumShared.WarningLog
       }
       let availableVoices = ttsNavigator.ttsGetAvailableVoices()
       result(availableVoices.compactMap { $0.jsonString })
+    case "ttsGetSystemVoices":
+      let voices = AVSpeechSynthesisVoice.speechVoices()
+      let voiceJsons: [String] = voices.compactMap { voice in
+        let json: [String: Any] = [
+          "identifier": voice.identifier,
+          "name": voice.name,
+          "language": voice.language,
+          "networkRequired": false,
+          "gender": "unspecified",
+          "quality": voice.quality.rawValue >= AVSpeechSynthesisVoiceQuality.enhanced.rawValue ? "high" : "normal"
+        ]
+        guard let data = try? JSONSerialization.data(withJSONObject: json),
+              let str = String(data: data, encoding: .utf8) else { return nil }
+        return str
+      }
+      result(voiceJsons)
     case "ttsCanSpeak":
       guard let publication = currentPublication else {
         result(false)

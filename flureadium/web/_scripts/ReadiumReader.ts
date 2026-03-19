@@ -185,6 +185,10 @@ class _ReadiumReader {
     return TtsEngine.getSystemVoices();
   }
 
+  public ttsGetSystemVoices(): string {
+    return TtsEngine.getSystemVoices();
+  }
+
   public ttsSetVoice(voiceId: string, language: string | null) {
     this._tts?.setVoice(voiceId, language);
   }

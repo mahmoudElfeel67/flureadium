@@ -29,6 +29,7 @@ extension type ReadiumReader._(JSObject _) implements JSObject {
   external void ttsNext();
   external void ttsPrevious();
   external JSString ttsGetAvailableVoices();
+  external JSString ttsGetSystemVoices();
   external void ttsSetVoice(JSString voiceId, JSString? language);
   external void ttsSetPreferences(JSString prefsJson);
   external JSBoolean ttsCanSpeak();
@@ -203,6 +204,10 @@ class JsPublicationChannel {
 
   static String ttsGetAvailableVoices() {
     return _readiumReader.ttsGetAvailableVoices().toDart;
+  }
+
+  static String ttsGetSystemVoices() {
+    return _readiumReader.ttsGetSystemVoices().toDart;
   }
 
   static void ttsSetVoice(String voiceId, String? language) {

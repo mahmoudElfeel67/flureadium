@@ -251,6 +251,13 @@ void main() {
         expect(voices, isA<List<ReaderTTSVoice>>());
       });
 
+      test('ttsGetSystemVoices calls platform method', () async {
+        final voices = await flureadium.ttsGetSystemVoices();
+
+        expect(mockPlatform.wasCalled('ttsGetSystemVoices'), isTrue);
+        expect(voices, isA<List<ReaderTTSVoice>>());
+      });
+
       test('ttsSetVoice calls platform method', () async {
         await flureadium.ttsSetVoice('voice-id', 'en-US');
 
