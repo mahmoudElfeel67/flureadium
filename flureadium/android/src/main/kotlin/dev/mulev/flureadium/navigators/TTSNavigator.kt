@@ -91,12 +91,12 @@ class TTSNavigator(
 
         val initialAndroidPreferences = preferences.toAndroidTtsPreferences()
         mainScope.async {
-            val firstVisibleLocator = ReadiumReader.currentReaderWidget?.getFirstVisibleLocator()
+            val startLocator = initialLocator ?: ReadiumReader.currentReaderWidget?.getFirstVisibleLocator()
 
             ttsNavigator =
                 navigatorFactory.createNavigator(
                     listener,
-                    firstVisibleLocator,
+                    startLocator,
                     initialAndroidPreferences
                 )
                     .getOrElse {
