@@ -118,6 +118,28 @@ await flureadium.ttsEnable(TTSPreferences(
 ));
 ```
 
+### Resuming from Position
+
+Save the current TTS position before stopping, then pass it back when re-enabling:
+
+```dart
+Locator? lastTtsLocator;
+
+// Save position from the timebased state stream while TTS is playing
+flureadium.onTimebasedPlayerStateChanged.listen((state) {
+  lastTtsLocator = state.currentLocator;
+});
+
+// Later, resume from where TTS left off
+await flureadium.ttsEnable(
+  TTSPreferences(speed: 1.0),
+  fromLocator: lastTtsLocator,
+);
+await flureadium.play(null);
+```
+
+Without `fromLocator`, TTS starts from the current visible position in the reader, which may not match where TTS previously stopped.
+
 ## Playback Controls
 
 ### Basic Controls
@@ -465,6 +487,7 @@ class _TTSReaderScreenState extends State<TTSReaderScreen> {
   double _speed = 1.0;
   List<ReaderTTSVoice>? _voices;
   String? _selectedVoiceId;
+  Locator? _lastTtsLocator;
 
   StreamSubscription? _stateSubscription;
 
@@ -473,7 +496,10 @@ class _TTSReaderScreenState extends State<TTSReaderScreen> {
     super.initState();
     _loadVoices();
     _stateSubscription = _flureadium.onTimebasedPlayerStateChanged.listen(
-      (state) => setState(() => _playbackState = state.state),
+      (state) {
+        _lastTtsLocator = state.currentLocator;
+        setState(() => _playbackState = state.state);
+      },
     );
   }
 
@@ -501,11 +527,11 @@ class _TTSReaderScreenState extends State<TTSReaderScreen> {
     });
   }
 
-  Future<void> _enableTTS() async {
-    await _flureadium.ttsEnable(TTSPreferences(
-      speed: _speed,
-      voiceIdentifier: _selectedVoiceId,
-    ));
+  Future<void> _enableTTS({Locator? fromLocator}) async {
+    await _flureadium.ttsEnable(
+      TTSPreferences(speed: _speed, voiceIdentifier: _selectedVoiceId),
+      fromLocator: fromLocator,
+    );
 
     // Set up highlighting
     await _flureadium.setDecorationStyle(
@@ -642,6 +668,7 @@ class _TTSReaderScreenState extends State<TTSReaderScreen> {
   Future<void> _stopTTS() async {
     await _flureadium.stop();
     setState(() => _ttsEnabled = false);
+    // _lastTtsLocator is preserved so _enableTTS can resume from it.
   }
 }
 ```

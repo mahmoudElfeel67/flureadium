@@ -281,18 +281,23 @@ await flureadium.applyDecorations('highlights', []);
 Enables text-to-speech mode.
 
 ```dart
-Future<void> ttsEnable(TTSPreferences? preferences)
+Future<void> ttsEnable(TTSPreferences? preferences, {Locator? fromLocator})
 ```
 
 **Parameters:**
 - `preferences` - Optional [TTSPreferences](preferences.md#ttspreferences)
+- `fromLocator` - Optional [Locator](locator.md) to start TTS from a saved position. When provided, TTS begins reading from this location instead of the current visible position. Useful for resuming after disabling and re-enabling TTS.
 
 **Example:**
 ```dart
-await flureadium.ttsEnable(TTSPreferences(
-  speed: 1.2,
-  pitch: 1.0,
-));
+// Enable with default position
+await flureadium.ttsEnable(TTSPreferences(speed: 1.2, pitch: 1.0));
+
+// Resume from a saved position
+await flureadium.ttsEnable(
+  TTSPreferences(speed: 1.2),
+  fromLocator: savedLocator,
+);
 ```
 
 ### ttsCanSpeak
