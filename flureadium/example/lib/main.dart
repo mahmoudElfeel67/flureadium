@@ -34,6 +34,7 @@ class _ReaderPageState extends State<ReaderPage> {
   ReadiumTimebasedState? _timebasedState;
   bool _controlsVisible = true;
   bool _ttsEnabled = false;
+  Locator? _lastTtsLocator;
   bool _audioEnabled = false;
   bool _audioPaused = false;
   List<ReaderTTSVoice> _voices = [];
@@ -105,6 +106,7 @@ class _ReaderPageState extends State<ReaderPage> {
       setState(() {
         _publication = pub;
         _ttsEnabled = false;
+        _lastTtsLocator = null;
         _audioEnabled = false;
         _audioPaused = false;
         _voices = [];
@@ -123,6 +125,7 @@ class _ReaderPageState extends State<ReaderPage> {
       setState(() {
         _publication = pub;
         _ttsEnabled = false;
+        _lastTtsLocator = null;
         _audioEnabled = false;
         _audioPaused = false;
         _voices = [];
@@ -143,6 +146,7 @@ class _ReaderPageState extends State<ReaderPage> {
       setState(() {
         _publication = pub;
         _ttsEnabled = false;
+        _lastTtsLocator = null;
         _audioEnabled = false;
         _audioPaused = false;
         _voices = [];
@@ -172,6 +176,7 @@ class _ReaderPageState extends State<ReaderPage> {
     setState(() {
       _publication = null;
       _ttsEnabled = false;
+      _lastTtsLocator = null;
       _audioEnabled = false;
       _audioPaused = false;
       _voices = [];
@@ -194,6 +199,7 @@ class _ReaderPageState extends State<ReaderPage> {
 
   Future<void> _toggleTts() async {
     if (_ttsEnabled) {
+      _lastTtsLocator = _timebasedState?.currentLocator;
       await _flureadium.stop();
       if (!mounted) return;
       setState(() {
@@ -216,7 +222,10 @@ class _ReaderPageState extends State<ReaderPage> {
       }
       return;
     }
-    await _flureadium.ttsEnable(TTSPreferences(speed: _ttsSpeed));
+    await _flureadium.ttsEnable(
+      TTSPreferences(speed: _ttsSpeed),
+      fromLocator: _lastTtsLocator,
+    );
     if (!mounted) return;
     // Set _ttsEnabled before play() so that the onTimebasedPlayerStateChanged
     // callback (which guards on _ttsEnabled) correctly captures the 'playing'

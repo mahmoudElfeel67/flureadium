@@ -138,6 +138,44 @@ void main() {
       expect(find.text('TTS Off'), findsOneWidget);
     });
 
+    testWidgets('tts disable and re-enable does not crash', (tester) async {
+      app.main();
+      for (var i = 0; i < 15; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        if (find.byType(ReadiumReaderWidget).evaluate().isNotEmpty) break;
+      }
+      // Enable TTS
+      await tester.tap(find.text('TTS On'));
+      for (var i = 0; i < 60; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        if (find.text('Prev Sentence').evaluate().isNotEmpty) break;
+      }
+      expect(find.text('TTS Off'), findsOneWidget);
+
+      // Advance one sentence
+      await tester.tap(find.text('Next Sentence'));
+      await tester.pump(const Duration(seconds: 2));
+
+      // Disable TTS
+      await tester.tap(find.text('TTS Off'));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        if (find.text('TTS On').evaluate().isNotEmpty) break;
+      }
+      expect(find.text('TTS On'), findsOneWidget);
+
+      // Re-enable TTS (should use saved locator)
+      await tester.tap(find.text('TTS On'));
+      for (var i = 0; i < 60; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        if (find.text('Prev Sentence').evaluate().isNotEmpty) break;
+      }
+      expect(find.text('TTS Off'), findsOneWidget);
+      expect(find.text('Prev Sentence'), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 2));
+    });
+
     testWidgets('tts off hides sentence nav buttons', (tester) async {
       app.main();
       for (var i = 0; i < 15; i++) {

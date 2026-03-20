@@ -89,6 +89,12 @@ await flureadium.ttsSetVoice(voices.first.id, 'en-US');
 await flureadium.play(null);
 await flureadium.pause();
 await flureadium.next();  // Skip to next sentence
+
+// Resume from a saved position after disabling/re-enabling TTS
+await flureadium.ttsEnable(
+  TTSPreferences(rate: 1.2),
+  fromLocator: savedLocator,
+);
 ```
 
 ### Audiobook Playback
