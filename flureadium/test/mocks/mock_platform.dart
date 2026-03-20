@@ -224,8 +224,16 @@ class MockFlureadiumPlatform
 
   // TTS API
   @override
-  Future<void> ttsEnable(TTSPreferences? preferences) async {
-    calls.add(MockMethodCall('ttsEnable', {'preferences': preferences}));
+  Future<void> ttsEnable(
+    TTSPreferences? preferences, {
+    Locator? fromLocator,
+  }) async {
+    calls.add(
+      MockMethodCall('ttsEnable', {
+        'preferences': preferences,
+        'fromLocator': fromLocator,
+      }),
+    );
   }
 
   @override

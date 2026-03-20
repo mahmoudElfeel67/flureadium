@@ -244,6 +244,22 @@ void main() {
         expect(mockPlatform.wasCalled('ttsEnable'), isTrue);
       });
 
+      test('ttsEnable with fromLocator passes locator to platform', () async {
+        final prefs = TTSPreferences(speed: 1.5, pitch: 1.0);
+        final locator = Locator(
+          href: 'chapter3.xhtml',
+          type: 'application/xhtml+xml',
+        );
+
+        await flureadium.ttsEnable(prefs, fromLocator: locator);
+
+        expect(mockPlatform.wasCalled('ttsEnable'), isTrue);
+        expect(
+          mockPlatform.lastCallArgs('ttsEnable')?['fromLocator'],
+          equals(locator),
+        );
+      });
+
       test('ttsGetAvailableVoices calls platform method', () async {
         final voices = await flureadium.ttsGetAvailableVoices();
 

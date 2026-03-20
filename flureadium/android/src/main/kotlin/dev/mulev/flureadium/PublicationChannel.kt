@@ -101,9 +101,12 @@ internal class PublicationMethodCallHandler() :
             }
 
             "ttsEnable" -> {
-                val args = arguments as Map<*, *>?
-                val ttsPrefs = FlutterTtsPreferences.fromMap(args)
-                return ttsEnable(ttsPrefs)
+                val args = arguments as List<*>
+                val ttsPrefs = FlutterTtsPreferences.fromMap(args[0] as Map<*, *>?)
+                val locator = (args[1] as? Map<*, *>)?.let {
+                    Locator.fromJSON(JSONObject(it))
+                }
+                return ttsEnable(locator, ttsPrefs)
             }
 
             "ttsSetPreferences" -> {
@@ -301,7 +304,10 @@ internal class PublicationMethodCallHandler() :
     /**
      * Enable TTS reading with the provided preferences.
      */
-    private suspend fun ttsEnable(prefs: FlutterTtsPreferences): Try<Any?, PublicationError> {
+    private suspend fun ttsEnable(
+        locator: Locator?,
+        prefs: FlutterTtsPreferences
+    ): Try<Any?, PublicationError> {
         val publication = ReadiumReader.currentPublication
         if (publication == null) {
             return Try.failure(
@@ -309,7 +315,7 @@ internal class PublicationMethodCallHandler() :
             )
         }
 
-        ReadiumReader.ttsEnable(prefs)
+        ReadiumReader.ttsEnable(locator, prefs)
         return Try.success(null)
     }
 

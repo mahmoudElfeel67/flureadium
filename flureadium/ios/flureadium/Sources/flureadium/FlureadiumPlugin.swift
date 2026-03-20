@@ -174,18 +174,29 @@ public class FlureadiumPlugin: NSObject, FlutterPlugin, ReadiumShared.WarningLog
       }
 
     case "ttsEnable":
+      guard let args = call.arguments as? [Any?] else {
+        return result(FlutterError.init(
+          code: "InvalidArgument",
+          message: "Invalid parameters to ttsEnable: \(call.arguments.debugDescription)",
+          details: nil))
+      }
       Task.detached(priority: .high) {
         do {
-          let args = call.arguments as? Dictionary<String, Any>,
-              ttsPrefs = (try? TTSPreferences(fromMap: args ?? [:])) ?? TTSPreferences()
+          let prefsMap = args[0] as? Dictionary<String, Any>,
+              ttsPrefs = (try? TTSPreferences(fromMap: prefsMap ?? [:])) ?? TTSPreferences()
+
+          var locator: Locator? = nil
+          if let locatorJson = args[1] as? Dictionary<String, Any> {
+            locator = try? Locator(json: locatorJson, warnings: self)
+          }
 
           guard let publication = getCurrentPublication() else {
             throw ReadiumError.notFound("No publication opened")
           }
 
           let navigator = await MainActor.run { () -> FlutterTTSNavigator in
-            let currentLocation = currentReaderView?.getCurrentLocation()
-            let nav = FlutterTTSNavigator(publication: publication, preferences: ttsPrefs, initialLocator: currentLocation)
+            let initialLocation = locator ?? currentReaderView?.getCurrentLocation()
+            let nav = FlutterTTSNavigator(publication: publication, preferences: ttsPrefs, initialLocator: initialLocation)
             nav.listener = self
             self.timebasedNavigator = nav
             return nav

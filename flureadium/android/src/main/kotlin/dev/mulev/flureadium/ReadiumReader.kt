@@ -841,10 +841,9 @@ object ReadiumReader : TimebasedNavigator.TimebasedListener, EpubNavigator.Visua
         pdfNavigator?.goToLocator(locator, animated)
     }
 
-    suspend fun ttsEnable(ttsPrefs: FlutterTtsPreferences) {
+    suspend fun ttsEnable(initialLocator: Locator?, ttsPrefs: FlutterTtsPreferences) {
         currentPublication?.let {
-            // TODO: Get initial locator
-            ttsNavigator = TTSNavigator(it, this@ReadiumReader, null, ttsPrefs).apply {
+            ttsNavigator = TTSNavigator(it, this@ReadiumReader, initialLocator, ttsPrefs).apply {
                 initNavigator()
             }
         } ?: throw Exception("Publication not opened cannot enable tts")

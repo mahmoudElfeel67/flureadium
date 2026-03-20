@@ -214,7 +214,10 @@ class FlureadiumWebPlugin extends FlureadiumPlatform {
 
   // TTS API - BEGIN
   @override
-  Future<void> ttsEnable(TTSPreferences? preferences) async {
+  Future<void> ttsEnable(
+    TTSPreferences? preferences, {
+    Locator? fromLocator,
+  }) async {
     final prefsJson = preferences != null
         ? json.encode(preferences.toMap())
         : null;
