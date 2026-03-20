@@ -692,6 +692,7 @@ class _TTSReaderScreenState extends State<TTSReaderScreen> {
 - `ttsRequestInstallVoice()` opens the system voice data installer
 - `TtsErrorType.languageMissingData` fires when voice data is missing for the publication's language
 - Voice quality and availability vary by device and installed language packs
+- When `fromLocator` is provided to `ttsEnable()`, Android uses it as the starting position. When null, it falls back to the first visible locator in the reader.
 
 ### Web
 
