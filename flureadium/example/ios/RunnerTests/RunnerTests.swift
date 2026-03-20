@@ -1,27 +1,27 @@
-import Flutter
-import UIKit
 import XCTest
-
-
+import Flutter
 @testable import flureadium
-
-// This demonstrates a simple unit test of the Swift portion of this plugin's implementation.
-//
-// See https://developer.apple.com/documentation/xctest for more information about using XCTest.
 
 class RunnerTests: XCTestCase {
 
-  func testGetPlatformVersion() {
+  func testTtsCanSpeakReturnsFalseWhenNoPublicationLoaded() {
+    currentPublication = nil
+
     let plugin = FlureadiumPlugin()
+    let expectation = expectation(description: "result called")
 
-    let call = FlutterMethodCall(methodName: "getPlatformVersion", arguments: [])
-
-    let resultExpectation = expectation(description: "result block must be called.")
-    plugin.handle(call) { result in
-      XCTAssertEqual(result as! String, "iOS " + UIDevice.current.systemVersion)
-      resultExpectation.fulfill()
+    let call = FlutterMethodCall(methodName: "ttsCanSpeak", arguments: nil)
+    plugin.handle(call) { response in
+      XCTAssertEqual(response as? Bool, false,
+                     "ttsCanSpeak should return false when no publication is loaded")
+      expectation.fulfill()
     }
-    waitForExpectations(timeout: 1)
+
+    wait(for: [expectation], timeout: 1.0)
   }
 
+  override func tearDown() {
+    currentPublication = nil
+    super.tearDown()
+  }
 }
