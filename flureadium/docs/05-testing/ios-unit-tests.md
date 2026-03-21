@@ -20,6 +20,9 @@ flureadium/example/ios/RunnerTests/
 ├── UtilityTests.swift                 # clamp, firstMap, asyncCompactMap
 ├── ModelTests.swift                   # ControlPanelInfoType, NavigationConfig, TTS/Audio/PDF preferences
 ├── StateSerializationTests.swift      # ReadiumTimebasedState toJson, toJsonString, Equatable
+├── ReadiumExtensionsTests.swift       # Locator extensions, state mappings, EPUB/PDF preferences fromMap, TTSVoice.Quality
+├── FlutterMediaOverlayTests.swift     # FlutterMediaOverlayItem parsing/matching/locators, FlutterMediaOverlay matching/fromJson
+├── ReadiumErrorTests.swift            # ReadiumError/FlureadiumError to FlutterError conversions
 └── <YourNewTests>.swift               # Add new files here
 ```
 
@@ -81,16 +84,22 @@ Alternatively, open `Runner.xcworkspace` in Xcode once, drag the file into Runne
 
 ## Running Tests
 
-### Prerequisites
+### Prerequisites — MUST BUILD BEFORE TESTING
 
-The example app must be built for the iOS simulator at least once before running tests. This generates Flutter build artifacts that `xcodebuild` depends on. Without this step, `xcodebuild test` fails with a `PhaseScriptExecution` / `kernel_snapshot_program` error.
+**This step is mandatory before every test run where files or project configuration changed.** Without it, `xcodebuild test` fails silently (exit code 1, no useful error output) or with stale-artifact errors.
 
 ```bash
 cd flureadium/example
 flutter build ios --simulator --debug
 ```
 
-Re-run this when Flutter dependencies change (pubspec.yaml, plugin registration, etc.). Subsequent test runs reuse the cached build.
+**You MUST re-run this build step when:**
+- New `.swift` test files are added
+- `project.pbxproj` is modified (file registrations, build settings)
+- Flutter dependencies change (pubspec.yaml, plugin registration)
+- Pod dependencies are updated
+
+The build regenerates all Flutter artifacts, runs `pod install`, and ensures `xcodebuild` has a consistent workspace. Skipping it after structural changes causes failures that produce no diagnostic output — just an empty error with exit code 1.
 
 ### Picking a Simulator
 
