@@ -15,18 +15,19 @@ Instead, tests live in the **example app's RunnerTests target** and run via `xco
 
 ```
 flureadium/example/ios/RunnerTests/
-├── RunnerTests.swift                  # Plugin handler tests
-├── FlutterTTSNavigatorTests.swift     # TTS navigator tests
-├── UtilityTests.swift                 # clamp, firstMap, asyncCompactMap
-├── ModelTests.swift                   # ControlPanelInfoType, NavigationConfig, TTS/Audio/PDF preferences
-├── StateSerializationTests.swift      # ReadiumTimebasedState toJson, toJsonString, Equatable
-├── ReadiumExtensionsTests.swift       # Locator extensions, state mappings, EPUB/PDF preferences fromMap, TTSVoice.Quality
-├── FlutterMediaOverlayTests.swift     # FlutterMediaOverlayItem parsing/matching/locators, FlutterMediaOverlay matching/fromJson
-├── ReadiumErrorTests.swift            # ReadiumError/FlureadiumError to FlutterError conversions
-├── EdgeTapInterceptViewTests.swift   # hitTest geometry, edge interception, subview bypass
-├── NowPlayingInfoUpdaterTests.swift  # Chapter formatting for all ControlPanelInfoType variants
-└── <YourNewTests>.swift               # Add new files here
+├── RunnerTests.swift                  # Plugin handler dispatch tests (~11 tests)
+├── FlutterTTSNavigatorTests.swift     # TTS navigator lifecycle, play/suppression, dispose (~18 tests)
+├── UtilityTests.swift                 # clamp, firstMap, asyncCompactMap (~8 tests)
+├── ModelTests.swift                   # ControlPanelInfoType, NavigationConfig, TTS/Audio/PDF preferences (~30 tests)
+├── StateSerializationTests.swift      # ReadiumTimebasedState toJson, toJsonString, Equatable (~8 tests)
+├── ReadiumExtensionsTests.swift       # Locator extensions, state mappings, EPUB/PDF preferences fromMap (~16 tests)
+├── FlutterMediaOverlayTests.swift     # FlutterMediaOverlayItem parsing/matching/locators (~14 tests)
+├── ReadiumErrorTests.swift            # ReadiumError/FlureadiumError to FlutterError conversions (~9 tests)
+├── EdgeTapInterceptViewTests.swift   # hitTest geometry, edge interception, subview bypass (~8 tests)
+└── NowPlayingInfoUpdaterTests.swift  # Chapter formatting for all ControlPanelInfoType variants (~8 tests)
 ```
+
+Total: ~130 tests across 10 test classes.
 
 All test files go in `flureadium/example/ios/RunnerTests/`. Do NOT put tests in the SPM test target at `ios/flureadium/Tests/flureadiumTests/` — those cannot be executed.
 
