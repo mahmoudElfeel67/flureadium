@@ -118,7 +118,7 @@ For advanced CSS options, see [Readium CSS Types](https://github.com/readium/ts-
 |---------|--------|-------|
 | EPUB from assets | Broken | Packed EPUB served via HTTP URL is not properly opened by the Readium JS navigator |
 | WebPub from remote URL | Broken | `loadPublication` / `getPublication` call fails before `ReadiumWebView` container is mounted |
-| TTS | Not implemented | Throws `UnimplementedError` |
+| TTS | Supported | Uses Web Speech API — see Text-to-Speech section below |
 | Audiobook playback | Not implemented | Throws `UnimplementedError` |
 | Custom HTTP headers | No-op | `setCustomHeaders` logs a warning and does nothing on web |
 | Background Audio | No | Browser limitation |
@@ -188,13 +188,41 @@ Access to fetch at 'file://' from origin 'http://localhost' has been blocked
 
 Solution: Serve files via HTTP server, not file:// protocol.
 
+## Text-to-Speech
+
+TTS on web is powered by the Web Speech API. The implementation lives in `Tts/ttsEngine.ts` and is bridged to Dart through `flureadium_web.dart`.
+
+### What works
+
+- Play, pause, resume, stop
+- Next/previous sentence navigation
+- Voice enumeration and selection (both before and after `ttsEnable()`)
+- Rate and pitch control via `ttsSetPreferences()`
+- Playback state events (`playing`, `paused`, `ended`, `failure`) via `onTimebasedPlayerStateChanged`
+- Sentence-level position updates via `onTextLocatorChanged`
+- `ttsCanSpeak()` pre-check (checks `window.speechSynthesis` availability and navigator readiness)
+
+### Limitations
+
+- **No background playback** — the browser tab must remain active. Switching tabs or minimizing pauses speech.
+- **Word-level highlighting is Chrome-only** — `SpeechSynthesisUtterance.onboundary` with `word` events fires reliably in Chrome but is inconsistent in Firefox and Safari. Sentence-level tracking works cross-browser.
+- **`setDecorationStyle()` is a no-op** — the Web Speech API operates on text extracted from the EPUB DOM, not the live rendered content. Injecting CSS decorations into sandboxed EPUB iframes would need a custom rendering layer.
+- **`ttsRequestInstallVoice()` is a no-op** — browsers don't have a voice install concept. Voices are managed through the OS.
+- **Voice loading may need user interaction** — some browsers delay `speechSynthesis.getVoices()` until after a user gesture. If `ttsGetAvailableVoices()` returns an empty list on first call, try again after the user taps a button.
+- **Position precision is resource-level only** — no CFI (character-level) positions from the Web Speech API. Locators point to the reading order resource, not a specific paragraph.
+
 ### TTS Not Working
 
 Web Speech API availability varies:
 ```dart
+final canSpeak = await flureadium.ttsCanSpeak();
+if (!canSpeak) {
+  // Browser doesn't support Web Speech API or navigator isn't ready
+}
+
 final voices = await flureadium.ttsGetAvailableVoices();
 if (voices.isEmpty) {
-  print('TTS not available in this browser');
+  print('No voices available — try again after user interaction');
 }
 ```
 

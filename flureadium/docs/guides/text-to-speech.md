@@ -2,6 +2,87 @@
 
 This guide covers integrating text-to-speech (TTS) into your reading app.
 
+## Before Enabling TTS
+
+Always check whether the current publication supports TTS before calling `ttsEnable()`. This prevents crashes on unsupported formats (e.g. PDF) and lets you show a user-friendly message instead.
+
+```dart
+final canSpeak = await flureadium.ttsCanSpeak();
+if (!canSpeak) {
+  // Show a message — this publication doesn't support TTS
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('TTS is not supported for this publication')),
+  );
+  return;
+}
+
+// Safe to enable TTS
+await flureadium.ttsEnable(null);
+await flureadium.play(null);
+```
+
+Platform behavior:
+- **iOS** — calls `PublicationSpeechSynthesizer.canSpeak(publication:)` to check content service availability.
+- **Android** — probes `TtsNavigatorFactory` to see if the publication can be spoken.
+- **Web** — returns `true` when the browser has `window.speechSynthesis` and a navigator is loaded.
+
+`ttsCanSpeak()` is safe to call before `ttsEnable()` and has no side effects.
+
+## Handling Android Language Errors
+
+On Android, TTS can fail when the device lacks voice data for the publication's language. You can detect this through the `ttsErrorType` field on `ReadiumTimebasedState` and prompt the user to install the missing voice.
+
+```dart
+flureadium.onTimebasedPlayerStateChanged.listen((state) {
+  if (state.ttsErrorType == TtsErrorType.languageMissingData) {
+    // Android is missing voice data for this language.
+    // Show a button or dialog prompting the user to install it.
+    showInstallVoiceDialog();
+  }
+});
+
+Future<void> showInstallVoiceDialog() async {
+  // Opens the system voice data installer on Android.
+  // No-op on iOS and web.
+  await flureadium.ttsRequestInstallVoice();
+}
+```
+
+`TtsErrorType` values:
+- `languageMissingData` — Android only. The TTS engine doesn't have voice data for the requested language.
+- `unknown` — a generic TTS engine failure.
+
+This field is always `null` on iOS and web, which don't discriminate TTS error types.
+
+## Getting Voices Before Enabling TTS
+
+Use `ttsGetSystemVoices()` to query available voices from the OS before enabling TTS. This lets you show a voice picker UI while the user is still browsing, without needing a TTS navigator.
+
+```dart
+// Works without calling ttsEnable() first
+final voices = await flureadium.ttsGetSystemVoices();
+
+// Show a voice picker to the user
+final selectedVoice = await showVoicePicker(voices);
+
+// Later, when the user starts reading aloud
+await flureadium.ttsEnable(TTSPreferences(
+  voiceIdentifier: selectedVoice.identifier,
+));
+await flureadium.play(null);
+```
+
+`ttsGetSystemVoices()` vs `ttsGetAvailableVoices()`:
+- `ttsGetSystemVoices()` queries the OS directly — works anytime, no navigator needed.
+- `ttsGetAvailableVoices()` queries voices through the TTS navigator — requires `ttsEnable()` first.
+
+Both return the same `ReaderTTSVoice` model. Use `ttsGetSystemVoices()` when you need voices before playback starts.
+
+Platform behavior:
+- **iOS** — calls `AVSpeechSynthesizer.speechVoices()` (static, no initialization).
+- **Android** — creates a temporary `TextToSpeech` instance, gets voices, then disposes it.
+- **Web** — calls `window.speechSynthesis.getVoices()` (same as `ttsGetAvailableVoices` on web).
+
 ## Enabling TTS
 
 ### Basic Setup
@@ -36,6 +117,55 @@ await flureadium.ttsEnable(TTSPreferences(
   voiceIdentifier: englishVoice.identifier,
 ));
 ```
+
+### Resuming from Position
+
+Save the current TTS position before stopping, then pass it back when re-enabling:
+
+```dart
+Locator? lastTtsLocator;
+
+// Save position from the timebased state stream while TTS is playing
+flureadium.onTimebasedPlayerStateChanged.listen((state) {
+  lastTtsLocator = state.currentLocator;
+});
+
+// Later, resume from where TTS left off
+await flureadium.ttsEnable(
+  TTSPreferences(speed: 1.0),
+  fromLocator: lastTtsLocator,
+);
+await flureadium.play(null);
+```
+
+Without `fromLocator`, TTS starts from the current visible position in the reader, which may not match where TTS previously stopped.
+
+### Starting TTS After Navigation
+
+When the user disables TTS, navigates to a different page, and then re-enables TTS, you should detect the navigation and pass `fromLocator: null` instead of the saved TTS locator. This makes TTS start from the current reader position rather than jumping back to where TTS left off on the previous page.
+
+```dart
+Locator? lastTtsLocator;
+Locator? readerLocatorAtTtsDisable;
+
+// When disabling TTS, save both the TTS position and the reader position
+lastTtsLocator = timebasedState?.currentLocator;
+readerLocatorAtTtsDisable = currentReaderLocator;
+
+// When re-enabling, check if the reader moved since TTS was disabled
+final navigated = readerLocatorAtTtsDisable != null &&
+    currentReaderLocator != null &&
+    readerLocatorAtTtsDisable != currentReaderLocator;
+final resumeLocator = navigated ? null : lastTtsLocator;
+
+await flureadium.ttsEnable(
+  TTSPreferences(speed: 1.0),
+  fromLocator: resumeLocator,
+);
+await flureadium.play(null);
+```
+
+Both iOS and Android have scroll-suppression logic in their TTS navigators that prevents the reader from jumping backward when TTS starts mid-utterance at a new position. This means the reader stays on the page the user navigated to while TTS begins reading from that position.
 
 ## Playback Controls
 
@@ -115,7 +245,8 @@ class _VoicePickerState extends State<VoicePicker> {
   }
 
   Future<void> _loadVoices() async {
-    final voices = await flureadium.ttsGetAvailableVoices();
+    // ttsGetSystemVoices works before ttsEnable — show voices immediately
+    final voices = await flureadium.ttsGetSystemVoices();
     setState(() => _voices = voices);
   }
 
@@ -383,6 +514,7 @@ class _TTSReaderScreenState extends State<TTSReaderScreen> {
   double _speed = 1.0;
   List<ReaderTTSVoice>? _voices;
   String? _selectedVoiceId;
+  Locator? _lastTtsLocator;
 
   StreamSubscription? _stateSubscription;
 
@@ -391,7 +523,10 @@ class _TTSReaderScreenState extends State<TTSReaderScreen> {
     super.initState();
     _loadVoices();
     _stateSubscription = _flureadium.onTimebasedPlayerStateChanged.listen(
-      (state) => setState(() => _playbackState = state.state),
+      (state) {
+        _lastTtsLocator = state.currentLocator;
+        setState(() => _playbackState = state.state);
+      },
     );
   }
 
@@ -405,7 +540,8 @@ class _TTSReaderScreenState extends State<TTSReaderScreen> {
   }
 
   Future<void> _loadVoices() async {
-    final voices = await _flureadium.ttsGetAvailableVoices();
+    // ttsGetSystemVoices works before ttsEnable — populate the picker early
+    final voices = await _flureadium.ttsGetSystemVoices();
     setState(() {
       _voices = voices;
       // Select first English voice by default
@@ -418,11 +554,11 @@ class _TTSReaderScreenState extends State<TTSReaderScreen> {
     });
   }
 
-  Future<void> _enableTTS() async {
-    await _flureadium.ttsEnable(TTSPreferences(
-      speed: _speed,
-      voiceIdentifier: _selectedVoiceId,
-    ));
+  Future<void> _enableTTS({Locator? fromLocator}) async {
+    await _flureadium.ttsEnable(
+      TTSPreferences(speed: _speed, voiceIdentifier: _selectedVoiceId),
+      fromLocator: fromLocator,
+    );
 
     // Set up highlighting
     await _flureadium.setDecorationStyle(
@@ -559,6 +695,7 @@ class _TTSReaderScreenState extends State<TTSReaderScreen> {
   Future<void> _stopTTS() async {
     await _flureadium.stop();
     setState(() => _ttsEnabled = false);
+    // _lastTtsLocator is preserved so _enableTTS can resume from it.
   }
 }
 ```
@@ -567,21 +704,34 @@ class _TTSReaderScreenState extends State<TTSReaderScreen> {
 
 ### iOS
 
-- Uses AVSpeechSynthesizer
-- Rich voice selection
-- System voices available
+- Uses AVSpeechSynthesizer through Readium's `PublicationSpeechSynthesizer`
+- Voices are managed by the OS — `ttsRequestInstallVoice()` is a no-op
+- `ttsCanSpeak()` checks content service availability via Readium
+- `ttsGetSystemVoices()` calls `AVSpeechSynthesizer.speechVoices()` directly (static, no navigator)
+- Voices are returned sorted alphabetically
+- Word-level highlighting through `AVSpeechSynthesizerDelegate`
 
 ### Android
 
-- Uses TextToSpeech engine
-- Voice quality varies by device
-- May require downloading voices
+- Uses Readium's `TtsNavigator` backed by `AndroidTtsEngine`
+- `ttsCanSpeak()` probes `TtsNavigatorFactory` to check publication support
+- `ttsGetSystemVoices()` creates a temporary `TextToSpeech` instance, gets voices, then disposes it
+- `ttsRequestInstallVoice()` opens the system voice data installer
+- `TtsErrorType.languageMissingData` fires when voice data is missing for the publication's language
+- Voice quality and availability vary by device and installed language packs
+- When `fromLocator` is provided to `ttsEnable()`, Android uses it as the starting position. When null, it falls back to the first visible locator in the reader.
 
 ### Web
 
-- Uses Web Speech API
-- Browser-dependent voice availability
-- Limited customization
+- Uses the Web Speech API (`window.speechSynthesis`)
+- `ttsCanSpeak()` checks browser support and navigator readiness
+- `ttsGetSystemVoices()` calls `window.speechSynthesis.getVoices()` (same as `ttsGetAvailableVoices` on web)
+- `ttsRequestInstallVoice()` is a no-op — browsers manage voices through the OS
+- No background playback — the browser tab must stay active
+- Word-level highlighting is Chrome-only (via `SpeechSynthesisUtterance.onboundary`); sentence-level works cross-browser
+- `setDecorationStyle()` is a no-op on web — the Web Speech API operates on extracted text, not the live EPUB DOM
+- Voice enumeration may require user interaction in some browsers before voices load
+- Position updates are resource-level only (no CFI precision from Web Speech API)
 
 ## See Also
 

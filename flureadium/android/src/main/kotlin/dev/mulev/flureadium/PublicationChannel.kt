@@ -2,6 +2,7 @@
 
 package dev.mulev.flureadium
 
+import android.speech.tts.TextToSpeech
 import android.util.Log
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -9,6 +10,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 import org.json.JSONObject
 import org.readium.r2.shared.ExperimentalReadiumApi
 import org.readium.r2.shared.InternalReadiumApi
@@ -98,9 +101,12 @@ internal class PublicationMethodCallHandler() :
             }
 
             "ttsEnable" -> {
-                val args = arguments as Map<*, *>?
-                val ttsPrefs = FlutterTtsPreferences.fromMap(args)
-                return ttsEnable(ttsPrefs)
+                val args = arguments as List<*>
+                val ttsPrefs = FlutterTtsPreferences.fromMap(args[0] as Map<*, *>?)
+                val locator = (args[1] as? Map<*, *>)?.let {
+                    Locator.fromJSON(JSONObject(it))
+                }
+                return ttsEnable(locator, ttsPrefs)
             }
 
             "ttsSetPreferences" -> {
@@ -119,8 +125,21 @@ internal class PublicationMethodCallHandler() :
                 return setDecorationStyle(decorationPreferences)
             }
 
+            "ttsCanSpeak" -> {
+                return Try.success(ReadiumReader.ttsCanSpeak())
+            }
+
+            "ttsRequestInstallVoice" -> {
+                ReadiumReader.ttsRequestInstallVoice()
+                return Try.success(null)
+            }
+
             "ttsGetAvailableVoices" -> {
                 return Try.success(ttsGetAvailableVoices())
+            }
+
+            "ttsGetSystemVoices" -> {
+                return Try.success(ttsGetSystemVoices())
             }
 
             "ttsSetVoice" -> {
@@ -285,7 +304,10 @@ internal class PublicationMethodCallHandler() :
     /**
      * Enable TTS reading with the provided preferences.
      */
-    private suspend fun ttsEnable(prefs: FlutterTtsPreferences): Try<Any?, PublicationError> {
+    private suspend fun ttsEnable(
+        locator: Locator?,
+        prefs: FlutterTtsPreferences
+    ): Try<Any?, PublicationError> {
         val publication = ReadiumReader.currentPublication
         if (publication == null) {
             return Try.failure(
@@ -293,7 +315,7 @@ internal class PublicationMethodCallHandler() :
             )
         }
 
-        ReadiumReader.ttsEnable(prefs)
+        ReadiumReader.ttsEnable(locator, prefs)
         return Try.success(null)
     }
 
@@ -346,6 +368,36 @@ internal class PublicationMethodCallHandler() :
         }
 
         return voicesJson
+    }
+
+    /**
+     * Get the list of TTS voices from the OS without requiring a TTS navigator.
+     */
+    private suspend fun ttsGetSystemVoices(): List<String> {
+        val context = ReadiumReader.application.applicationContext
+        return suspendCancellableCoroutine { cont ->
+            var tts: TextToSpeech? = null
+            tts = TextToSpeech(context) { status ->
+                if (status == TextToSpeech.SUCCESS) {
+                    val voices = tts?.voices ?: emptySet()
+                    val json = voices.map { voice ->
+                        JSONObject().apply {
+                            put("identifier", voice.name)
+                            put("name", voice.name)
+                            put("quality", if (voice.quality >= android.speech.tts.Voice.QUALITY_HIGH) "high" else "normal")
+                            put("requiresNetwork", voice.isNetworkConnectionRequired)
+                            put("language", voice.locale.toLanguageTag())
+                        }.toString()
+                    }
+                    tts?.shutdown()
+                    cont.resume(json)
+                } else {
+                    tts?.shutdown()
+                    cont.resume(listOf())
+                }
+            }
+            cont.invokeOnCancellation { tts?.shutdown() }
+        }
     }
 
     /**

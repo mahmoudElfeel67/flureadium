@@ -58,6 +58,7 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
     with WakelockManagerMixin, ReaderLifecycleMixin, OrientationHandlerMixin
     implements ReadiumReaderWidgetInterface {
   ReadiumReaderChannel? _channel;
+  StreamSubscription<Locator>? _locatorDebugSub;
   bool wasDestroyed = false;
   bool isReady = false;
 
@@ -88,6 +89,8 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
   @override
   void dispose() {
     R2Log.d('ReadiumReaderWidget disposed');
+    _locatorDebugSub?.cancel();
+    _locatorDebugSub = null;
     cleanupWidgetInterface(_channel?.name);
     _channel?.dispose();
     _channel = null;
@@ -412,10 +415,14 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
         widget.onLocatorChanged?.call(locator);
 
         if (isReady == false) {
-          setState(() {
-            isReady = true;
-          });
-          _isReadyCompleter.complete(locator);
+          if (mounted) {
+            setState(() {
+              isReady = true;
+            });
+          }
+          if (!_isReadyCompleter.isCompleted) {
+            _isReadyCompleter.complete(locator);
+          }
         }
       },
     );
@@ -438,7 +445,8 @@ class _ReadiumReaderWidgetState extends State<ReadiumReaderWidget>
         .asBroadcastStream()
         .distinct();
 
-    nativeLocatorStream.listen((locator) {
+    _locatorDebugSub?.cancel();
+    _locatorDebugSub = nativeLocatorStream.listen((locator) {
       R2Log.d('ReaderWidget.LocatorChanged - $locator');
     });
   }

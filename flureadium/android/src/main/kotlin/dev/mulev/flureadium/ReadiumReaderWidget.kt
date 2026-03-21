@@ -71,7 +71,14 @@ class ReadiumReaderWidget(
 
     override fun dispose() {
         Log.d(TAG, "::dispose")
-        ReadiumReader.sendReaderStatus("closed")
+        // Only send "closed" if this is still the active widget.
+        // When Flutter recreates the widget tree (e.g. between integration
+        // tests), the OLD platform view disposes asynchronously — after the
+        // NEW widget has already registered its event listener. Without this
+        // guard the stale "closed" event would clobber the new widget's state.
+        if (ReadiumReader.currentReaderWidget === this) {
+            ReadiumReader.sendReaderStatus("closed")
+        }
         if (isPdf) {
             ReadiumReader.pdfClose()
         } else {

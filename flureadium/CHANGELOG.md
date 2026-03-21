@@ -1,3 +1,72 @@
+## 0.8.0
+
+### New Features
+
+- **TTS availability check**: Add `ttsCanSpeak()` — checks whether the device TTS engine supports the current publication's language before enabling. Returns `false` when TTS is unavailable, letting you show an appropriate message instead of a silent failure.
+- **TTS voice installer**: Add `ttsRequestInstallVoice()` — opens the platform voice-data installer when the required language pack is missing. Android launches the system TTS settings; on iOS and web this is a no-op.
+- **TTS error reporting**: Add `TtsErrorType` to `ReadiumTimebasedState` — surfaces structured error types (`languageMissingData`, `languageNotSupported`, `synthesisError`, `networkError`) so the app can react to specific failure modes.
+- **System voices**: Add `ttsGetSystemVoices()` — returns all system-level TTS voices regardless of publication language. Unlike `ttsGetAvailableVoices()` (which filters to the current publication), this gives the full list for voice-picker UI.
+- **TTS position restore**: Add optional `fromLocator` parameter to `ttsEnable()` — allows resuming TTS playback from a saved position after disabling and re-enabling.
+- **Android**: Add awaitable `release()` to all navigators — proper resource cleanup that can be awaited before switching publications.
+- **Web**: Add TTS engine using the Web Speech API with full JS interop bridge to Dart.
+
+### Bug Fixes
+
+- **Android**: Suppress backward scroll when calling TTS `play()` from a specific position — the navigator no longer jumps back to the start of the chapter before reading.
+- **iOS**: Suppress backward scroll on TTS play from a specific position, matching the Android fix.
+- **Android**: Honor `initialLocator` in `TTSNavigator.initNavigator()` — TTS now starts from the saved locator instead of the beginning of the chapter.
+- **iOS**: Use optional cast in `ttsSetPreferences` to handle null `voiceIdentifier` without crashing.
+- **iOS**: Make `closePublication` awaitable to prevent async race when switching publications.
+- **Android**: Dispatch navigator `close()` to the main thread in `release()`, preventing `CalledFromWrongThreadException`.
+- **Android**: Dispatch fragment `commitNow` on the main thread in `release()`.
+- **Android**: Guard stale "closed" event from a disposed platform view.
+- **Android**: Release navigators in `openPublication()` before switching to prevent resource leaks.
+- **Android**: Use `release()` in `ReadiumReader` for proper resource cleanup.
+- Guard `setState` with `mounted` check and cancel leaked subscription after dispose.
+- Use `_initialLocator` in TTS `play()` so resume starts from the saved position.
+- Pass saved TTS locator on re-enable.
+
+### Example App
+
+- Full TTS control UI: can-speak gating, voice cycling, system voice picker, sentence navigation, install-voice prompt on missing language data.
+- Save and restore TTS position across enable/disable cycles.
+- Detect navigation when re-enabling TTS to prevent backward scroll.
+- Catch `PlatformException` in audio toggle.
+- Use unique temp paths in asset extraction to prevent SIGBUS.
+- Fix race condition in `_toggleTts` that discarded the playing state.
+
+### Developer Tools
+
+- Harden integration test runner with signal traps, test reporter, and cleanup.
+- Capture native logcat during Android integration tests.
+- Clean up orphaned Chrome processes and use `web-server` device.
+- Stream test output in real-time when `--verbose` is set.
+
+### Testing
+
+- Add Web TTS integration tests (`epub_tts_web_test.dart`).
+- Add Jest test suite for the Web Speech API TTS engine.
+- Replace fixed sleeps with adaptive polling and bounded pump loops in integration tests.
+- Add tearDown blocks to integration tests for cleanup between tests.
+- Replace stale `getPlatformVersion` template test with real `ttsCanSpeak` test.
+- Add Android unit tests: `ReadiumReaderCleanupTest`, `ReadiumReaderTtsTest`, `AudiobookNavigatorReleaseTest`, `TTSNavigatorReleaseTest`, `TTSNavigatorTest`.
+- Add iOS unit tests: `FlutterTTSNavigatorTests`.
+
+### Documentation
+
+- Document `ttsCanSpeak`, `ttsErrorType`, `ttsGetSystemVoices`, and `ttsRequestInstallVoice` in API reference.
+- Document TTS position resume with `fromLocator` in the text-to-speech guide.
+- Document `release()` vs `dispose()` navigator pattern.
+- Document audio error handling and test isolation tearDown pattern.
+- Add iOS Swift unit test documentation.
+- Add troubleshooting entries for `ttsSetPreferences` iOS crash and iOS publication cleanup.
+
+### Dependencies
+
+- Requires `flureadium_platform_interface` ^0.6.0.
+
+---
+
 ## 0.7.2
 
 ### Bug fixes

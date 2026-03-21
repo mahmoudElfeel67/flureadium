@@ -5,7 +5,9 @@ import 'dart:isolate';
 
 void main(List<String> args) async {
   if (args.isEmpty) {
-    print('Usage: dart run flureadium:copy_js_file <destination_directory> [dev|prod]');
+    print(
+      'Usage: dart run flureadium:copy_js_file <destination_directory> [dev|prod]',
+    );
     return;
   }
 

@@ -20,6 +20,14 @@ public class FlutterTTSNavigator: FlutterTimebasedNavigator, PublicationSpeechSy
   internal var subscriptions: Set<AnyCancellable> = []
   internal var isMoving = false
 
+  /// When true, the next utterance from $playingUtterance should suppress
+  /// its reachedLocator event to prevent backward scrolling.
+  internal var _suppressScrollUntilNewUtterance = false
+
+  /// When true, word-range reachedLocator events are suppressed because
+  /// the current utterance was suppressed (it would scroll backward).
+  internal var _isInSuppressedUtterance = false
+
   public var publication: Publication {
     get {
       return self._publication
@@ -44,22 +52,25 @@ public class FlutterTTSNavigator: FlutterTimebasedNavigator, PublicationSpeechSy
     self.nowPlayingUpdater = .init(withPublication: publication)
   }
 
-  public func initNavigator() -> Void {
+  public func initNavigator() async throws -> Void {
     self.engine = AVTTSEngine()
-    self.synthesizer = PublicationSpeechSynthesizer(
+    guard let eng = self.engine else {
+      throw NSError(domain: "Flureadium", code: -2, userInfo: [NSLocalizedDescriptionKey: "TTS engine failed to initialize"])
+    }
+    guard let synth = PublicationSpeechSynthesizer(
       publication: publication,
       config: PublicationSpeechSynthesizer.Configuration(
         defaultLanguage: preferences.overrideLanguage,
-        voiceIdentifier: preferences.voiceIdentifier,
+        voiceIdentifier: preferences.voiceIdentifier
       ),
-      engineFactory: {
-        return self.engine!
-      }
-    )!
-    engine?.delegate = self
-    self.synthesizer?.delegate = self
+      engineFactory: { return eng }
+    ) else {
+      throw NSError(domain: "Flureadium", code: -1, userInfo: [NSLocalizedDescriptionKey: "Publication does not support TTS"])
+    }
+    self.synthesizer = synth
+    eng.delegate = self
+    synth.delegate = self
 
-    // TODO: Why is this public, if always called from itself?
     self.setupNavigatorListeners()
   }
 
@@ -76,6 +87,15 @@ public class FlutterTTSNavigator: FlutterTimebasedNavigator, PublicationSpeechSy
 
         self.nowPlayingUpdater.updateChapterNo(chapterNo)
         self.nowPlayingUpdater.updateCommandCenterControls()
+
+        if self._suppressScrollUntilNewUtterance {
+          self._suppressScrollUntilNewUtterance = false
+          self._isInSuppressedUtterance = true
+          return
+        }
+
+        self._isInSuppressedUtterance = false
+
         listener?.timebasedNavigator(self, reachedLocator: locator, readingOrderLink: link)
       }
       .store(in: &subscriptions)
@@ -86,6 +106,10 @@ public class FlutterTTSNavigator: FlutterTimebasedNavigator, PublicationSpeechSy
       .throttle(for: .milliseconds(100), scheduler: RunLoop.main, latest: true)
       .sink { [weak self] locator in
         guard let self = self else {
+          return
+        }
+
+        if self._isInSuppressedUtterance {
           return
         }
 
@@ -107,7 +131,11 @@ public class FlutterTTSNavigator: FlutterTimebasedNavigator, PublicationSpeechSy
   }
 
   public func play(fromLocator: Locator?) async -> Void {
-    self.synthesizer?.start(from: fromLocator)
+    let startLocator = _initialLocator ?? fromLocator
+    _initialLocator = nil
+    _suppressScrollUntilNewUtterance = startLocator != nil
+    _isInSuppressedUtterance = false
+    self.synthesizer?.start(from: startLocator)
     nowPlayingUpdater.setupNowPlayingInfo()
     nowPlayingUpdater.setupCommandCenterControls(
       preferredIntervals: [],
@@ -136,16 +164,22 @@ public class FlutterTTSNavigator: FlutterTimebasedNavigator, PublicationSpeechSy
   }
 
   public func seekForward() async -> Bool {
+    _suppressScrollUntilNewUtterance = false
+    _isInSuppressedUtterance = false
     self.synthesizer?.next()
     return true
   }
 
   public func seekBackward() async -> Bool {
+    _suppressScrollUntilNewUtterance = false
+    _isInSuppressedUtterance = false
     self.synthesizer?.previous()
     return true
   }
 
   public func seek(toLocator: Locator) async -> Bool {
+    _suppressScrollUntilNewUtterance = false
+    _isInSuppressedUtterance = false
     self.synthesizer?.start(from: toLocator)
     return true
   }
@@ -172,7 +206,7 @@ public class FlutterTTSNavigator: FlutterTimebasedNavigator, PublicationSpeechSy
   }
 
   func ttsGetAvailableVoices() -> [TTSVoice] {
-    return self.synthesizer?.availableVoices ?? []
+    return (self.synthesizer?.availableVoices ?? []).sorted()
   }
 
   func ttsSetVoice(voiceIdentifier: String) throws {

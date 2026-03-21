@@ -268,6 +268,39 @@ If edge taps appear in Flutter's `Listener` logs but no navigation occurs:
 3. In EPUB scroll mode, all overlay gestures are intentionally disabled; check that
    `setScrollMode(false)` was called when leaving scroll mode.
 
+### "setState() called after dispose()" in test logs
+
+This error occurred when the native platform sent `onPageChanged` method calls after the Dart `ReadiumReaderWidget` had already been disposed. The `onPageChanged` callback called `setState()` without checking `mounted`, and the `onTextLocatorChanged` stream subscription was never cancelled.
+
+Both issues are now fixed: `onPageChanged` checks `mounted` before calling `setState()`, and the debug stream subscription is stored and cancelled in `dispose()`. If you see this error in older versions, update the plugin.
+
+### Integration test cascade failures
+
+When integration tests share a process (the default for `flutter test`), a
+failed test can leave native resources (ExoPlayer sessions, TTS engines,
+navigator fragments) in a dirty state that causes every subsequent test to fail.
+
+**Prevention:** Add `tearDown` blocks to every test group that uses audio or TTS:
+
+```dart
+group('Audiobook', () {
+  tearDown(() async {
+    final flureadium = Flureadium();
+    await flureadium.stop();
+    await flureadium.closePublication();
+  });
+
+  testWidgets('plays audio', (tester) async { ... });
+});
+```
+
+`stop()` releases the TTS engine or ExoPlayer session. `closePublication()`
+calls `release()` on all active navigators, which awaits cleanup inline instead
+of firing and forgetting. Together they ensure each test starts with a clean
+native state.
+
+For EPUB-only tests (no TTS or audio), `closePublication()` alone is enough.
+
 ### WebView rendering issues
 
 Enable hardware acceleration:

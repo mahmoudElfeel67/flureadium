@@ -2,6 +2,7 @@ import Flutter
 import Combine
 import UIKit
 import MediaPlayer
+import AVFoundation
 import ReadiumNavigator
 import ReadiumShared
 
@@ -77,13 +78,19 @@ public class FlureadiumPlugin: NSObject, FlutterPlugin, ReadiumShared.WarningLog
       sharedReadium.setAdditionalHeaders(httpHeaders)
       result(nil)
     case "dispose":
-      closePublication()
-      self.timebasedPlayerStateStreamHandler?.dispose()
-      self.timebasedPlayerStateStreamHandler = nil
-      result(nil)
+      Task.detached(priority: .high) {
+        await self.closePublication()
+        await MainActor.run {
+          self.timebasedPlayerStateStreamHandler?.dispose()
+          self.timebasedPlayerStateStreamHandler = nil
+          result(nil)
+        }
+      }
     case "closePublication":
-      self.closePublication()
-      result(nil)
+      Task.detached(priority: .high) {
+        await self.closePublication()
+        await MainActor.run { result(nil) }
+      }
     case "openPublication":
       let args = call.arguments as! [Any?]
       let pubUrlStr = args[0] as! String
@@ -91,7 +98,7 @@ public class FlureadiumPlugin: NSObject, FlutterPlugin, ReadiumShared.WarningLog
       Task.detached(priority: .high) {
         do {
           if (currentPublication != nil) {
-            self.closePublication()
+            await self.closePublication()
           }
           let pub: Publication = try await self.loadPublication(fromUrlStr: pubUrlStr).get()
           currentPublication = pub
@@ -167,28 +174,42 @@ public class FlureadiumPlugin: NSObject, FlutterPlugin, ReadiumShared.WarningLog
       }
 
     case "ttsEnable":
+      guard let args = call.arguments as? [Any?] else {
+        return result(FlutterError.init(
+          code: "InvalidArgument",
+          message: "Invalid parameters to ttsEnable: \(call.arguments.debugDescription)",
+          details: nil))
+      }
       Task.detached(priority: .high) {
         do {
-          let args = call.arguments as? Dictionary<String, Any>,
-              ttsPrefs = (try? TTSPreferences(fromMap: args ?? [:])) ?? TTSPreferences()
-          //try await self.ttsEnable(withPreferences: ttsPrefs)
+          let prefsMap = args[0] as? Dictionary<String, Any>,
+              ttsPrefs = (try? TTSPreferences(fromMap: prefsMap ?? [:])) ?? TTSPreferences()
+
+          var locator: Locator? = nil
+          if let locatorJson = args[1] as? Dictionary<String, Any> {
+            locator = try? Locator(json: locatorJson, warnings: self)
+          }
 
           guard let publication = getCurrentPublication() else {
             throw ReadiumError.notFound("No publication opened")
           }
 
-          Task { @MainActor in
-            // Start TTS from the reader's current location
-            let currentLocation = currentReaderView?.getCurrentLocation()
-            self.timebasedNavigator = FlutterTTSNavigator(publication: publication, preferences: ttsPrefs, initialLocator: currentLocation)
-            self.timebasedNavigator?.listener = self
-            Task {
-              await self.timebasedNavigator?.initNavigator()
-            }
+          let navigator = await MainActor.run { () -> FlutterTTSNavigator in
+            let initialLocation = locator ?? currentReaderView?.getCurrentLocation()
+            let nav = FlutterTTSNavigator(publication: publication, preferences: ttsPrefs, initialLocator: initialLocation)
+            nav.listener = self
+            self.timebasedNavigator = nav
+            return nav
+          }
+
+          try await navigator.initNavigator()
+
+          await MainActor.run {
             result(nil)
           }
         } catch {
-          Task { @MainActor in
+          await MainActor.run {
+            self.timebasedNavigator = nil
             result(FlutterError.init(
               code: "TTSError",
               message: "Failed to enable TTS: \(error.localizedDescription)",
@@ -205,6 +226,30 @@ public class FlureadiumPlugin: NSObject, FlutterPlugin, ReadiumShared.WarningLog
       }
       let availableVoices = ttsNavigator.ttsGetAvailableVoices()
       result(availableVoices.compactMap { $0.jsonString })
+    case "ttsGetSystemVoices":
+      let voices = AVSpeechSynthesisVoice.speechVoices()
+      let voiceJsons: [String] = voices.compactMap { voice in
+        let json: [String: Any] = [
+          "identifier": voice.identifier,
+          "name": voice.name,
+          "language": voice.language,
+          "networkRequired": false,
+          "gender": "unspecified",
+          "quality": voice.quality.rawValue >= AVSpeechSynthesisVoiceQuality.enhanced.rawValue ? "high" : "normal"
+        ]
+        guard let data = try? JSONSerialization.data(withJSONObject: json),
+              let str = String(data: data, encoding: .utf8) else { return nil }
+        return str
+      }
+      result(voiceJsons)
+    case "ttsCanSpeak":
+      guard let publication = currentPublication else {
+        result(false)
+        return
+      }
+      result(PublicationSpeechSynthesizer.canSpeak(publication: publication))
+    case "ttsRequestInstallVoice":
+      result(nil) // No-op on iOS — voices managed by OS
     case "ttsSetVoice":
       let args = call.arguments as! [Any?]
       let voiceIdentifier = args[0] as! String
@@ -238,7 +283,7 @@ public class FlureadiumPlugin: NSObject, FlutterPlugin, ReadiumShared.WarningLog
       }
       result(nil)
     case "ttsSetPreferences":
-      let args = call.arguments as! Dictionary<String, String>
+      let args = call.arguments as? Dictionary<String, Any> ?? [:]
       guard let ttsNavigator = self.timebasedNavigator as? FlutterTTSNavigator else {
         return result(FlutterError.init(
           code: "TTSError",
@@ -274,12 +319,14 @@ public class FlureadiumPlugin: NSObject, FlutterPlugin, ReadiumShared.WarningLog
         }
       }
     case "stop":
-      Task { @MainActor in
-        self.timebasedNavigator?.dispose()
-        self.timebasedNavigator = nil
-        self.updateReaderViewTimebasedDecorations([])
+      Task.detached(priority: .high) {
+        await MainActor.run {
+          self.timebasedNavigator?.dispose()
+          self.timebasedNavigator = nil
+          self.updateReaderViewTimebasedDecorations([])
+        }
+        await MainActor.run { result(nil) }
       }
-      result(nil)
     case "pause":
       Task { @MainActor in
         await self.timebasedNavigator?.pause()
@@ -376,7 +423,7 @@ public class FlureadiumPlugin: NSObject, FlutterPlugin, ReadiumShared.WarningLog
         }
 
         self.timebasedNavigator?.listener = self
-        await self.timebasedNavigator?.initNavigator()
+        try await self.timebasedNavigator?.initNavigator()
 
         await MainActor.run {
           result(nil)
@@ -537,9 +584,9 @@ extension FlureadiumPlugin {
     }
   }
 
-  private func closePublication() {
+  private func closePublication() async {
     // Clean-up any resources associated with the publication.
-    Task { @MainActor in
+    await MainActor.run {
       self.timebasedNavigator?.dispose()
       self.timebasedNavigator = nil
       currentPublication?.close()

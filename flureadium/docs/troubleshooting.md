@@ -267,6 +267,33 @@ settles as soon as the reader is ready in integration tests.
 
 **Fix:** Ensure all stream handler `.dispose()` calls happen in the platform view's `"dispose"` method call handler (called from Dart while the engine is alive), not in `deinit`. The `deinit` should only nil out references without sending any messages. See [iOS Platform - Stream and View Lifecycle](platform-specific/ios.md#stream-and-view-lifecycle).
 
+### iOS: Crash on ttsSetPreferences with Null voiceIdentifier
+
+**Symptom:**
+```
+Could not cast value of type 'NSNull' to 'NSString'
+```
+App crashes when calling `ttsSetPreferences` — for example, tapping the speed button during TTS playback when no voice was explicitly set.
+
+**Cause:**
+The `ttsSetPreferences` handler in `FlureadiumPlugin.swift` used a forced cast (`as! Dictionary<String, String>`) on the method channel arguments. When `TTSPreferences` has a null `voiceIdentifier` (the default — system voice), Flutter serializes null as `NSNull`, which cannot be cast to `NSString`.
+
+**Fix (applied):**
+Changed the cast to match the safe pattern used by `ttsEnable`: `as? Dictionary<String, Any> ?? [:]`. The downstream `TTSPreferences(fromMap:)` already uses optional casts (`as? String`) for nullable fields, so it handles nulls correctly once the arguments arrive.
+
+### iOS: "No publication open" After Switching Publications
+
+**Error:**
+```
+PlatformException(InvalidArgument, No publication open)
+```
+
+**Cause:**
+This happened when `closePublication()` in `FlureadiumPlugin.swift` used a fire-and-forget `Task { @MainActor in }` for cleanup. When `openPublication` called `closePublication()` internally before loading a new publication, the cleanup task ran *after* the new publication was already stored — nullifying `currentPublication`. Any subsequent call (`audioEnable`, `play`, etc.) would fail because the publication reference was gone.
+
+**Fix (applied):**
+`closePublication()` is now `async` and uses `await MainActor.run { }` so callers wait for cleanup to complete before proceeding. The `openPublication`, `closePublication`, `dispose`, and `stop` method channel handlers all await cleanup before returning `result(nil)` to Dart.
+
 ## Platform-Specific Issues
 
 ### iOS: Localhost Connection Failed

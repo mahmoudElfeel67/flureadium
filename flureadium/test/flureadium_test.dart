@@ -244,10 +244,33 @@ void main() {
         expect(mockPlatform.wasCalled('ttsEnable'), isTrue);
       });
 
+      test('ttsEnable with fromLocator passes locator to platform', () async {
+        final prefs = TTSPreferences(speed: 1.5, pitch: 1.0);
+        final locator = Locator(
+          href: 'chapter3.xhtml',
+          type: 'application/xhtml+xml',
+        );
+
+        await flureadium.ttsEnable(prefs, fromLocator: locator);
+
+        expect(mockPlatform.wasCalled('ttsEnable'), isTrue);
+        expect(
+          mockPlatform.lastCallArgs('ttsEnable')?['fromLocator'],
+          equals(locator),
+        );
+      });
+
       test('ttsGetAvailableVoices calls platform method', () async {
         final voices = await flureadium.ttsGetAvailableVoices();
 
         expect(mockPlatform.wasCalled('ttsGetAvailableVoices'), isTrue);
+        expect(voices, isA<List<ReaderTTSVoice>>());
+      });
+
+      test('ttsGetSystemVoices calls platform method', () async {
+        final voices = await flureadium.ttsGetSystemVoices();
+
+        expect(mockPlatform.wasCalled('ttsGetSystemVoices'), isTrue);
         expect(voices, isA<List<ReaderTTSVoice>>());
       });
 
@@ -274,6 +297,19 @@ void main() {
         await flureadium.ttsSetPreferences(prefs);
 
         expect(mockPlatform.wasCalled('ttsSetPreferences'), isTrue);
+      });
+
+      test('ttsCanSpeak delegates to platform', () async {
+        final result = await flureadium.ttsCanSpeak();
+
+        expect(mockPlatform.wasCalled('ttsCanSpeak'), isTrue);
+        expect(result, isA<bool>());
+      });
+
+      test('ttsRequestInstallVoice delegates to platform', () async {
+        await flureadium.ttsRequestInstallVoice();
+
+        expect(mockPlatform.wasCalled('ttsRequestInstallVoice'), isTrue);
       });
 
       test('setDecorationStyle calls platform method', () async {

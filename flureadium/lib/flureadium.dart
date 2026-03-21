@@ -209,9 +209,16 @@ class Flureadium {
 
   /// Enables text-to-speech mode with optional preferences.
   ///
+  /// [fromLocator] optionally starts TTS from a saved position.
   /// Once enabled, use [play], [pause], [next], [previous] to control.
-  Future<void> ttsEnable(TTSPreferences? preferences) =>
-      _platform.ttsEnable(preferences);
+  Future<void> ttsEnable(TTSPreferences? preferences, {Locator? fromLocator}) =>
+      _platform.ttsEnable(preferences, fromLocator: fromLocator);
+
+  /// Checks whether TTS can speak the current publication's language.
+  Future<bool> ttsCanSpeak() => _platform.ttsCanSpeak();
+
+  /// Requests the system to install missing TTS voice data.
+  Future<void> ttsRequestInstallVoice() => _platform.ttsRequestInstallVoice();
 
   /// Updates TTS preferences while TTS is enabled.
   Future<void> ttsSetPreferences(TTSPreferences preferences) =>
@@ -231,6 +238,12 @@ class Flureadium {
   /// Returns platform-specific voice options for TTS playback.
   Future<List<ReaderTTSVoice>> ttsGetAvailableVoices() =>
       _platform.ttsGetAvailableVoices();
+
+  /// Gets available TTS voices from the OS without requiring TTS to be
+  /// enabled. Unlike [ttsGetAvailableVoices], this does not need a TTS
+  /// navigator.
+  Future<List<ReaderTTSVoice>> ttsGetSystemVoices() =>
+      _platform.ttsGetSystemVoices();
 
   /// Sets the TTS voice to use.
   ///

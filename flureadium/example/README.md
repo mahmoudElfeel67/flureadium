@@ -8,10 +8,12 @@ A minimal single-screen Flutter app that exercises all flureadium plugin capabil
 lib/
 └── main.dart           # Single file — ExampleApp + ReaderPage
 integration_test/
-├── launch_test.dart    # App launches without crash
-├── epub_test.dart      # Open EPUB, navigate, preferences, highlight, close
-├── audiobook_test.dart # Open audiobook, play/pause (native only)
-└── webpub_test.dart    # Open remote WebPub manifest
+├── launch_test.dart        # App launches without crash
+├── epub_test.dart          # Open EPUB, navigate, preferences, highlight, close
+├── epub_tts_test.dart      # TTS enable/disable, voice cycling, position restore
+├── epub_tts_web_test.dart  # Web Speech API TTS tests
+├── audiobook_test.dart     # Open audiobook, play/pause (native only)
+└── webpub_test.dart        # Open remote WebPub manifest
 test/
 └── widget_test.dart    # Widget smoke test
 ```
@@ -73,8 +75,18 @@ await flureadium.goByLink(tocLink, publication);
 ### Text-to-Speech
 
 ```dart
-// Get available voices
+// Check TTS availability before enabling
+final canSpeak = await flureadium.ttsCanSpeak();
+if (!canSpeak) {
+  // TTS engine cannot speak the publication's language
+  return;
+}
+
+// Get available voices (filtered to publication language)
 final voices = await flureadium.ttsGetAvailableVoices();
+
+// Get all system voices (all languages)
+final systemVoices = await flureadium.ttsGetSystemVoices();
 
 // Enable TTS with preferences
 await flureadium.ttsEnable(TTSPreferences(
@@ -89,6 +101,15 @@ await flureadium.ttsSetVoice(voices.first.id, 'en-US');
 await flureadium.play(null);
 await flureadium.pause();
 await flureadium.next();  // Skip to next sentence
+
+// Resume from a saved position after disabling/re-enabling TTS
+await flureadium.ttsEnable(
+  TTSPreferences(rate: 1.2),
+  fromLocator: savedLocator,
+);
+
+// Open platform voice installer when language data is missing
+await flureadium.ttsRequestInstallVoice();
 ```
 
 ### Audiobook Playback
@@ -165,8 +186,10 @@ if (savedJson != null) {
 | Ch.1 | `goByLink` | First TOC entry or first readingOrder link |
 | Night | `setEPUBPreferences` | Dark background, light text, Georgia font |
 | Highlight | `applyDecorations` | Yellow highlight at current locator |
-| TTS On / TTS Off | `ttsEnable` + `play` / `stop` + `ttsGetAvailableVoices` | Fetches voices on enable |
+| TTS On / TTS Off | `ttsCanSpeak` + `ttsEnable` + `play` / `stop` + `ttsGetAvailableVoices` | Checks availability, fetches voices on enable |
 | Voice N/Total | `ttsSetVoice` | Cycles available voices (visible when TTS active and voices available) |
+| OS TTS | `ttsGetSystemVoices` | Shows all system voices in a dialog (visible when TTS active) |
+| Install Voice | `ttsRequestInstallVoice` | Opens platform voice installer (visible on `languageMissingData` error) |
 | Prev Sentence / Next Sentence | `previous` / `next` | Sentence-level TTS navigation (visible when TTS active) |
 | Audio Play / Audio Pause / Audio Resume | `audioEnable` + `play` / `pause` / `resume` | Three-state toggle |
 | +30s | `audioSeekBy` | Seek forward 30 s (visible when audio active) |

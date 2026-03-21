@@ -34,10 +34,15 @@ class _ReaderPageState extends State<ReaderPage> {
   ReadiumTimebasedState? _timebasedState;
   bool _controlsVisible = true;
   bool _ttsEnabled = false;
+  Locator? _lastTtsLocator;
+  Locator? _readerLocatorAtTtsDisable;
   bool _audioEnabled = false;
   bool _audioPaused = false;
   List<ReaderTTSVoice> _voices = [];
   int _voiceIndex = 0;
+  TimebasedState? _ttsPlaybackState;
+  TtsErrorType? _ttsErrorType;
+  double _ttsSpeed = 1.0;
 
   StreamSubscription<ReadiumReaderStatus>? _statusSub;
   StreamSubscription<Locator>? _locatorSub;
@@ -53,7 +58,11 @@ class _ReaderPageState extends State<ReaderPage> {
     // Those channels are subscribed via ReadiumReaderWidget.onReady, which is
     // called from _onPlatformViewCreated after all native handlers are set up.
     _timebasedSub = _flureadium.onTimebasedPlayerStateChanged.listen(
-      (s) => setState(() => _timebasedState = s),
+      (s) => setState(() {
+        _timebasedState = s;
+        _ttsPlaybackState = _ttsEnabled ? s.state : null;
+        _ttsErrorType = _ttsEnabled ? s.ttsErrorType : null;
+      }),
     );
     WidgetsBinding.instance.addPostFrameCallback((_) => _openEpub());
   }
@@ -98,6 +107,8 @@ class _ReaderPageState extends State<ReaderPage> {
       setState(() {
         _publication = pub;
         _ttsEnabled = false;
+        _lastTtsLocator = null;
+        _readerLocatorAtTtsDisable = null;
         _audioEnabled = false;
         _audioPaused = false;
         _voices = [];
@@ -116,6 +127,8 @@ class _ReaderPageState extends State<ReaderPage> {
       setState(() {
         _publication = pub;
         _ttsEnabled = false;
+        _lastTtsLocator = null;
+        _readerLocatorAtTtsDisable = null;
         _audioEnabled = false;
         _audioPaused = false;
         _voices = [];
@@ -136,6 +149,8 @@ class _ReaderPageState extends State<ReaderPage> {
       setState(() {
         _publication = pub;
         _ttsEnabled = false;
+        _lastTtsLocator = null;
+        _readerLocatorAtTtsDisable = null;
         _audioEnabled = false;
         _audioPaused = false;
         _voices = [];
@@ -152,7 +167,9 @@ class _ReaderPageState extends State<ReaderPage> {
     }
     final bytes = await rootBundle.load(assetPath);
     final filename = assetPath.split('/').last;
-    final tmp = File('${Directory.systemTemp.path}/$filename');
+    final tmp = File(
+      '${Directory.systemTemp.path}/${DateTime.now().millisecondsSinceEpoch}_$filename',
+    );
     await tmp.writeAsBytes(bytes.buffer.asUint8List());
     return tmp.path;
   }
@@ -163,6 +180,8 @@ class _ReaderPageState extends State<ReaderPage> {
     setState(() {
       _publication = null;
       _ttsEnabled = false;
+      _lastTtsLocator = null;
+      _readerLocatorAtTtsDisable = null;
       _audioEnabled = false;
       _audioPaused = false;
       _voices = [];
@@ -185,24 +204,71 @@ class _ReaderPageState extends State<ReaderPage> {
 
   Future<void> _toggleTts() async {
     if (_ttsEnabled) {
+      _lastTtsLocator = _timebasedState?.currentLocator;
+      _readerLocatorAtTtsDisable = _locator;
       await _flureadium.stop();
       if (!mounted) return;
       setState(() {
         _ttsEnabled = false;
+        _ttsPlaybackState = null;
+        _ttsErrorType = null;
         _voices = [];
         _voiceIndex = 0;
       });
-    } else {
-      await _flureadium.ttsEnable(null);
-      await _flureadium.play(null);
-      final voices = await _flureadium.ttsGetAvailableVoices();
-      if (!mounted) return;
-      setState(() {
-        _ttsEnabled = true;
-        _voices = voices;
-        _voiceIndex = 0;
-      });
+      return;
     }
+    final canSpeak = await _flureadium.ttsCanSpeak();
+    if (!canSpeak) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('TTS is not supported for this publication'),
+          ),
+        );
+      }
+      return;
+    }
+    // Detect whether the reader position changed since TTS was disabled.
+    // If the user navigated to a different page, start TTS from the current
+    // reader position (fromLocator: null) instead of resuming from the saved
+    // TTS locator — this prevents backward scrolling to the previous page.
+    final navigated =
+        _readerLocatorAtTtsDisable != null &&
+        _locator != null &&
+        _readerLocatorAtTtsDisable != _locator;
+    final resumeLocator = navigated ? null : _lastTtsLocator;
+    await _flureadium.ttsEnable(
+      TTSPreferences(speed: _ttsSpeed),
+      fromLocator: resumeLocator,
+    );
+    if (!mounted) return;
+    // Set _ttsEnabled before play() so that the onTimebasedPlayerStateChanged
+    // callback (which guards on _ttsEnabled) correctly captures the 'playing'
+    // state when the native engine reports it.
+    setState(() {
+      _ttsEnabled = true;
+    });
+    await _flureadium.play(null);
+    final voices = await _flureadium.ttsGetAvailableVoices();
+    if (!mounted) return;
+    setState(() {
+      _voices = voices;
+      _voiceIndex = 0;
+    });
+  }
+
+  Future<void> _ttsPause() async => _flureadium.pause();
+
+  Future<void> _ttsResume() async => _flureadium.resume();
+
+  Future<void> _installVoice() async => _flureadium.ttsRequestInstallVoice();
+
+  Future<void> _showSystemVoices() async {
+    final voices = await _flureadium.ttsGetSystemVoices();
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('System voices: ${voices.length}')));
   }
 
   Future<void> _nextVoice() async {
@@ -224,13 +290,22 @@ class _ReaderPageState extends State<ReaderPage> {
       if (!mounted) return;
       setState(() => _audioPaused = false);
     } else {
-      await _flureadium.audioEnable();
-      await _flureadium.play(null);
-      if (!mounted) return;
-      setState(() {
-        _audioEnabled = true;
-        _audioPaused = false;
-      });
+      try {
+        await _flureadium.audioEnable();
+        await _flureadium.play(null);
+        if (!mounted) return;
+        setState(() {
+          _audioEnabled = true;
+          _audioPaused = false;
+        });
+      } catch (e) {
+        debugPrint('audioEnable error: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Audio playback unavailable: $e')),
+          );
+        }
+      }
     }
   }
 
@@ -375,9 +450,38 @@ class _ReaderPageState extends State<ReaderPage> {
                           child: const Text('Highlight'),
                         ),
                         TextButton(
+                          onPressed: _showSystemVoices,
+                          child: const Text('OS TTS'),
+                        ),
+                        TextButton(
                           onPressed: _toggleTts,
                           child: Text(_ttsEnabled ? 'TTS Off' : 'TTS On'),
                         ),
+                        if (_ttsEnabled && _ttsPlaybackState != null)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Text(
+                              'TTS: ${_ttsPlaybackState!.name}',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        if (_ttsEnabled &&
+                            _ttsPlaybackState == TimebasedState.playing)
+                          TextButton(
+                            onPressed: _ttsPause,
+                            child: const Text('Pause TTS'),
+                          ),
+                        if (_ttsEnabled &&
+                            _ttsPlaybackState == TimebasedState.paused)
+                          TextButton(
+                            onPressed: _ttsResume,
+                            child: const Text('Resume TTS'),
+                          ),
+                        if (_ttsErrorType == TtsErrorType.languageMissingData)
+                          TextButton(
+                            onPressed: _installVoice,
+                            child: const Text('Install Voice'),
+                          ),
                         if (_ttsEnabled && _voices.isNotEmpty)
                           TextButton(
                             onPressed: _nextVoice,
@@ -395,6 +499,25 @@ class _ReaderPageState extends State<ReaderPage> {
                             child: const Text('Next Sentence'),
                           ),
                         ],
+                        if (_ttsEnabled)
+                          SizedBox(
+                            width: 200,
+                            child: Slider(
+                              value: _ttsSpeed,
+                              min: 0.5,
+                              max: 2.0,
+                              divisions: 6,
+                              label: '${_ttsSpeed}x',
+                              onChanged: (value) async {
+                                setState(() => _ttsSpeed = value);
+                                if (_ttsEnabled) {
+                                  await _flureadium.ttsSetPreferences(
+                                    TTSPreferences(speed: value),
+                                  );
+                                }
+                              },
+                            ),
+                          ),
                         TextButton(
                           onPressed: _toggleAudio,
                           child: Text(

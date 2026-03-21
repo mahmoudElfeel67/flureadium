@@ -169,8 +169,22 @@ class MethodChannelFlureadium extends FlureadiumPlatform {
   ) async => await currentReaderWidget?.applyDecorations(id, decorations);
 
   @override
-  Future<void> ttsEnable(TTSPreferences? preferences) async =>
-      await methodChannel.invokeMethod('ttsEnable', preferences?.toMap());
+  Future<void> ttsEnable(TTSPreferences? preferences, {Locator? fromLocator}) =>
+      methodChannel.invokeMethod('ttsEnable', [
+        preferences?.toMap(),
+        fromLocator?.toJson(),
+      ]);
+
+  @override
+  Future<bool> ttsCanSpeak() async {
+    final result = await methodChannel.invokeMethod<bool>('ttsCanSpeak');
+    return result ?? false;
+  }
+
+  @override
+  Future<void> ttsRequestInstallVoice() async {
+    await methodChannel.invokeMethod<void>('ttsRequestInstallVoice');
+  }
 
   @override
   Future<void> play(Locator? fromLocator) async =>
@@ -204,6 +218,23 @@ class MethodChannelFlureadium extends FlureadiumPlatform {
   Future<List<ReaderTTSVoice>> ttsGetAvailableVoices() async {
     final voicesStr = await methodChannel.invokeMethod<List<dynamic>>(
       'ttsGetAvailableVoices',
+    );
+    final voices =
+        voicesStr
+            ?.whereType<String>()
+            .map<Map<String, dynamic>>(
+              (str) => json.decode(str) as Map<String, dynamic>,
+            )
+            .map<ReaderTTSVoice>((map) => ReaderTTSVoice.fromJsonMap(map))
+            .toList() ??
+        <ReaderTTSVoice>[];
+    return voices;
+  }
+
+  @override
+  Future<List<ReaderTTSVoice>> ttsGetSystemVoices() async {
+    final voicesStr = await methodChannel.invokeMethod<List<dynamic>>(
+      'ttsGetSystemVoices',
     );
     final voices =
         voicesStr

@@ -232,6 +232,30 @@ try {
 }
 ```
 
+### 5. Handle Audio/TTS Enable Failures
+
+`audioEnable()` can throw a `PlatformException` when the native audio navigator
+factory fails to initialize (e.g., missing codecs, hardware audio session
+conflicts). Wrap the call in a try/catch and surface the error to the user:
+
+```dart
+try {
+  await flureadium.audioEnable();
+  await flureadium.play(null);
+} catch (e) {
+  debugPrint('audioEnable error: $e');
+  if (mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Audio playback unavailable: $e')),
+    );
+  }
+}
+```
+
+Without this guard, a single `PlatformException` from `audioEnable()` can
+corrupt the Flutter integration test harness (`_pendingFrame` state) and cause
+all subsequent tests to fail in cascade.
+
 ---
 
 ## Error Categories (Recommended Extension)

@@ -19,7 +19,9 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import org.readium.adapter.pdfium.navigator.PdfiumEngineProvider
 import org.readium.r2.navigator.pdf.PdfNavigatorFactory
@@ -259,6 +261,18 @@ class PdfNavigator : BaseNavigator, PdfReaderFragment.Listener {
 
     override fun onCurrentLocatorChanges(locator: Locator) {
         visualListener.onVisualCurrentLocationChanged(locator)
+    }
+
+    override suspend fun release() {
+        super.dispose()
+
+        pdfNavigator?.let { fragment ->
+            withContext(Dispatchers.Main) {
+                fragment.parentFragmentManager.commitNow { remove(fragment) }
+            }
+        }
+        pdfNavigator = null
+        state.clear()
     }
 
     override fun dispose() {

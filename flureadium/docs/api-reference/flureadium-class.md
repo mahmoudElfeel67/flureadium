@@ -281,18 +281,61 @@ await flureadium.applyDecorations('highlights', []);
 Enables text-to-speech mode.
 
 ```dart
-Future<void> ttsEnable(TTSPreferences? preferences)
+Future<void> ttsEnable(TTSPreferences? preferences, {Locator? fromLocator})
 ```
 
 **Parameters:**
 - `preferences` - Optional [TTSPreferences](preferences.md#ttspreferences)
+- `fromLocator` - Optional [Locator](locator.md) to start TTS from a saved position. When provided, TTS begins reading from this location instead of the current visible position. Useful for resuming after disabling and re-enabling TTS.
 
 **Example:**
 ```dart
-await flureadium.ttsEnable(TTSPreferences(
-  speed: 1.2,
-  pitch: 1.0,
-));
+// Enable with default position
+await flureadium.ttsEnable(TTSPreferences(speed: 1.2, pitch: 1.0));
+
+// Resume from a saved position
+await flureadium.ttsEnable(
+  TTSPreferences(speed: 1.2),
+  fromLocator: savedLocator,
+);
+```
+
+### ttsCanSpeak
+
+Checks whether the platform's TTS engine can speak the current publication's language.
+
+```dart
+Future<bool> ttsCanSpeak()
+```
+
+**Returns:** `true` if TTS can handle the publication's language, `false` otherwise
+
+Call this after opening a publication and before enabling TTS to verify language support. Platform-specific behavior is documented in Phase 1 (iOS), Phase 2 (Android), and Phase 3 (Web).
+
+**Example:**
+```dart
+final canSpeak = await flureadium.ttsCanSpeak();
+if (!canSpeak) {
+  // Offer to install voice data or show a warning
+  await flureadium.ttsRequestInstallVoice();
+}
+```
+
+### ttsRequestInstallVoice
+
+Requests the system to install missing TTS voice data for the current publication's language.
+
+```dart
+Future<void> ttsRequestInstallVoice()
+```
+
+On Android, this opens the system TTS voice data installation dialog. On iOS, this is a no-op since voice downloads are managed through system settings. Platform-specific behavior is documented in Phase 2 (Android).
+
+**Example:**
+```dart
+if (!await flureadium.ttsCanSpeak()) {
+  await flureadium.ttsRequestInstallVoice();
+}
 ```
 
 ### ttsSetPreferences
@@ -308,7 +351,7 @@ Future<void> ttsSetPreferences(TTSPreferences preferences)
 
 ### ttsGetAvailableVoices
 
-Gets the list of available TTS voices.
+Gets the list of available TTS voices. Requires `ttsEnable()` to have been called first.
 
 ```dart
 Future<List<ReaderTTSVoice>> ttsGetAvailableVoices()
@@ -322,6 +365,23 @@ final voices = await flureadium.ttsGetAvailableVoices();
 for (final voice in voices) {
   print('${voice.name} (${voice.language})');
 }
+```
+
+### ttsGetSystemVoices
+
+Gets available TTS voices from the OS without requiring TTS to be enabled. Unlike `ttsGetAvailableVoices()`, this does not need a TTS navigator — call it anytime to populate a voice picker before the user starts reading aloud.
+
+```dart
+Future<List<ReaderTTSVoice>> ttsGetSystemVoices()
+```
+
+**Returns:** List of available platform voices (same `ReaderTTSVoice` model as `ttsGetAvailableVoices`)
+
+**Example:**
+```dart
+// Works before ttsEnable()
+final voices = await flureadium.ttsGetSystemVoices();
+final englishVoices = voices.where((v) => v.language.startsWith('en')).toList();
 ```
 
 ### ttsSetVoice

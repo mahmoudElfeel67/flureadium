@@ -9,6 +9,7 @@ import dev.mulev.flureadium.PublicationError
 import dev.mulev.flureadium.ReadiumReader
 import dev.mulev.flureadium.letIfBothNotNull
 import dev.mulev.flureadium.throttleLatest
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import org.readium.navigator.media.tts.TtsNavigator
 import org.readium.navigator.media.tts.TtsNavigator.Listener
@@ -58,6 +60,18 @@ class TTSNavigator(
 ) : TimebasedNavigator<TtsNavigator.Playback>(publication, timebaseListener, initialLocator) {
     val decorationGroup = "tts"
 
+    /**
+     * When true, the next location change should suppress the
+     * onTimebasedLocationChanged call to prevent backward scrolling.
+     */
+    private var suppressScrollUntilNewLocation = false
+
+    /**
+     * When true, location-change scrolling is suppressed because
+     * the current location was suppressed (it would scroll backward).
+     */
+    private var isInSuppressedLocation = false
+
     private var ttsNavigator: TtsNavigator<AndroidTtsSettings, AndroidTtsPreferences, AndroidTtsEngine.Error, AndroidTtsEngine.Voice>? =
         null
 
@@ -89,12 +103,18 @@ class TTSNavigator(
 
         val initialAndroidPreferences = preferences.toAndroidTtsPreferences()
         mainScope.async {
-            val firstVisibleLocator = ReadiumReader.currentReaderWidget?.getFirstVisibleLocator()
+            val startLocator = initialLocator ?: ReadiumReader.currentReaderWidget?.getFirstVisibleLocator()
+
+            // Suppress backward scroll for the first location change when
+            // starting from a specific position. The utterance's CSS selector
+            // may point to an element that starts on an earlier page.
+            suppressScrollUntilNewLocation = startLocator != null
+            isInSuppressedLocation = false
 
             ttsNavigator =
                 navigatorFactory.createNavigator(
                     listener,
-                    firstVisibleLocator,
+                    startLocator,
                     initialAndroidPreferences
                 )
                     .getOrElse {
@@ -186,6 +206,8 @@ class TTSNavigator(
      * Skip to previous utterance (sentence).
      */
     override suspend fun goBack() {
+        suppressScrollUntilNewLocation = false
+        isInSuppressedLocation = false
         val navigator = ttsNavigator ?: return
         mainScope.async {
             if (navigator.hasPreviousUtterance()) {
@@ -198,6 +220,8 @@ class TTSNavigator(
      * Skip to next utterance (sentence).
      */
     override suspend fun goForward() {
+        suppressScrollUntilNewLocation = false
+        isInSuppressedLocation = false
         val navigator = ttsNavigator ?: return
         mainScope.async {
             if (navigator.hasNextUtterance()) {
@@ -207,6 +231,8 @@ class TTSNavigator(
     }
 
     override suspend fun goToLocator(locator: Locator) {
+        suppressScrollUntilNewLocation = false
+        isInSuppressedLocation = false
         val navigator = ttsNavigator ?: return
         mainScope.async {
             navigator.go(locator)
@@ -297,6 +323,22 @@ class TTSNavigator(
             .map { it.tokenLocator ?: it.utteranceLocator }
             .distinctUntilChanged()
             .onEach { locator ->
+                if (suppressScrollUntilNewLocation) {
+                    // First location after play — suppress scroll to prevent
+                    // backward navigation. Subsequent word/token locations
+                    // within this utterance will also be suppressed.
+                    suppressScrollUntilNewLocation = false
+                    isInSuppressedLocation = true
+                    return@onEach
+                }
+
+                if (isInSuppressedLocation) {
+                    // Still in the suppressed utterance — the next distinct
+                    // location means we moved to a new utterance. Clear the
+                    // flag and resume normal scrolling.
+                    isInSuppressedLocation = false
+                }
+
                 ReadiumReader.onTimebasedLocationChanged(locator)
             }
             .launchIn(mainScope)
@@ -356,6 +398,20 @@ class TTSNavigator(
         }
     }
 
+    override suspend fun release() {
+        super.dispose()
+
+        mediaServiceFacade?.closeSession()
+        ReadiumReader.applyDecorations(emptyList(), decorationGroup)
+        // TtsNavigator.close() interacts with Android TTS engine which
+        // may require the main thread. release() can be called from
+        // Dispatchers.IO (via PublicationChannel), so we switch explicitly.
+        withContext(Dispatchers.Main.immediate) {
+            ttsNavigator?.close()
+        }
+        ttsNavigator = null
+    }
+
     override fun dispose() {
         super.dispose()
 
@@ -371,31 +427,40 @@ class TTSNavigator(
 
     override fun onPlaybackStateChanged(pb: TtsNavigator.Playback) {
         when (pb.state) {
-            // Handle TTS-specific failure state
             is TtsNavigator.State.Failure -> {
                 val ttsState = pb.state as TtsNavigator.State.Failure
                 val error = ttsState.error
 
-                // TODO: Handle TTS-specific errors?
                 Log.e(
                     TAG,
                     ": onPlaybackStateChanged - TTS error: Message=${error.message} cause=${error.cause}"
+                )
+
+                ReadiumReader.ttsErrorType = classifyTtsErrorType(
+                    error as? AndroidTtsEngine.Error
                 )
 
                 timebaseListener.onTimebasedPlaybackStateChanged(TimebasedState.Failure)
                 timebaseListener.onTimebasedPlaybackFailure(
                     PublicationError.invoke(error)
                 )
-
             }
 
             else -> {
+                ReadiumReader.ttsErrorType = null
                 super.onPlaybackStateChanged(pb)
             }
         }
     }
 
     companion object {
+        fun classifyTtsErrorType(error: AndroidTtsEngine.Error?): String {
+            return when (error) {
+                is AndroidTtsEngine.Error.LanguageMissingData -> "languageMissingData"
+                else -> "unknown"
+            }
+        }
+
         fun restoreState(
             publication: Publication,
             listener: TimebasedListener,

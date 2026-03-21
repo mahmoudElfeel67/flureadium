@@ -140,15 +140,32 @@ abstract class FlureadiumPlatform extends PlatformInterface {
   // COMMON PLAYBACK API - END
 
   // TTS API - BEGIN
-  /// Enabled TTS playback for the current publication with optional preferences.
-  Future<void> ttsEnable(TTSPreferences? preferences) =>
+  /// Enables TTS playback for the current publication with optional preferences.
+  ///
+  /// [fromLocator] optionally starts TTS from a saved position.
+  Future<void> ttsEnable(TTSPreferences? preferences, {Locator? fromLocator}) =>
       throw UnimplementedError('ttsEnable() has not been implemented');
+
+  /// Check whether TTS can speak the current publication's language.
+  Future<bool> ttsCanSpeak() =>
+      throw UnimplementedError('ttsCanSpeak() has not been implemented');
+
+  /// Request the system to install missing TTS voice data.
+  Future<void> ttsRequestInstallVoice() => throw UnimplementedError(
+    'ttsRequestInstallVoice() has not been implemented',
+  );
 
   /// Get the list of available TTS voices on the platform.
   Future<List<ReaderTTSVoice>> ttsGetAvailableVoices() =>
       throw UnimplementedError(
         'ttsGetAvailableVoices() has not been implemented',
       );
+
+  /// Get the list of available TTS voices from the OS without requiring
+  /// TTS to be enabled. Unlike [ttsGetAvailableVoices], this does not
+  /// need a TTS navigator.
+  Future<List<ReaderTTSVoice>> ttsGetSystemVoices() =>
+      throw UnimplementedError('ttsGetSystemVoices() has not been implemented');
 
   /// Set the TTS voice by its identifier, optionally for a specific language.
   Future<void> ttsSetVoice(String voiceIdentifier, String? forLanguage) =>

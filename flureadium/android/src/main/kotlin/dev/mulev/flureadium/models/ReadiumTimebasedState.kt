@@ -32,7 +32,12 @@ data class ReadiumTimebasedState(
     /**
      *  Current duration in milliseconds
      */
-    val currentDuration: Double
+    val currentDuration: Double,
+
+    /**
+     *  TTS error type when state is Failure (null otherwise)
+     */
+    val ttsErrorType: String? = null
 ) : JSONable {
     /**
      * Convert to JSON object
@@ -43,5 +48,8 @@ data class ReadiumTimebasedState(
         put("currentOffset", currentOffset)
         put("currentBuffer", currentBuffer)
         put("currentDuration", currentDuration)
+        if (ttsErrorType != null) {
+            put("ttsErrorType", ttsErrorType)
+        }
     }
 }

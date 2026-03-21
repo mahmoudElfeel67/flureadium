@@ -102,7 +102,31 @@ void main() {
     });
 
     group('TTS API', () {
-      test('ttsEnable sends preferences map', () async {
+      test('ttsEnable sends preferences and locator', () async {
+        final prefs = TTSPreferences(
+          speed: 1.5,
+          pitch: 1.0,
+          voiceIdentifier: 'voice-123',
+        );
+        final locator = Locator(
+          href: 'chapter3.xhtml',
+          type: 'application/xhtml+xml',
+        );
+
+        await platform.ttsEnable(prefs, fromLocator: locator);
+
+        expect(methodCalls.length, equals(1));
+        expect(methodCalls.last.method, equals('ttsEnable'));
+        expect(methodCalls.last.arguments[0]['speed'], equals(1.5));
+        expect(methodCalls.last.arguments[0]['pitch'], equals(1.0));
+        expect(
+          methodCalls.last.arguments[0]['voiceIdentifier'],
+          equals('voice-123'),
+        );
+        expect(methodCalls.last.arguments[1]['href'], equals('chapter3.xhtml'));
+      });
+
+      test('ttsEnable sends only preferences when no locator', () async {
         final prefs = TTSPreferences(
           speed: 1.5,
           pitch: 1.0,
@@ -113,12 +137,8 @@ void main() {
 
         expect(methodCalls.length, equals(1));
         expect(methodCalls.last.method, equals('ttsEnable'));
-        expect(methodCalls.last.arguments['speed'], equals(1.5));
-        expect(methodCalls.last.arguments['pitch'], equals(1.0));
-        expect(
-          methodCalls.last.arguments['voiceIdentifier'],
-          equals('voice-123'),
-        );
+        expect(methodCalls.last.arguments[0]['speed'], equals(1.5));
+        expect(methodCalls.last.arguments[1], isNull);
       });
 
       test('ttsEnable sends null when no preferences', () async {
@@ -126,7 +146,7 @@ void main() {
 
         expect(methodCalls.length, equals(1));
         expect(methodCalls.last.method, equals('ttsEnable'));
-        expect(methodCalls.last.arguments, isNull);
+        expect(methodCalls.last.arguments, equals([null, null]));
       });
 
       test('ttsGetAvailableVoices returns list of voices', () async {
@@ -168,6 +188,43 @@ void main() {
         },
       );
 
+      test('ttsGetSystemVoices returns list of voices', () async {
+        final voices = await platform.ttsGetSystemVoices();
+
+        expect(methodCalls.length, equals(1));
+        expect(methodCalls.last.method, equals('ttsGetSystemVoices'));
+        expect(voices, isA<List<ReaderTTSVoice>>());
+      });
+
+      test(
+        'ttsGetSystemVoices filters null entries from native response',
+        () async {
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMethodCallHandler(platform.methodChannel, (call) async {
+                methodCalls.add(call);
+                if (call.method == 'ttsGetSystemVoices') {
+                  return [
+                    json.encode({
+                      'identifier': 'voice-1',
+                      'name': 'Samantha',
+                      'language': 'en-US',
+                      'networkRequired': false,
+                      'gender': 'female',
+                      'quality': 'high',
+                    }),
+                    null,
+                  ];
+                }
+                return _mockResponse(call);
+              });
+
+          final voices = await platform.ttsGetSystemVoices();
+
+          expect(voices.length, equals(1));
+          expect(voices.first.identifier, equals('voice-1'));
+        },
+      );
+
       test('ttsSetVoice sends voice identifier and language', () async {
         await platform.ttsSetVoice('com.apple.voice.Samantha', 'en-US');
 
@@ -197,6 +254,31 @@ void main() {
         expect(methodCalls.length, equals(1));
         expect(methodCalls.last.method, equals('ttsSetPreferences'));
         expect(methodCalls.last.arguments['speed'], equals(2.0));
+      });
+
+      test(
+        'ttsSetPreferences sends preferences with null voiceIdentifier',
+        () async {
+          final prefs = TTSPreferences(speed: 1.5);
+
+          await platform.ttsSetPreferences(prefs);
+
+          expect(methodCalls.length, equals(1));
+          expect(methodCalls.last.method, equals('ttsSetPreferences'));
+          expect(methodCalls.last.arguments['speed'], equals(1.5));
+          expect(methodCalls.last.arguments['voiceIdentifier'], isNull);
+        },
+      );
+
+      test('ttsCanSpeak returns bool result from native', () async {
+        final result = await platform.ttsCanSpeak();
+        expect(methodCalls.last.method, equals('ttsCanSpeak'));
+        expect(result, isA<bool>());
+      });
+
+      test('ttsRequestInstallVoice sends correct method', () async {
+        await platform.ttsRequestInstallVoice();
+        expect(methodCalls.last.method, equals('ttsRequestInstallVoice'));
       });
 
       test('setDecorationStyle sends decoration styles', () async {
@@ -423,6 +505,21 @@ dynamic _mockResponse(MethodCall call) {
           'quality': 'high',
         }),
       ];
+    case 'ttsGetSystemVoices':
+      return <String>[
+        json.encode({
+          'identifier': 'voice-1',
+          'name': 'Samantha',
+          'language': 'en-US',
+          'networkRequired': false,
+          'gender': 'female',
+          'quality': 'high',
+        }),
+      ];
+    case 'ttsCanSpeak':
+      return true;
+    case 'ttsRequestInstallVoice':
+      return null;
     case 'getLinkContent':
       return '<html><body>Content</body></html>';
     default:

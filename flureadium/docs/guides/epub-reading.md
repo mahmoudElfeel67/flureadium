@@ -377,6 +377,12 @@ ReadiumReaderWidget(
 )
 ```
 
+### Switching Publications
+
+When `openPublication()` is called while another publication is active, the Android implementation automatically releases all active navigators (EPUB, audiobook, TTS, PDF) before opening the new publication. This prevents resource contention — particularly with ExoPlayer audio sessions, which may fail to initialize if a previous session hasn't fully closed.
+
+You don't need to call `closePublication()` before `openPublication()` — cleanup is handled internally. However, calling `closePublication()` explicitly in your widget's `dispose()` remains good practice to free resources promptly.
+
 ## Visual Customization
 
 ### Setting Preferences

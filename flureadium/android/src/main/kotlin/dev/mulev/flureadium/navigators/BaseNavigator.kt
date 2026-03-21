@@ -54,6 +54,15 @@ abstract class BaseNavigator(
     }
 
     /**
+     * Awaitable disposal — suspends until all resources (ExoPlayer sessions,
+     * MediaSessions, fragments) are fully released. Callers that need to
+     * create a new navigator afterwards MUST use this instead of [dispose].
+     */
+    open suspend fun release() {
+        dispose()
+    }
+
+    /**
      * Called when the current locator changes.
      */
     abstract fun onCurrentLocatorChanges(locator: Locator)

@@ -16,8 +16,12 @@ void main() {
     // with a fixed duration instead.
     await tester.pump(const Duration(seconds: 2));
     await tester.tap(find.text('Open WebPub'));
-    // Wait for the async JS fetch of the remote WebPub manifest to complete.
-    await tester.pump(const Duration(seconds: 10));
+    // Poll for the reader widget — remote manifest fetch typically completes in 2-5s.
+    // Ceiling 15s (was 10s fixed) for slow/flaky networks.
+    for (var i = 0; i < 15; i++) {
+      await tester.pump(const Duration(seconds: 1));
+      if (find.byType(ReadiumReaderWidget).evaluate().isNotEmpty) break;
+    }
     expect(find.byType(ReadiumReaderWidget), findsOneWidget);
   });
 }
