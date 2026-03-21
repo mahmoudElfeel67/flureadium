@@ -400,6 +400,8 @@ Native code throws platform exceptions with string codes that map to `OpeningRea
 | `incorrectCredentials` | incorrectCredentials | Auth failed |
 | (other) | unknown | Unmapped error |
 
+The `details` field in platform channel errors is always `String?` or `null` — never a complex object. On Android, `publicationError()` converts `error.cause` to a string via `toString()` before passing it to `MethodChannel.Result.error()`. On iOS, `ReadiumError.toFlutterError()` uses `.localizedDescription` for the same purpose. This keeps the value compatible with Flutter's `StandardMessageCodec`, which only accepts primitives, maps, lists, and null.
+
 ---
 
 ## Summary
@@ -430,7 +432,7 @@ const _trace = <String>[
 
 ---
 
-**Last Updated**: 2026-02-01
+**Last Updated**: 2026-03-21
 **Related Files:**
 - `lib/src/exceptions/readium_exceptions.dart`
 - `lib/src/utils/r2_log.dart`
