@@ -514,6 +514,6 @@ fun MethodChannel.Result.publicationError(method: String, error: PublicationErro
     this.error(
         error.errorCode.name,
         error.message,
-        error.cause
+        error.cause?.toString()
     )
 }
