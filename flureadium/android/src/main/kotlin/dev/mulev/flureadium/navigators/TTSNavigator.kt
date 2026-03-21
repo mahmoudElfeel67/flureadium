@@ -60,6 +60,18 @@ class TTSNavigator(
 ) : TimebasedNavigator<TtsNavigator.Playback>(publication, timebaseListener, initialLocator) {
     val decorationGroup = "tts"
 
+    /**
+     * When true, the next location change should suppress the
+     * onTimebasedLocationChanged call to prevent backward scrolling.
+     */
+    private var suppressScrollUntilNewLocation = false
+
+    /**
+     * When true, location-change scrolling is suppressed because
+     * the current location was suppressed (it would scroll backward).
+     */
+    private var isInSuppressedLocation = false
+
     private var ttsNavigator: TtsNavigator<AndroidTtsSettings, AndroidTtsPreferences, AndroidTtsEngine.Error, AndroidTtsEngine.Voice>? =
         null
 
@@ -92,6 +104,12 @@ class TTSNavigator(
         val initialAndroidPreferences = preferences.toAndroidTtsPreferences()
         mainScope.async {
             val startLocator = initialLocator ?: ReadiumReader.currentReaderWidget?.getFirstVisibleLocator()
+
+            // Suppress backward scroll for the first location change when
+            // starting from a specific position. The utterance's CSS selector
+            // may point to an element that starts on an earlier page.
+            suppressScrollUntilNewLocation = startLocator != null
+            isInSuppressedLocation = false
 
             ttsNavigator =
                 navigatorFactory.createNavigator(
@@ -188,6 +206,8 @@ class TTSNavigator(
      * Skip to previous utterance (sentence).
      */
     override suspend fun goBack() {
+        suppressScrollUntilNewLocation = false
+        isInSuppressedLocation = false
         val navigator = ttsNavigator ?: return
         mainScope.async {
             if (navigator.hasPreviousUtterance()) {
@@ -200,6 +220,8 @@ class TTSNavigator(
      * Skip to next utterance (sentence).
      */
     override suspend fun goForward() {
+        suppressScrollUntilNewLocation = false
+        isInSuppressedLocation = false
         val navigator = ttsNavigator ?: return
         mainScope.async {
             if (navigator.hasNextUtterance()) {
@@ -209,6 +231,8 @@ class TTSNavigator(
     }
 
     override suspend fun goToLocator(locator: Locator) {
+        suppressScrollUntilNewLocation = false
+        isInSuppressedLocation = false
         val navigator = ttsNavigator ?: return
         mainScope.async {
             navigator.go(locator)
@@ -299,6 +323,22 @@ class TTSNavigator(
             .map { it.tokenLocator ?: it.utteranceLocator }
             .distinctUntilChanged()
             .onEach { locator ->
+                if (suppressScrollUntilNewLocation) {
+                    // First location after play — suppress scroll to prevent
+                    // backward navigation. Subsequent word/token locations
+                    // within this utterance will also be suppressed.
+                    suppressScrollUntilNewLocation = false
+                    isInSuppressedLocation = true
+                    return@onEach
+                }
+
+                if (isInSuppressedLocation) {
+                    // Still in the suppressed utterance — the next distinct
+                    // location means we moved to a new utterance. Clear the
+                    // flag and resume normal scrolling.
+                    isInSuppressedLocation = false
+                }
+
                 ReadiumReader.onTimebasedLocationChanged(locator)
             }
             .launchIn(mainScope)
