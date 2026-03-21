@@ -1,3 +1,9 @@
+## 0.8.1
+
+### Bug Fixes
+
+- **Android**: Convert `error.cause` to `String?` in `publicationError()` before passing it to `MethodChannel.Result.error()`. The Readium `Error` object was not codec-safe, causing `StandardMessageCodec` to throw `IllegalArgumentException: Unsupported value` and silently swallowing EPUB subject metadata.
+
 ## 0.8.0
 
 ### New Features
