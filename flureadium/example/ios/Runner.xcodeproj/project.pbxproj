@@ -17,6 +17,8 @@
 		C1D2E3F4A5B6C7D800004002 /* ReadiumExtensionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D2E3F4A5B6C7D800004001 /* ReadiumExtensionsTests.swift */; };
 		C1D2E3F4A5B6C7D800005002 /* FlutterMediaOverlayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D2E3F4A5B6C7D800005001 /* FlutterMediaOverlayTests.swift */; };
 		C1D2E3F4A5B6C7D800006002 /* ReadiumErrorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D2E3F4A5B6C7D800006001 /* ReadiumErrorTests.swift */; };
+		D1E2F3A4B5C6D7E800007002 /* EdgeTapInterceptViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E2F3A4B5C6D7E800007001 /* EdgeTapInterceptViewTests.swift */; };
+		D1E2F3A4B5C6D7E800008002 /* NowPlayingInfoUpdaterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E2F3A4B5C6D7E800008001 /* NowPlayingInfoUpdaterTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		78A318202AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage in Frameworks */ = {isa = PBXBuildFile; productRef = 78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */; };
@@ -63,6 +65,8 @@
 		C1D2E3F4A5B6C7D800004001 /* ReadiumExtensionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadiumExtensionsTests.swift; sourceTree = "<group>"; };
 		C1D2E3F4A5B6C7D800005001 /* FlutterMediaOverlayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlutterMediaOverlayTests.swift; sourceTree = "<group>"; };
 		C1D2E3F4A5B6C7D800006001 /* ReadiumErrorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadiumErrorTests.swift; sourceTree = "<group>"; };
+		D1E2F3A4B5C6D7E800007001 /* EdgeTapInterceptViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeTapInterceptViewTests.swift; sourceTree = "<group>"; };
+		D1E2F3A4B5C6D7E800008001 /* NowPlayingInfoUpdaterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingInfoUpdaterTests.swift; sourceTree = "<group>"; };
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
 		5BDBF082C9CC180601979FB5 /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
@@ -123,6 +127,8 @@
 				C1D2E3F4A5B6C7D800004001 /* ReadiumExtensionsTests.swift */,
 				C1D2E3F4A5B6C7D800005001 /* FlutterMediaOverlayTests.swift */,
 				C1D2E3F4A5B6C7D800006001 /* ReadiumErrorTests.swift */,
+				D1E2F3A4B5C6D7E800007001 /* EdgeTapInterceptViewTests.swift */,
+				D1E2F3A4B5C6D7E800008001 /* NowPlayingInfoUpdaterTests.swift */,
 			);
 			path = RunnerTests;
 			sourceTree = "<group>";
@@ -405,6 +411,8 @@
 				C1D2E3F4A5B6C7D800004002 /* ReadiumExtensionsTests.swift in Sources */,
 				C1D2E3F4A5B6C7D800005002 /* FlutterMediaOverlayTests.swift in Sources */,
 				C1D2E3F4A5B6C7D800006002 /* ReadiumErrorTests.swift in Sources */,
+				D1E2F3A4B5C6D7E800007002 /* EdgeTapInterceptViewTests.swift in Sources */,
+				D1E2F3A4B5C6D7E800008002 /* NowPlayingInfoUpdaterTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
