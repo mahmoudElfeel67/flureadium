@@ -176,6 +176,56 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
     });
 
+    testWidgets(
+      'tts disable, navigate to next page, re-enable does not crash',
+      (tester) async {
+        app.main();
+        for (var i = 0; i < 15; i++) {
+          await tester.pump(const Duration(seconds: 1));
+          if (find.byType(ReadiumReaderWidget).evaluate().isNotEmpty) break;
+        }
+        // Enable TTS
+        await tester.tap(find.text('TTS On'));
+        for (var i = 0; i < 60; i++) {
+          await tester.pump(const Duration(seconds: 1));
+          if (find.text('Prev Sentence').evaluate().isNotEmpty) break;
+        }
+        expect(find.text('TTS Off'), findsOneWidget);
+
+        // Advance one sentence so TTS has a locator to save
+        await tester.tap(find.text('Next Sentence'));
+        await tester.pump(const Duration(seconds: 2));
+
+        // Disable TTS
+        await tester.tap(find.text('TTS Off'));
+        for (var i = 0; i < 5; i++) {
+          await tester.pump(const Duration(seconds: 1));
+          if (find.text('TTS On').evaluate().isNotEmpty) break;
+        }
+        expect(find.text('TTS On'), findsOneWidget);
+
+        // Navigate to next page — this changes the reader locator,
+        // triggering the navigation-aware re-enable path (fromLocator: null).
+        await tester.tap(find.text('→'));
+        // Wait for page turn to complete and locator to update.
+        await tester.pump(const Duration(seconds: 3));
+
+        // Re-enable TTS — should start from current (navigated-to) position.
+        // The native suppression logic prevents backward scrolling to the
+        // utterance's CSS selector on the previous page.
+        await tester.tap(find.text('TTS On'));
+        for (var i = 0; i < 60; i++) {
+          await tester.pump(const Duration(seconds: 1));
+          if (find.text('Prev Sentence').evaluate().isNotEmpty) break;
+        }
+        expect(find.text('TTS Off'), findsOneWidget);
+        expect(find.text('Prev Sentence'), findsOneWidget);
+
+        // Let in-flight native play() settle before tearDown.
+        await tester.pump(const Duration(seconds: 2));
+      },
+    );
+
     testWidgets('tts off hides sentence nav buttons', (tester) async {
       app.main();
       for (var i = 0; i < 15; i++) {

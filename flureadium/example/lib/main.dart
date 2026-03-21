@@ -35,6 +35,7 @@ class _ReaderPageState extends State<ReaderPage> {
   bool _controlsVisible = true;
   bool _ttsEnabled = false;
   Locator? _lastTtsLocator;
+  Locator? _readerLocatorAtTtsDisable;
   bool _audioEnabled = false;
   bool _audioPaused = false;
   List<ReaderTTSVoice> _voices = [];
@@ -107,6 +108,7 @@ class _ReaderPageState extends State<ReaderPage> {
         _publication = pub;
         _ttsEnabled = false;
         _lastTtsLocator = null;
+        _readerLocatorAtTtsDisable = null;
         _audioEnabled = false;
         _audioPaused = false;
         _voices = [];
@@ -126,6 +128,7 @@ class _ReaderPageState extends State<ReaderPage> {
         _publication = pub;
         _ttsEnabled = false;
         _lastTtsLocator = null;
+        _readerLocatorAtTtsDisable = null;
         _audioEnabled = false;
         _audioPaused = false;
         _voices = [];
@@ -147,6 +150,7 @@ class _ReaderPageState extends State<ReaderPage> {
         _publication = pub;
         _ttsEnabled = false;
         _lastTtsLocator = null;
+        _readerLocatorAtTtsDisable = null;
         _audioEnabled = false;
         _audioPaused = false;
         _voices = [];
@@ -177,6 +181,7 @@ class _ReaderPageState extends State<ReaderPage> {
       _publication = null;
       _ttsEnabled = false;
       _lastTtsLocator = null;
+      _readerLocatorAtTtsDisable = null;
       _audioEnabled = false;
       _audioPaused = false;
       _voices = [];
@@ -200,6 +205,7 @@ class _ReaderPageState extends State<ReaderPage> {
   Future<void> _toggleTts() async {
     if (_ttsEnabled) {
       _lastTtsLocator = _timebasedState?.currentLocator;
+      _readerLocatorAtTtsDisable = _locator;
       await _flureadium.stop();
       if (!mounted) return;
       setState(() {
@@ -222,9 +228,18 @@ class _ReaderPageState extends State<ReaderPage> {
       }
       return;
     }
+    // Detect whether the reader position changed since TTS was disabled.
+    // If the user navigated to a different page, start TTS from the current
+    // reader position (fromLocator: null) instead of resuming from the saved
+    // TTS locator — this prevents backward scrolling to the previous page.
+    final navigated =
+        _readerLocatorAtTtsDisable != null &&
+        _locator != null &&
+        _readerLocatorAtTtsDisable != _locator;
+    final resumeLocator = navigated ? null : _lastTtsLocator;
     await _flureadium.ttsEnable(
       TTSPreferences(speed: _ttsSpeed),
-      fromLocator: _lastTtsLocator,
+      fromLocator: resumeLocator,
     );
     if (!mounted) return;
     // Set _ttsEnabled before play() so that the onTimebasedPlayerStateChanged
