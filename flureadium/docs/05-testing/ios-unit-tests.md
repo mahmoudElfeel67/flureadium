@@ -80,34 +80,34 @@ Alternatively, open `Runner.xcworkspace` in Xcode once, drag the file into Runne
 
 ### Prerequisites
 
-The example app must be built for the iOS simulator at least once before running tests. This generates Flutter build artifacts that `xcodebuild` depends on:
+The example app must be built for the iOS simulator at least once before running tests. This generates Flutter build artifacts that `xcodebuild` depends on. Without this step, `xcodebuild test` fails with a `PhaseScriptExecution` / `kernel_snapshot_program` error.
 
 ```bash
 cd flureadium/example
 flutter build ios --simulator --debug
 ```
 
-You only need to re-run this when Flutter dependencies change (pubspec.yaml, plugin registration, etc.). Subsequent test runs reuse the cached build.
+Re-run this when Flutter dependencies change (pubspec.yaml, plugin registration, etc.). Subsequent test runs reuse the cached build.
 
-### Finding a Simulator
+### Picking a Simulator
 
-List available iOS simulators:
-
-```bash
-xcrun simctl list devices available | grep iPhone
-```
-
-Pick any simulator. For best compatibility, choose one running the latest installed iOS runtime. If you need a specific runtime version:
+Use the simulator UUID rather than its name. Name-based destinations (`platform=iOS Simulator,name=iPhone 16 Pro`) fail when multiple iOS runtimes define a simulator with the same name.
 
 ```bash
-# List installed runtimes
-xcrun simctl list runtimes | grep iOS
-
-# Filter devices by runtime
-xcrun simctl list devices available "iOS 18.3"
+# Grab the UUID of the first matching iPhone simulator
+SIM_ID=$(xcrun simctl list devices available | grep -m1 'iPhone.*Flutter Sim' | grep -oE '[A-F0-9-]{36}')
+# Fallback if no "Flutter Sim" custom simulator exists
+[ -z "$SIM_ID" ] && SIM_ID=$(xcrun simctl list devices available | grep -m1 'iPhone 16 Pro' | grep -oE '[A-F0-9-]{36}')
 ```
 
 The simulator does not need to be booted — `xcodebuild` boots it automatically.
+
+If you need a specific runtime version:
+
+```bash
+xcrun simctl list runtimes | grep iOS
+xcrun simctl list devices available "iOS 18.3"
+```
 
 ### Run All iOS Unit Tests
 
@@ -117,12 +117,10 @@ xcodebuild test \
   -workspace Runner.xcworkspace \
   -scheme Runner \
   -configuration Debug \
-  -destination 'platform=iOS Simulator,name=<simulator-name>' \
+  -destination "id=$SIM_ID" \
   -only-testing:RunnerTests \
-  2>&1 | grep -E '(Test Case|TEST |Executed|error:)' | tail -30
+  2>&1 | grep -E '(Test Case|TEST |Executed|error:|failed)' | tail -30
 ```
-
-Replace `<simulator-name>` with a simulator from the list above (e.g., `iPhone 16 Pro`).
 
 ### Run a Specific Test Class
 
@@ -131,9 +129,9 @@ xcodebuild test \
   -workspace Runner.xcworkspace \
   -scheme Runner \
   -configuration Debug \
-  -destination 'platform=iOS Simulator,name=<simulator-name>' \
+  -destination "id=$SIM_ID" \
   -only-testing:RunnerTests/FlutterTTSNavigatorTests \
-  2>&1 | grep -E '(Test Case|TEST |Executed|error:)' | tail -30
+  2>&1 | grep -E '(Test Case|TEST |Executed|error:|failed)' | tail -30
 ```
 
 ### Run a Single Test Method
@@ -143,9 +141,9 @@ xcodebuild test \
   -workspace Runner.xcworkspace \
   -scheme Runner \
   -configuration Debug \
-  -destination 'platform=iOS Simulator,name=<simulator-name>' \
+  -destination "id=$SIM_ID" \
   -only-testing:RunnerTests/FlutterTTSNavigatorTests/testPlayConsumesInitialLocator \
-  2>&1 | grep -E '(Test Case|TEST |Executed|error:)' | tail -30
+  2>&1 | grep -E '(Test Case|TEST |Executed|error:|failed)' | tail -30
 ```
 
 ### Reading Output
