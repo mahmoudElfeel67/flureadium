@@ -140,6 +140,33 @@ await flureadium.play(null);
 
 Without `fromLocator`, TTS starts from the current visible position in the reader, which may not match where TTS previously stopped.
 
+### Starting TTS After Navigation
+
+When the user disables TTS, navigates to a different page, and then re-enables TTS, you should detect the navigation and pass `fromLocator: null` instead of the saved TTS locator. This makes TTS start from the current reader position rather than jumping back to where TTS left off on the previous page.
+
+```dart
+Locator? lastTtsLocator;
+Locator? readerLocatorAtTtsDisable;
+
+// When disabling TTS, save both the TTS position and the reader position
+lastTtsLocator = timebasedState?.currentLocator;
+readerLocatorAtTtsDisable = currentReaderLocator;
+
+// When re-enabling, check if the reader moved since TTS was disabled
+final navigated = readerLocatorAtTtsDisable != null &&
+    currentReaderLocator != null &&
+    readerLocatorAtTtsDisable != currentReaderLocator;
+final resumeLocator = navigated ? null : lastTtsLocator;
+
+await flureadium.ttsEnable(
+  TTSPreferences(speed: 1.0),
+  fromLocator: resumeLocator,
+);
+await flureadium.play(null);
+```
+
+Both iOS and Android have scroll-suppression logic in their TTS navigators that prevents the reader from jumping backward when TTS starts mid-utterance at a new position. This means the reader stays on the page the user navigated to while TTS begins reading from that position.
+
 ## Playback Controls
 
 ### Basic Controls
