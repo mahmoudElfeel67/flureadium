@@ -222,4 +222,86 @@ final class FlutterTTSNavigatorTests: XCTestCase {
         XCTAssertEqual(mock.reachedLocatorCalls.count, 0,
                         "Word range during suppressed utterance should not reach listener")
     }
+
+    // MARK: - dispose()
+
+    @MainActor
+    func testDisposeSendsEndedStateToListener() {
+        let (navigator, mock) = makeNavigatorWithMock(initialLocator: nil)
+        navigator.dispose()
+        XCTAssertTrue(mock.stateChanges.contains(where: { $0.state == .ended }),
+                      "dispose should send .ended state to listener")
+    }
+
+    @MainActor
+    func testDisposeNilsOutListener() {
+        let (navigator, _) = makeNavigatorWithMock(initialLocator: nil)
+        XCTAssertNotNil(navigator.listener)
+        navigator.dispose()
+        XCTAssertNil(navigator.listener,
+                     "dispose should set listener to nil")
+    }
+
+    @MainActor
+    func testDisposeCancelsSubscriptions() async {
+        let (navigator, mock) = makeNavigatorWithMock(initialLocator: nil)
+        navigator.dispose()
+        // After dispose, setting playingUtterance should NOT trigger listener
+        navigator.playingUtterance = makeLocator(href: "page1.xhtml")
+
+        // Wait for Combine pipeline flush
+        let waitExpectation = expectation(description: "wait for Combine")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            waitExpectation.fulfill()
+        }
+        await fulfillment(of: [waitExpectation], timeout: 1.0)
+
+        XCTAssertEqual(mock.reachedLocatorCalls.count, 0,
+                       "No locator events should reach listener after dispose cancels subscriptions")
+    }
+
+    // MARK: - seekRelative / seek(toOffset:)
+
+    func testSeekRelativeReturnsFalse() async {
+        let navigator = FlutterTTSNavigator(
+            publication: makeUnspeakablePublication(),
+            initialLocator: nil
+        )
+        let result = await navigator.seekRelative(byOffsetSeconds: 10.0)
+        XCTAssertFalse(result, "seekRelative should return false for TTS navigator")
+    }
+
+    func testSeekToOffsetReturnsFalse() async {
+        let navigator = FlutterTTSNavigator(
+            publication: makeUnspeakablePublication(),
+            initialLocator: nil
+        )
+        let result = await navigator.seek(toOffset: 30.0)
+        XCTAssertFalse(result, "seek(toOffset:) should return false for TTS navigator")
+    }
+
+    // MARK: - ttsSetPreferences
+
+    func testTtsSetPreferencesUpdatesRateAndPitch() {
+        let navigator = FlutterTTSNavigator(
+            publication: makeUnspeakablePublication(),
+            initialLocator: nil
+        )
+        let newPrefs = TTSPreferences(rate: 0.75, pitch: 1.5)
+        navigator.ttsSetPreferences(prefs: newPrefs)
+        XCTAssertEqual(navigator.preferences.rate, 0.75)
+        XCTAssertEqual(navigator.preferences.pitch, 1.5)
+    }
+
+    // MARK: - ttsSetVoice error (no synthesizer)
+
+    func testTtsSetVoiceThrowsWithoutSynthesizer() {
+        let navigator = FlutterTTSNavigator(
+            publication: makeUnspeakablePublication(),
+            initialLocator: nil
+        )
+        XCTAssertThrowsError(try navigator.ttsSetVoice(voiceIdentifier: "nonexistent")) { error in
+            XCTAssertTrue(error is ReadiumError)
+        }
+    }
 }

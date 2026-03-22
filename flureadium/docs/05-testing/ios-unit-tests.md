@@ -15,10 +15,19 @@ Instead, tests live in the **example app's RunnerTests target** and run via `xco
 
 ```
 flureadium/example/ios/RunnerTests/
-├── RunnerTests.swift                  # Plugin handler tests
-├── FlutterTTSNavigatorTests.swift     # TTS navigator tests
-└── <YourNewTests>.swift               # Add new files here
+├── RunnerTests.swift                  # Plugin handler dispatch tests (~11 tests)
+├── FlutterTTSNavigatorTests.swift     # TTS navigator lifecycle, play/suppression, dispose (~18 tests)
+├── UtilityTests.swift                 # clamp, firstMap, asyncCompactMap (~8 tests)
+├── ModelTests.swift                   # ControlPanelInfoType, NavigationConfig, TTS/Audio/PDF preferences (~30 tests)
+├── StateSerializationTests.swift      # ReadiumTimebasedState toJson, toJsonString, Equatable (~8 tests)
+├── ReadiumExtensionsTests.swift       # Locator extensions, state mappings, EPUB/PDF preferences fromMap (~16 tests)
+├── FlutterMediaOverlayTests.swift     # FlutterMediaOverlayItem parsing/matching/locators (~14 tests)
+├── ReadiumErrorTests.swift            # ReadiumError/FlureadiumError to FlutterError conversions (~9 tests)
+├── EdgeTapInterceptViewTests.swift   # hitTest geometry, edge interception, subview bypass (~8 tests)
+└── NowPlayingInfoUpdaterTests.swift  # Chapter formatting for all ControlPanelInfoType variants (~8 tests)
 ```
+
+Total: ~130 tests across 10 test classes.
 
 All test files go in `flureadium/example/ios/RunnerTests/`. Do NOT put tests in the SPM test target at `ios/flureadium/Tests/flureadiumTests/` — those cannot be executed.
 
@@ -78,29 +87,40 @@ Alternatively, open `Runner.xcworkspace` in Xcode once, drag the file into Runne
 
 ## Running Tests
 
-### Prerequisites
+### Prerequisites — MUST BUILD BEFORE TESTING
 
-The example app must be built for the iOS simulator at least once before running tests. This generates Flutter build artifacts that `xcodebuild` depends on. Without this step, `xcodebuild test` fails with a `PhaseScriptExecution` / `kernel_snapshot_program` error.
+**This step is mandatory before every test run where files or project configuration changed.** Without it, `xcodebuild test` fails silently (exit code 1, no useful error output) or with stale-artifact errors.
 
 ```bash
 cd flureadium/example
 flutter build ios --simulator --debug
 ```
 
-Re-run this when Flutter dependencies change (pubspec.yaml, plugin registration, etc.). Subsequent test runs reuse the cached build.
+**You MUST re-run this build step when:**
+- New `.swift` test files are added
+- `project.pbxproj` is modified (file registrations, build settings)
+- Flutter dependencies change (pubspec.yaml, plugin registration)
+- Pod dependencies are updated
+
+The build regenerates all Flutter artifacts, runs `pod install`, and ensures `xcodebuild` has a consistent workspace. Skipping it after structural changes causes failures that produce no diagnostic output — just an empty error with exit code 1.
 
 ### Picking a Simulator
 
 Use the simulator UUID rather than its name. Name-based destinations (`platform=iOS Simulator,name=iPhone 16 Pro`) fail when multiple iOS runtimes define a simulator with the same name.
 
 ```bash
-# Grab the UUID of the first matching iPhone simulator
-SIM_ID=$(xcrun simctl list devices available | grep -m1 'iPhone.*Flutter Sim' | grep -oE '[A-F0-9-]{36}')
-# Fallback if no "Flutter Sim" custom simulator exists
+# Grab the UUID of the BOOTED Flutter Sim simulator
+SIM_ID=$(xcrun simctl list devices available | grep 'Flutter Sim.*Booted' | grep -oE '[A-F0-9-]{36}')
+# Fallback if no booted Flutter Sim exists
 [ -z "$SIM_ID" ] && SIM_ID=$(xcrun simctl list devices available | grep -m1 'iPhone 16 Pro' | grep -oE '[A-F0-9-]{36}')
 ```
 
-The simulator does not need to be booted — `xcodebuild` boots it automatically.
+**Critical:** Always grep for `Flutter Sim.*Booted` — never `grep -m1 'iPhone.*Flutter Sim'`. Multiple Flutter Sim devices exist across iOS runtimes, and `-m1` picks the first match which may be Shutdown. xcodebuild silently fails (exit code 1, zero output) when targeting a Shutdown simulator.
+
+If no simulator is booted, boot one first:
+```bash
+xcrun simctl boot $(xcrun simctl list devices available | grep -m1 'Flutter Sim' | grep -oE '[A-F0-9-]{36}')
+```
 
 If you need a specific runtime version:
 
@@ -112,38 +132,46 @@ xcrun simctl list devices available "iOS 18.3"
 ### Run All iOS Unit Tests
 
 ```bash
-cd flureadium/example/ios
-xcodebuild test \
-  -workspace Runner.xcworkspace \
-  -scheme Runner \
-  -configuration Debug \
-  -destination "id=$SIM_ID" \
-  -only-testing:RunnerTests \
-  2>&1 | grep -E '(Test Case|TEST |Executed|error:|failed)' | tail -30
+SIM_ID=$(xcrun simctl list devices available | grep 'Flutter Sim.*Booted' | grep -oE '[A-F0-9-]{36}')
+[ -z "$SIM_ID" ] && SIM_ID=$(xcrun simctl list devices available | grep -m1 'iPhone 16 Pro' | grep -oE '[A-F0-9-]{36}')
+cd flureadium/example/ios && \
+  xcodebuild test \
+    -workspace Runner.xcworkspace \
+    -scheme Runner \
+    -configuration Debug \
+    -destination "id=$SIM_ID" \
+    -only-testing:RunnerTests \
+    2>&1 | grep -E '(Test Case|TEST |Executed|error:|failed|SUCCEEDED|FAILED)' | tail -50
 ```
 
 ### Run a Specific Test Class
 
 ```bash
-xcodebuild test \
-  -workspace Runner.xcworkspace \
-  -scheme Runner \
-  -configuration Debug \
-  -destination "id=$SIM_ID" \
-  -only-testing:RunnerTests/FlutterTTSNavigatorTests \
-  2>&1 | grep -E '(Test Case|TEST |Executed|error:|failed)' | tail -30
+SIM_ID=$(xcrun simctl list devices available | grep 'Flutter Sim.*Booted' | grep -oE '[A-F0-9-]{36}')
+[ -z "$SIM_ID" ] && SIM_ID=$(xcrun simctl list devices available | grep -m1 'iPhone 16 Pro' | grep -oE '[A-F0-9-]{36}')
+cd flureadium/example/ios && \
+  xcodebuild test \
+    -workspace Runner.xcworkspace \
+    -scheme Runner \
+    -configuration Debug \
+    -destination "id=$SIM_ID" \
+    -only-testing:RunnerTests/FlutterTTSNavigatorTests \
+    2>&1 | grep -E '(Test Case|TEST |Executed|error:|failed|SUCCEEDED|FAILED)' | tail -50
 ```
 
 ### Run a Single Test Method
 
 ```bash
-xcodebuild test \
-  -workspace Runner.xcworkspace \
-  -scheme Runner \
-  -configuration Debug \
-  -destination "id=$SIM_ID" \
-  -only-testing:RunnerTests/FlutterTTSNavigatorTests/testPlayConsumesInitialLocator \
-  2>&1 | grep -E '(Test Case|TEST |Executed|error:|failed)' | tail -30
+SIM_ID=$(xcrun simctl list devices available | grep 'Flutter Sim.*Booted' | grep -oE '[A-F0-9-]{36}')
+[ -z "$SIM_ID" ] && SIM_ID=$(xcrun simctl list devices available | grep -m1 'iPhone 16 Pro' | grep -oE '[A-F0-9-]{36}')
+cd flureadium/example/ios && \
+  xcodebuild test \
+    -workspace Runner.xcworkspace \
+    -scheme Runner \
+    -configuration Debug \
+    -destination "id=$SIM_ID" \
+    -only-testing:RunnerTests/FlutterTTSNavigatorTests/testPlayConsumesInitialLocator \
+    2>&1 | grep -E '(Test Case|TEST |Executed|error:|failed|SUCCEEDED|FAILED)' | tail -50
 ```
 
 ### Reading Output
@@ -158,13 +186,16 @@ The `grep` filter at the end shows pass/fail lines. Full xcodebuild output is ex
 For full output (debugging build failures), drop the `grep` pipe:
 
 ```bash
-xcodebuild test \
-  -workspace Runner.xcworkspace \
-  -scheme Runner \
-  -configuration Debug \
-  -destination 'platform=iOS Simulator,name=<simulator-name>' \
-  -only-testing:RunnerTests \
-  2>&1 | tail -50
+SIM_ID=$(xcrun simctl list devices available | grep 'Flutter Sim.*Booted' | grep -oE '[A-F0-9-]{36}')
+[ -z "$SIM_ID" ] && SIM_ID=$(xcrun simctl list devices available | grep -m1 'iPhone 16 Pro' | grep -oE '[A-F0-9-]{36}')
+cd flureadium/example/ios && \
+  xcodebuild test \
+    -workspace Runner.xcworkspace \
+    -scheme Runner \
+    -configuration Debug \
+    -destination "id=$SIM_ID" \
+    -only-testing:RunnerTests \
+    2>&1 | tail -80
 ```
 
 ## Deployment Target
