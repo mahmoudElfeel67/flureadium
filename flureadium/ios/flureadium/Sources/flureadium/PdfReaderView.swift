@@ -44,16 +44,8 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
   }
 
   deinit {
-    print(TAG, "::dispose")
+    print(TAG, "::deinit")
     pdfViewController.view.removeFromSuperview()
-    pdfViewController.delegate = nil
-    textLocatorStreamHandler?.dispose()
-    textLocatorStreamHandler = nil
-    readerStatusStreamHandler?.dispose()
-    readerStatusStreamHandler = nil
-    errorStreamHandler?.dispose()
-    errorStreamHandler = nil
-    channel.setMethodCallHandler(nil)
   }
 
   init(
@@ -517,6 +509,13 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
       pdfViewController.view.removeFromSuperview()
       pdfViewController.delegate = nil
       self.readerStatusStreamHandler?.sendEvent(PdfReaderStatusClosed)
+      textLocatorStreamHandler?.dispose()
+      textLocatorStreamHandler = nil
+      readerStatusStreamHandler?.dispose()
+      readerStatusStreamHandler = nil
+      errorStreamHandler?.dispose()
+      errorStreamHandler = nil
+      channel.setMethodCallHandler(nil)
       if currentPdfReaderView === self { currentPdfReaderView = nil }
       result(nil)
     default:

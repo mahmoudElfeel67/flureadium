@@ -55,11 +55,6 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
   deinit {
     print(TAG, "::deinit")
     readiumViewController.view.removeFromSuperview()
-    readiumViewController.delegate = nil
-    textLocatorStreamHandler = nil
-    readerStatusStreamHandler = nil
-    errorStreamHandler = nil
-    channel.setMethodCallHandler(nil)
   }
 
   init(
@@ -601,6 +596,7 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
       readerStatusStreamHandler = nil
       errorStreamHandler?.dispose()
       errorStreamHandler = nil
+      channel.setMethodCallHandler(nil)
       if currentReaderView === self { currentReaderView = nil }
       result(nil)
       break
