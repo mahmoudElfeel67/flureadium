@@ -54,7 +54,6 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
     errorStreamHandler?.dispose()
     errorStreamHandler = nil
     channel.setMethodCallHandler(nil)
-    setCurrentPdfReaderView(nil)
   }
 
   init(
@@ -126,7 +125,7 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
       ]
     )
 
-    setCurrentPdfReaderView(self)
+    currentPdfReaderView = self
     publicationIdentifier = publication.metadata.identifier
 
     // Configure edge tap handlers for page navigation
@@ -518,6 +517,7 @@ class PdfReaderView: NSObject, FlutterPlatformView, PDFNavigatorDelegate, Visual
       pdfViewController.view.removeFromSuperview()
       pdfViewController.delegate = nil
       self.readerStatusStreamHandler?.sendEvent(PdfReaderStatusClosed)
+      if currentPdfReaderView === self { currentPdfReaderView = nil }
       result(nil)
     default:
       print(TAG, "Unhandled call \(call.method)")

@@ -60,7 +60,6 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
     readerStatusStreamHandler = nil
     errorStreamHandler = nil
     channel.setMethodCallHandler(nil)
-    setCurrentReadiumReaderView(nil)
   }
 
   init(
@@ -152,7 +151,7 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
       ]
     )
 
-    setCurrentReadiumReaderView(self)
+    currentReaderView = self
     publicationIdentifier = publication.metadata.identifier
 
     /// This adapter will automatically turn pages when the user taps the
@@ -602,6 +601,7 @@ class ReadiumReaderView: NSObject, FlutterPlatformView, EPUBNavigatorDelegate, V
       readerStatusStreamHandler = nil
       errorStreamHandler?.dispose()
       errorStreamHandler = nil
+      if currentReaderView === self { currentReaderView = nil }
       result(nil)
       break
     default:
