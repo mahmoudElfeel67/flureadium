@@ -181,9 +181,33 @@ Flureadium iOS uses `EventStreamHandler` to manage Flutter EventChannel streams 
 
 This separation prevents crashes during app termination, where `FlutterEngine.destroyContext` triggers deallocation of native views after the message channels are already torn down.
 
+### Global Reference Lifecycle
+
+The plugin tracks the active reader view via two module-level globals in `FlureadiumPlugin.swift`:
+
+```swift
+internal weak var currentReaderView: ReadiumReaderView?
+internal weak var currentPdfReaderView: PdfReaderView?
+```
+
+Both are `weak var` — they do not own the view. This mirrors Android's `WeakReference<ReadiumReaderWidget>` pattern in `ReadiumReader.kt`. The weak reference prevents a Swift runtime exclusivity violation that would otherwise occur during hot reload: when a new view's `init` assigns itself to the global, ARC releases the old value, triggering the old view's `deinit` — if `deinit` also writes to the same global, Swift detects overlapping exclusive writes and aborts.
+
+Cleanup responsibilities:
+
+| Event | What happens |
+|-------|-------------|
+| `init` | View assigns itself to the global (`currentReaderView = self`) |
+| `"dispose"` method call | Identity-guarded cleanup (`if currentReaderView === self { currentReaderView = nil }`) — prevents clearing a newer view that replaced this one during hot reload |
+| `closePublication()` | Nils both globals before closing the publication — correct teardown order since views reference the publication |
+| `deinit` | Does not touch globals — handles only the view's own resource cleanup |
+
+The identity guard in the dispose handler matches Android's pattern at `ReadiumReaderWidget.kt:79`.
+
 **Files:**
 - `EventStreamHandler.swift` - Stream handler with `dispose()` that sends `FlutterEndOfEventStream`
-- `ReadiumReaderView.swift` - Calls stream `dispose()` in method call handler, not in `deinit`
+- `FlureadiumPlugin.swift` - Global weak references and `closePublication()` cleanup
+- `ReadiumReaderView.swift` - EPUB reader: init assigns global, dispose handler clears it
+- `PdfReaderView.swift` - PDF reader: same pattern as EPUB
 
 ## Troubleshooting
 
