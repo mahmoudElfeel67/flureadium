@@ -174,12 +174,21 @@ This is a native iOS layer change only. No Dart or Flutter changes are required.
 
 ### Stream and View Lifecycle
 
-Flureadium iOS uses `EventStreamHandler` to manage Flutter EventChannel streams (text locator, reader status, errors). Proper lifecycle management is critical:
+Flureadium iOS uses `EventStreamHandler` to manage Flutter EventChannel streams (text locator, reader status, errors). The `"dispose"` method call from Dart is the single comprehensive cleanup point. `deinit` is a minimal safety net.
 
-- **Stream disposal** (sending `FlutterEndOfEventStream` and clearing handlers) must happen in the `"dispose"` method call from Dart, while the Flutter engine is still alive
-- **`deinit`** only nils out references as a safety net — it must NOT send messages on Flutter channels, as `deinit` may be triggered during engine teardown when channels are no longer valid
+**dispose handler** owns all cleanup that needs a live Flutter engine:
 
-This separation prevents crashes during app termination, where `FlutterEngine.destroyContext` triggers deallocation of native views after the message channels are already torn down.
+| Responsibility | Why in dispose |
+|----------------|----------------|
+| Send "closed" status event | Needs live Flutter engine |
+| Stream `.dispose()` (sends `FlutterEndOfEventStream`) | Needs live Flutter engine |
+| Nil stream handler references | Part of explicit teardown |
+| Nil channel method call handler | Prevents calls after dispose |
+| Remove subview | Idempotent, safe in both |
+| Nil delegate | Part of explicit teardown |
+| Nil global reference (identity-guarded) | Explicit lifecycle event |
+
+**deinit** retains only `removeFromSuperview()` — it handles the edge case where the native view is deallocated without the Dart `dispose` call being received (engine teardown, hot restart). All property nilling is removed because ARC handles it automatically when the object deallocates. `deinit` must not send messages on Flutter channels, as it may run during engine teardown when channels are already torn down.
 
 ### Global Reference Lifecycle
 
