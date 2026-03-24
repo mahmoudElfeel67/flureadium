@@ -1,3 +1,10 @@
+## 0.8.2
+
+### Bug Fixes
+
+- **iOS**: Fix SIGABRT crash on hot reload with an active EPUB or PDF reader. The crash was a Swift runtime exclusivity violation — `deinit` wrote to a global variable that was already mid-write during ARC deallocation triggered by the new view's `init`. Global reader view references are now `weak var` (matching Android's `WeakReference` pattern), and `deinit` no longer touches them.
+- **iOS**: Make PdfReaderView dispose handler comprehensive — stream disposal and channel cleanup were previously only in `deinit`, meaning they never ran when the Dart `dispose` call arrived while the engine was still alive.
+
 ## 0.8.1
 
 ### Bug Fixes

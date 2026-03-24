@@ -10,19 +10,11 @@ private let TAG = "ReadiumReaderPlugin"
 
 internal var currentPublicationUrlStr: String?
 internal var currentPublication: Publication?
-internal var currentReaderView: ReadiumReaderView?
-internal var currentPdfReaderView: PdfReaderView?
+internal weak var currentReaderView: ReadiumReaderView?
+internal weak var currentPdfReaderView: PdfReaderView?
 
 func getCurrentPublication() -> Publication? {
   return currentPublication
-}
-
-func setCurrentReadiumReaderView(_ readerView: ReadiumReaderView?) {
-  currentReaderView = readerView
-}
-
-func setCurrentPdfReaderView(_ readerView: PdfReaderView?) {
-  currentPdfReaderView = readerView
 }
 
 public class FlureadiumPlugin: NSObject, FlutterPlugin, ReadiumShared.WarningLogger, TimebasedListener {
@@ -589,6 +581,8 @@ extension FlureadiumPlugin {
     await MainActor.run {
       self.timebasedNavigator?.dispose()
       self.timebasedNavigator = nil
+      currentReaderView = nil
+      currentPdfReaderView = nil
       currentPublication?.close()
       currentPublication = nil
       currentPublicationUrlStr = nil

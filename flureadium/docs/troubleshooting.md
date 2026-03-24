@@ -267,6 +267,14 @@ settles as soon as the reader is ready in integration tests.
 
 **Fix:** Ensure all stream handler `.dispose()` calls happen in the platform view's `"dispose"` method call handler (called from Dart while the engine is alive), not in `deinit`. The `deinit` should only nil out references without sending any messages. See [iOS Platform - Stream and View Lifecycle](platform-specific/ios.md#stream-and-view-lifecycle).
 
+### iOS: Crash on Hot Reload with Active Reader (SIGABRT)
+
+**Symptom:** `SIGABRT` with "Fatal access conflict detected" or "Simultaneous accesses to..." when hot-reloading while a reader view is open. The crash trace points to `ReadiumReaderView.deinit` or `PdfReaderView.deinit`.
+
+**Cause:** The old reader view's `deinit` was writing to a module-level global (`currentReaderView`) at the same time the new view's `init` was writing to it. Swift's runtime exclusivity enforcement detects overlapping writes and aborts. This happens because assigning the new view to the global triggers ARC release of the old value, which triggers `deinit` — all within a single write operation.
+
+**Fix (applied):** The globals are now `weak var`, so ARC zeroing doesn't trigger user code in `deinit`. The `deinit` no longer touches global state at all. Explicit cleanup happens in the `"dispose"` method call handler (identity-guarded) and in `closePublication()`. See [iOS Platform - Global Reference Lifecycle](platform-specific/ios.md#global-reference-lifecycle).
+
 ### iOS: Crash on ttsSetPreferences with Null voiceIdentifier
 
 **Symptom:**

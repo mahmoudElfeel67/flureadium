@@ -174,16 +174,49 @@ This is a native iOS layer change only. No Dart or Flutter changes are required.
 
 ### Stream and View Lifecycle
 
-Flureadium iOS uses `EventStreamHandler` to manage Flutter EventChannel streams (text locator, reader status, errors). Proper lifecycle management is critical:
+Flureadium iOS uses `EventStreamHandler` to manage Flutter EventChannel streams (text locator, reader status, errors). The `"dispose"` method call from Dart is the single comprehensive cleanup point. `deinit` is a minimal safety net.
 
-- **Stream disposal** (sending `FlutterEndOfEventStream` and clearing handlers) must happen in the `"dispose"` method call from Dart, while the Flutter engine is still alive
-- **`deinit`** only nils out references as a safety net — it must NOT send messages on Flutter channels, as `deinit` may be triggered during engine teardown when channels are no longer valid
+**dispose handler** owns all cleanup that needs a live Flutter engine:
 
-This separation prevents crashes during app termination, where `FlutterEngine.destroyContext` triggers deallocation of native views after the message channels are already torn down.
+| Responsibility | Why in dispose |
+|----------------|----------------|
+| Send "closed" status event | Needs live Flutter engine |
+| Stream `.dispose()` (sends `FlutterEndOfEventStream`) | Needs live Flutter engine |
+| Nil stream handler references | Part of explicit teardown |
+| Nil channel method call handler | Prevents calls after dispose |
+| Remove subview | Idempotent, safe in both |
+| Nil delegate | Part of explicit teardown |
+| Nil global reference (identity-guarded) | Explicit lifecycle event |
+
+**deinit** retains only `removeFromSuperview()` — it handles the edge case where the native view is deallocated without the Dart `dispose` call being received (engine teardown, hot restart). All property nilling is removed because ARC handles it automatically when the object deallocates. `deinit` must not send messages on Flutter channels, as it may run during engine teardown when channels are already torn down.
+
+### Global Reference Lifecycle
+
+The plugin tracks the active reader view via two module-level globals in `FlureadiumPlugin.swift`:
+
+```swift
+internal weak var currentReaderView: ReadiumReaderView?
+internal weak var currentPdfReaderView: PdfReaderView?
+```
+
+Both are `weak var` — they do not own the view. This mirrors Android's `WeakReference<ReadiumReaderWidget>` pattern in `ReadiumReader.kt`. The weak reference prevents a Swift runtime exclusivity violation that would otherwise occur during hot reload: when a new view's `init` assigns itself to the global, ARC releases the old value, triggering the old view's `deinit` — if `deinit` also writes to the same global, Swift detects overlapping exclusive writes and aborts.
+
+Cleanup responsibilities:
+
+| Event | What happens |
+|-------|-------------|
+| `init` | View assigns itself to the global (`currentReaderView = self`) |
+| `"dispose"` method call | Identity-guarded cleanup (`if currentReaderView === self { currentReaderView = nil }`) — prevents clearing a newer view that replaced this one during hot reload |
+| `closePublication()` | Nils both globals before closing the publication — correct teardown order since views reference the publication |
+| `deinit` | Does not touch globals — handles only the view's own resource cleanup |
+
+The identity guard in the dispose handler matches Android's pattern at `ReadiumReaderWidget.kt:79`.
 
 **Files:**
 - `EventStreamHandler.swift` - Stream handler with `dispose()` that sends `FlutterEndOfEventStream`
-- `ReadiumReaderView.swift` - Calls stream `dispose()` in method call handler, not in `deinit`
+- `FlureadiumPlugin.swift` - Global weak references and `closePublication()` cleanup
+- `ReadiumReaderView.swift` - EPUB reader: init assigns global, dispose handler clears it
+- `PdfReaderView.swift` - PDF reader: same pattern as EPUB
 
 ## Troubleshooting
 
