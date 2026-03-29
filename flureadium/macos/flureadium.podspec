@@ -1,6 +1,7 @@
 #
-# macOS podspec for flureadium — ported from iOS with Readium dependencies.
-# Run `pod lib lint flureadium.podspec` to validate before publishing.
+# macOS podspec for flureadium with full Readium support.
+# Readium pod dependencies are declared in the app's Podfile via podspec: URLs
+# (they're not on public CocoaPods CDN).
 #
 Pod::Spec.new do |s|
   s.name             = 'flureadium'
@@ -18,13 +19,6 @@ Provides EPUB, PDF, and audiobook reading capabilities.
   s.source_files     = 'Classes/**/*.swift'
 
   s.dependency 'FlutterMacOS'
-  s.dependency 'ReadiumShared', '~> 3.5.0'
-  s.dependency 'ReadiumStreamer', '~> 3.5.0'
-  s.dependency 'ReadiumNavigator', '~> 3.5.0'
-  s.dependency 'ReadiumOPDS', '~> 3.5.0'
-  s.dependency 'ReadiumAdapterGCDWebServer', '~> 3.5.0'
-  s.dependency 'ReadiumInternal', '~> 3.5.0'
-  # s.dependency 'ReadiumLCP', '~> 3.5.0'
 
   s.platform = :osx, '13.0'
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
